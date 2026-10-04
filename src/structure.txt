@@ -1,0 +1,37 @@
+Folder PATH listing for volume Felix Denis
+Volume serial number is B435-4815
+D:.
+|   App.css
+|   App.tsx
+|   index.css
+|   main.tsx
+|   structure.txt
+|   
++---assets
+|       hero.png
+|       react.svg
+|       vite.svg
+|       
++---components
++---layouts
++---pages
+|       AdminDashboard.tsx
+|       AdminReports.tsx
+|       AISearch.tsx
+|       CreateListing.tsx
+|       EditListing.tsx
+|       Favorites.tsx
+|       Home.tsx
+|       ListingDetails.tsx
+|       Login.tsx
+|       Messages.tsx
+|       MessagesInbox.tsx
+|       Notifications.tsx
+|       Register.tsx
+|       SellerDashboard.tsx
+|       
++---services
+|       supabase.ts
+|       
++---types
+\---utils

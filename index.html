@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="rw">
+  <head>
+    <meta charset="UTF-8" />
+
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon.svg"
+    />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <meta
+      name="theme-color"
+      content="#09090b"
+    />
+
+    <meta
+      name="description"
+      content="KUGURISHA.COM — Isoko ryawe ryo mu Rwanda. Gura icyo ushaka, gurisha icyo ufite."
+    />
+
+    <title>Kugurisha</title>
+
+    <!--
+      Apply the saved theme BEFORE React loads.
+      Dark is the default.
+      This prevents the white flash on page load.
+    -->
+    <script>
+      (() => {
+        try {
+          const savedTheme =
+            localStorage.getItem("kugurisha-theme")
+
+          const theme =
+            savedTheme === "light" ||
+            savedTheme === "dark"
+              ? savedTheme
+              : "dark"
+
+          document.documentElement.setAttribute(
+            "data-theme",
+            theme
+          )
+
+          document.documentElement.style.colorScheme =
+            theme
+        } catch {
+          document.documentElement.setAttribute(
+            "data-theme",
+            "dark"
+          )
+
+          document.documentElement.style.colorScheme =
+            "dark"
+        }
+      })()
+    </script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <script
+      type="module"
+      src="/src/main.tsx"
+    ></script>
+  </body>
+</html>

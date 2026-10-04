@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+
+    <!-- Buyer (Blue) Gradient -->
+    <linearGradient id="buyerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+
+    <!-- Seller (Emerald) Gradient -->
+    <linearGradient id="sellerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <!-- Handshake Connection (Teal/Cyan) Gradient -->
+    <linearGradient id="shakeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="50%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Favicon Container / Background Layer -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="#334155" stroke-width="4" opacity="0.5"/>
+
+  <!-- Main Symbol Group -->
+  <g transform="translate(0, 0)">
+    
+    <!-- LEFT SIDE: BUYER (Shopping Bag Entity) -->
+    <g id="buyer-node">
+      <!-- Outer Orbit Arch -->
+      <path d="M 120,230 A 100,100 0 0,1 256,130" fill="none" stroke="url(#buyerGrad)" stroke-width="12" stroke-linecap="round"/>
+      
+      <!-- Buyer Node Circle -->
+      <circle cx="120" cy="230" r="32" fill="url(#buyerGrad)" filter="url(#glow)"/>
+      
+      <!-- Shopping Bag Icon (Inside Circle) -->
+      <path d="M 112,222 h 16 v 18 a 8,8 0 0,1 -16,0 z" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 116,222 v -4 a 4,4 0 0,1 8,0 v 4" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+    </g>
+
+    <!-- RIGHT SIDE: SELLER (Tag / Growth Entity) -->
+    <g id="seller-node">
+      <!-- Outer Orbit Arch -->
+      <path d="M 392,230 A 100,100 0 0,1 256,330" fill="none" stroke="url(#sellerGrad)" stroke-width="12" stroke-linecap="round"/>
+      
+      <!-- Seller Node Circle -->
+      <circle cx="392" cy="230" r="32" fill="url(#sellerGrad)" filter="url(#glow)"/>
+      
+      <!-- Price Tag Icon (Inside Circle) -->
+      <path d="M 385,221 l 12,-12 h 12 v 12 l -12,12 z" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="394" cy="218" r="1.5" fill="#FFFFFF"/>
+    </g>
+
+    <!-- CENTER: THE HANDSHAKE (Meeting Point) -->
+    <g id="handshake-core" transform="translate(0, 10)">
+      
+      <!-- Left Arm / Hand (Buyer side) -->
+      <path d="M 148,240 L 210,240 L 240,270 L 220,290 L 195,265 L 148,265 Z" fill="url(#buyerGrad)"/>
+      
+      <!-- Right Arm / Hand (Seller side) -->
+      <path d="M 364,240 L 302,240 L 272,270 L 292,290 L 317,265 L 364,265 Z" fill="url(#sellerGrad)"/>
+      
+      <!-- Clasping Hands Center Overlay -->
+      <!-- Top Hand Grip -->
+      <path d="M 225,240 L 260,225 C 270,220 280,228 275,238 L 260,260 L 240,270 Z" fill="#38BDF8"/>
+      
+      <!-- Interlocking Fingers -->
+      <path d="M 235,270 L 252,287 C 257,292 265,292 270,287 C 275,282 275,274 270,269 L 260,260" fill="none" stroke="#059669" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M 222,257 L 239,274 C 244,279 252,279 257,274" fill="none" stroke="#0284C7" stroke-width="8" stroke-linecap="round"/>
+      
+      <!-- Central Spark / Agreement Light -->
+      <circle cx="256" cy="230" r="6" fill="#FFFFFF" filter="url(#glow)"/>
+      <path d="M 256,218 V 242 M 244,230 H 268" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+
+    <!-- EXCHANGE ARROWS (Flow of Value & Goods) -->
+    <!-- Top Arrow (Left to Right) -->
+    <path d="M 270,130 L 285,130 L 278,120" fill="none" stroke="#34D399" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Bottom Arrow (Right to Left) -->
+    <path d="M 242,330 L 227,330 L 234,340" fill="none" stroke="#38BDF8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  </g>
+</svg>
