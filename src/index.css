@@ -287,7 +287,66 @@ select:focus {
 /* =========================================================
    LINKS
    ========================================================= */
+/* =========================================================
+   KUGURISHA.COM — PREMIUM GLASS SYSTEM
+========================================================= */
 
+.glass {
+  background: color-mix(
+    in srgb,
+    var(--surface) 72%,
+    transparent
+  );
+  border: 1px solid color-mix(
+    in srgb,
+    var(--border-strong) 65%,
+    transparent
+  );
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+}
+
+.glass-soft {
+  background: color-mix(
+    in srgb,
+    var(--surface) 58%,
+    transparent
+  );
+  border: 1px solid color-mix(
+    in srgb,
+    var(--border) 70%,
+    transparent
+  );
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.glass-strong {
+  background: color-mix(
+    in srgb,
+    var(--surface) 84%,
+    transparent
+  );
+  border: 1px solid color-mix(
+    in srgb,
+    var(--border-strong) 75%,
+    transparent
+  );
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+}
+
+.glass-shadow {
+  box-shadow:
+    0 24px 80px -40px rgba(15, 23, 42, 0.35),
+    0 8px 30px -20px rgba(37, 99, 235, 0.16);
+}
+
+.glass-glow {
+  box-shadow:
+    0 0 0 1px rgba(59, 130, 246, 0.08),
+    0 25px 80px -35px rgba(37, 99, 235, 0.30);
+}
 
 /* =========================================================
    SAFE AREA — MOBILE
