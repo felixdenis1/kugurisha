@@ -405,7 +405,6 @@ function Home() {
 
       if (error) {
         console.error("Logout error:", error)
-
         alert("Ntibyashobotse gusohoka. Ongera ugerageze.")
         return
       }
@@ -596,10 +595,7 @@ function Home() {
     })
   }, [listings, search])
 
-  const featuredListings = useMemo(() => {
-    return listings.slice(0, 6)
-  }, [listings])
-
+  
   function closeMenus() {
     setShowUserMenu(false)
     setShowMobileMenu(false)
@@ -610,6 +606,16 @@ function Home() {
       .getElementById("listings")
       ?.scrollIntoView({
         behavior: "smooth",
+        block: "start",
+      })
+  }
+
+  function scrollToAllListings() {
+    document
+      .getElementById("all-listings")
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
       })
   }
 
@@ -617,11 +623,7 @@ function Home() {
     setSearch(categoryName)
 
     requestAnimationFrame(() => {
-      document
-        .getElementById("listings")
-        ?.scrollIntoView({
-          behavior: "smooth",
-        })
+      scrollToAllListings()
     })
   }
 
@@ -661,8 +663,6 @@ function Home() {
               WebkitBackdropFilter: "blur(28px)",
             }}
           >
-            {/* BRAND */}
-
             <Link
               to="/"
               onClick={closeMenus}
@@ -691,8 +691,6 @@ function Home() {
                 <span className="text-blue-600">.COM</span>
               </span>
             </Link>
-
-            {/* DESKTOP NAV */}
 
             <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex">
               <Link
@@ -741,8 +739,6 @@ function Home() {
               </Link>
             </nav>
 
-            {/* RIGHT ACTIONS */}
-
             <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
               {userId && (
                 <Link
@@ -752,14 +748,17 @@ function Home() {
                   aria-label="Notifications"
                   className="group relative flex h-10 w-10 items-center justify-center rounded-xl border bg-white/60 text-slate-700 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-blue-500/30 hover:text-blue-600 sm:h-11 sm:w-11"
                   style={{
-                    borderColor: "rgba(148,163,184,0.18)",
+                    borderColor:
+                      "rgba(148,163,184,0.18)",
                   }}
                 >
                   <Icon name="bell" size={18} />
 
                   {unreadCount > 0 && (
                     <span className="absolute -right-1 -top-1 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white ring-2 ring-white">
-                      {unreadCount > 99 ? "99+" : unreadCount}
+                      {unreadCount > 99
+                        ? "99+"
+                        : unreadCount}
                     </span>
                   )}
                 </Link>
@@ -778,7 +777,9 @@ function Home() {
                   <button
                     type="button"
                     onClick={() =>
-                      setShowUserMenu((current) => !current)
+                      setShowUserMenu(
+                        (current) => !current,
+                      )
                     }
                     aria-expanded={showUserMenu}
                     aria-label="Fungura konti yanjye"
@@ -805,7 +806,10 @@ function Home() {
                           : "rotate(0deg)",
                       }}
                     >
-                      <Icon name="chevron-down" size={13} />
+                      <Icon
+                        name="chevron-down"
+                        size={13}
+                      />
                     </span>
                   </button>
 
@@ -818,7 +822,8 @@ function Home() {
                         borderColor:
                           "rgba(37,99,235,0.15)",
                         backdropFilter: "blur(28px)",
-                        WebkitBackdropFilter: "blur(28px)",
+                        WebkitBackdropFilter:
+                          "blur(28px)",
                       }}
                     >
                       <div className="rounded-xl bg-blue-50/80 px-3.5 py-3.5">
@@ -886,7 +891,9 @@ function Home() {
 
                           {unreadCount > 0 && (
                             <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-black text-white">
-                              {unreadCount > 99 ? "99+" : unreadCount}
+                              {unreadCount > 99
+                                ? "99+"
+                                : unreadCount}
                             </span>
                           )}
                         </Link>
@@ -933,11 +940,14 @@ function Home() {
               <button
                 type="button"
                 onClick={() =>
-                  setShowMobileMenu((current) => !current)
+                  setShowMobileMenu(
+                    (current) => !current,
+                  )
                 }
                 className="flex h-10 w-10 items-center justify-center rounded-xl border bg-white/60 text-slate-700 backdrop-blur-xl transition hover:border-blue-500/30 hover:text-blue-600 sm:hidden"
                 style={{
-                  borderColor: "rgba(148,163,184,0.18)",
+                  borderColor:
+                    "rgba(148,163,184,0.18)",
                 }}
                 aria-label={
                   showMobileMenu
@@ -947,7 +957,9 @@ function Home() {
               >
                 <Icon
                   name={
-                    showMobileMenu ? "close" : "menu"
+                    showMobileMenu
+                      ? "close"
+                      : "menu"
                   }
                   size={19}
                 />
@@ -955,8 +967,6 @@ function Home() {
             </div>
           </div>
         </div>
-
-        {/* MOBILE MENU */}
 
         {showMobileMenu && (
           <div className="px-3 pt-2 sm:hidden">
@@ -968,16 +978,29 @@ function Home() {
                 borderColor:
                   "rgba(37,99,235,0.14)",
                 backdropFilter: "blur(28px)",
-                WebkitBackdropFilter: "blur(28px)",
+                WebkitBackdropFilter:
+                  "blur(28px)",
               }}
             >
               <div className="space-y-0.5">
                 {[
                   ["#", "Ahabanza", "grid"],
-                  ["#categories", "Ibyiciro", "grid"],
-                  ["#listings", "Ibicuruzwa", "shopping-bag"],
+                  [
+                    "#categories",
+                    "Ibyiciro",
+                    "grid",
+                  ],
+                  [
+                    "#listings",
+                    "Ibicuruzwa",
+                    "shopping-bag",
+                  ],
                   ["#about", "Ibyo dukora", "info"],
-                  ["#how-it-works", "Uko rukora", "check"],
+                  [
+                    "#how-it-works",
+                    "Uko rukora",
+                    "check",
+                  ],
                 ].map(([href, label, icon]) => (
                   <a
                     key={label}
@@ -1115,123 +1138,296 @@ function Home() {
       </header>
 
       {/* =====================================================
-          HERO
+          SMALL SEARCH — DIRECTLY UNDER HEADER
       ===================================================== */}
 
-      <section className="relative overflow-hidden bg-[#f7faff]">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent" />
-
-        <div className="pointer-events-none absolute -left-32 top-20 h-80 w-80 rounded-full bg-blue-500/[0.08] blur-3xl" />
-
-        <div className="pointer-events-none absolute -right-32 top-40 h-96 w-96 rounded-full bg-cyan-400/[0.08] blur-3xl" />
-
-        <div className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-blue-400/[0.055] blur-3xl" />
-
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.07),transparent_58%)]" />
-
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-14 sm:px-6 sm:pb-28 sm:pt-24">
-          <div className="relative mx-auto max-w-5xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/15 bg-white/60 px-4 py-2 text-[11px] font-black uppercase tracking-[0.16em] text-blue-600 shadow-sm backdrop-blur-xl">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
-                <Icon name="check" size={12} strokeWidth={2.5} />
-              </span>
-              Isoko ryawe ryo mu Rwanda
-            </div>
-
-            <h1 className="mt-7 text-5xl font-black leading-[0.94] tracking-[-0.065em] text-slate-950 sm:text-6xl lg:text-[78px]">
-              Gura icyo ushaka.
-              <br />
-              <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                Gurisha icyo ufite.
-              </span>
-            </h1>
-
-            <p className="mx-auto mt-7 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-              KUGURISHA.COM ni urubuga ruhuza
-              abaguzi n'abagurisha mu Rwanda,
-              ahantu hamwe kandi mu buryo bworoshye.
-            </p>
-
-            {/* MAIN SEARCH */}
-
-            <div className="mx-auto mt-9 max-w-4xl">
-              <div
-                className="rounded-[1.7rem] border p-2.5 shadow-[0_30px_80px_-35px_rgba(37,99,235,0.28)]"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(255,255,255,0.86), rgba(239,246,255,0.72))",
-                  borderColor: "rgba(255,255,255,0.90)",
-                  backdropFilter: "blur(28px)",
-                  WebkitBackdropFilter: "blur(28px)",
-                }}
-              >
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <div className="relative flex-1">
-                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">
-                      <Icon name="search" size={20} />
-                    </span>
-
-                    <input
-                      type="text"
-                      value={search}
-                      onChange={(e) =>
-                        setSearch(e.target.value)
-                      }
-                      placeholder="Urashaka iki? Urugero: laptop, iPhone, inzu..."
-                      className="h-14 w-full rounded-xl border border-slate-200/70 bg-white/75 px-12 pr-4 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
-                    />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={scrollToListings}
-                    className="flex h-14 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-blue-600 to-cyan-500 px-8 text-sm font-black text-white shadow-[0_14px_30px_-14px_rgba(37,99,235,0.9)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_35px_-14px_rgba(37,99,235,0.95)] active:scale-[0.98]"
-                  >
+      <section className="relative z-30 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
+          <div className="mx-auto max-w-3xl">
+            <div
+              className="rounded-2xl border p-1.5 shadow-[0_15px_40px_-28px_rgba(37,99,235,0.35)]"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(239,246,255,0.88))",
+                borderColor:
+                  "rgba(37,99,235,0.12)",
+                backdropFilter: "blur(22px)",
+                WebkitBackdropFilter:
+                  "blur(22px)",
+              }}
+            >
+              <div className="flex items-center gap-1.5">
+                <div className="relative min-w-0 flex-1">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500">
                     <Icon name="search" size={17} />
-                    Shakisha
-                  </button>
+                  </span>
+
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) =>
+                      setSearch(e.target.value)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        scrollToListings()
+                      }
+                    }}
+                    placeholder="Urashaka iki? laptop, iPhone, inzu..."
+                    className="h-11 w-full rounded-xl border border-slate-200/70 bg-white/80 px-10 pr-3 text-[13px] font-medium text-slate-900 outline-none placeholder:text-slate-400 transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                  />
                 </div>
+
+                <button
+                  type="button"
+                  onClick={scrollToListings}
+                  className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 text-xs font-black text-white shadow-[0_10px_22px_-12px_rgba(37,99,235,0.9)] transition hover:-translate-y-0.5 active:scale-[0.98]"
+                >
+                  <Icon name="search" size={15} />
+                  <span>Shakisha</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          HERO + LISTINGS SLIDER
+      ===================================================== */}
+
+      <section
+        id="listings"
+        className="relative overflow-hidden bg-[#f7faff]"
+      >
+        <div className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-blue-500/[0.08] blur-3xl" />
+
+        <div className="pointer-events-none absolute -right-32 top-20 h-96 w-96 rounded-full bg-cyan-400/[0.08] blur-3xl" />
+
+        <div className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-blue-400/[0.045] blur-3xl" />
+
+        <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:py-16">
+          <div className="grid items-center gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:gap-12">
+
+            {/* LEFT */}
+
+            <div className="max-w-xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/15 bg-white/70 px-3.5 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 shadow-sm backdrop-blur-xl">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
+                  <Icon
+                    name="check"
+                    size={11}
+                    strokeWidth={2.5}
+                  />
+                </span>
+
+                Isoko ryawe ryo mu Rwanda
               </div>
 
-              <Link
-                to="/ai-search"
-                className="mt-4 inline-flex items-center gap-2 rounded-full border border-blue-500/10 bg-white/50 px-4 py-2 text-sm font-bold text-blue-600 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-blue-500/20 hover:bg-white/80"
-              >
-                <Icon name="spark" size={16} />
-                <span>Baza AI icyo ushaka</span>
-                <Icon name="arrow-right" size={15} />
-              </Link>
+              <h1 className="mt-6 text-4xl font-black leading-[0.98] tracking-[-0.055em] text-slate-950 sm:text-5xl lg:text-[58px]">
+                Gura icyo ushaka.
+                <br />
+                <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
+                  Gurisha icyo ufite.
+                </span>
+              </h1>
+
+              <p className="mt-5 max-w-lg text-sm leading-7 text-slate-600 sm:text-base">
+                KUGURISHA.COM ni urubuga ruhuza
+                abaguzi n'abagurisha mu Rwanda,
+                ahantu hamwe kandi mu buryo bworoshye.
+              </p>
+
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <Link
+                  to="/create-listing"
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3 text-sm font-black text-white shadow-[0_14px_30px_-15px_rgba(37,99,235,0.9)] transition hover:-translate-y-0.5"
+                >
+                  <Icon name="plus" size={16} />
+                  Gurisha
+                </Link>
+
+                <Link
+                  to="/ai-search"
+                  className="flex items-center gap-2 rounded-xl border border-blue-500/15 bg-white/70 px-5 py-3 text-sm font-bold text-blue-600 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-white"
+                >
+                  <Icon name="spark" size={16} />
+                  Baza AI
+                </Link>
+              </div>
+
+              <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-[11px] font-semibold text-slate-500">
+                <span className="flex items-center gap-1.5">
+                  <Icon
+                    name="shield"
+                    size={14}
+                    strokeWidth={2}
+                  />
+                  Byoroshye gukoresha
+                </span>
+
+                <span className="flex items-center gap-1.5">
+                  <Icon
+                    name="users"
+                    size={14}
+                    strokeWidth={2}
+                  />
+                  Abaguzi n'abagurisha
+                </span>
+
+                <span className="flex items-center gap-1.5">
+                  <Icon
+                    name="map-pin"
+                    size={14}
+                    strokeWidth={2}
+                  />
+                  Mu Rwanda
+                </span>
+              </div>
             </div>
 
-            {/* TRUST POINTS */}
+            {/* RIGHT — SLIDER */}
 
-            <div className="mx-auto mt-10 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-3 text-xs font-semibold text-slate-600">
-              <span className="flex items-center gap-2">
-                <Icon
-                  name="shield"
-                  size={15}
-                  strokeWidth={2}
-                />
-                Isoko ryoroshye gukoresha
-              </span>
+            <div className="min-w-0">
+              <div className="mb-4 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
+                    Kugezweho
+                  </p>
 
-              <span className="flex items-center gap-2">
-                <Icon
-                  name="users"
-                  size={15}
-                  strokeWidth={2}
-                />
-                Abaguzi n'abagurisha
-              </span>
+                  <h2 className="mt-1 text-xl font-black tracking-[-0.025em] text-slate-950 sm:text-2xl">
+                    Ibicuruzwa bishya
+                  </h2>
+                </div>
 
-              <span className="flex items-center gap-2">
-                <Icon
-                  name="map-pin"
-                  size={15}
-                  strokeWidth={2}
-                />
-                Mu Rwanda
-              </span>
+                <span className="hidden text-xs font-semibold text-slate-400 sm:block">
+                  Reba ibiri ku isoko
+                </span>
+              </div>
+
+              {loading ? (
+                <div className="flex gap-4 overflow-hidden">
+                  {[1, 2, 3].map((item) => (
+                    <div
+                      key={item}
+                      className="w-[235px] shrink-0 overflow-hidden rounded-[1.45rem] border border-slate-200/70 bg-white/70 shadow-sm"
+                    >
+                      <div className="h-44 animate-pulse bg-blue-50" />
+
+                      <div className="space-y-3 p-4">
+                        <div className="h-4 animate-pulse rounded bg-blue-50" />
+                        <div className="h-4 w-2/3 animate-pulse rounded bg-blue-50" />
+                        <div className="h-3 w-1/2 animate-pulse rounded bg-blue-50" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : filteredListings.length > 0 ? (
+                <div className="flex snap-x gap-4 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {filteredListings
+                    .slice(0, 8)
+                    .map((listing) => (
+                      <Link
+                        key={listing.id}
+                        to={`/listing/${listing.id}`}
+                        className="group w-[235px] shrink-0 snap-start overflow-hidden rounded-[1.45rem] border transition duration-300 hover:-translate-y-1 hover:border-blue-400/30 hover:shadow-[0_25px_55px_-25px_rgba(37,99,235,0.40)] sm:w-[255px]"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(255,255,255,0.94), rgba(239,246,255,0.72))",
+                          borderColor:
+                            "rgba(148,163,184,0.18)",
+                          backdropFilter: "blur(20px)",
+                          WebkitBackdropFilter:
+                            "blur(20px)",
+                        }}
+                      >
+                        <div className="relative h-44 overflow-hidden bg-blue-50">
+                          {images[listing.id] ? (
+                            <img
+                              src={images[listing.id]}
+                              alt={listing.title}
+                              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/80 text-slate-400 shadow-sm">
+                                <Icon
+                                  name="shopping-bag"
+                                  size={24}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="absolute left-3 top-3 rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-[9px] font-black text-slate-800 shadow-sm backdrop-blur-xl">
+                            {listing.category?.name ||
+                              "Ibindi"}
+                          </div>
+                        </div>
+
+                        <div className="p-4">
+                          <h3 className="line-clamp-2 min-h-[2.75rem] text-sm font-black leading-5 text-slate-900 transition group-hover:text-blue-600">
+                            {listing.title}
+                          </h3>
+
+                          <p className="mt-2 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-base font-black text-transparent">
+                            {formatPrice(listing)}
+                          </p>
+
+                          <p className="mt-2 flex items-center gap-1.5 truncate text-[11px] font-medium text-slate-500">
+                            <Icon
+                              name="map-pin"
+                              size={12}
+                            />
+                            {formatLocation(listing)}
+                          </p>
+
+                          <div className="mt-3 flex items-center justify-between border-t border-slate-200/70 pt-3">
+                            <span className="text-[10px] font-bold text-slate-400">
+                              Reba ibisobanuro
+                            </span>
+
+                            <span className="text-blue-600 transition group-hover:translate-x-1">
+                              <Icon
+                                name="arrow-right"
+                                size={15}
+                              />
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                </div>
+              ) : (
+                <div className="flex min-h-[300px] items-center justify-center rounded-[1.6rem] border border-slate-200/70 bg-white/70 p-8 text-center shadow-sm backdrop-blur-xl">
+                  <div>
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-slate-400">
+                      <Icon
+                        name="search"
+                        size={23}
+                      />
+                    </div>
+
+                    <h3 className="mt-4 text-base font-black text-slate-900">
+                      Nta bicuruzwa bihari
+                    </h3>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Gerageza irindi jambo ryo gushakisha.
+                    </p>
+
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => setSearch("")}
+                        className="mt-4 rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white"
+                      >
+                        Reba byose
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1277,7 +1473,8 @@ function Home() {
                   borderColor:
                     "rgba(148,163,184,0.18)",
                   backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
+                  WebkitBackdropFilter:
+                    "blur(20px)",
                 }}
               >
                 <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-blue-500/[0.05] blur-2xl transition duration-300 group-hover:bg-blue-500/[0.12]" />
@@ -1311,102 +1508,7 @@ function Home() {
       </section>
 
       {/* =====================================================
-          FEATURED
-      ===================================================== */}
-
-      {!loading &&
-        !error &&
-        featuredListings.length > 0 && (
-          <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-600">
-                  Ku isoko ubu
-                </p>
-
-                <h2 className="mt-2 text-3xl font-black tracking-[-0.035em] text-slate-950">
-                  Reba ibicuruzwa biri ku isoko
-                </h2>
-              </div>
-
-              <button
-                type="button"
-                onClick={scrollToListings}
-                className="hidden items-center gap-2 rounded-xl border bg-white/70 px-4 py-2.5 text-sm font-bold text-slate-800 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-blue-500/30 hover:text-blue-600 sm:flex"
-                style={{
-                  borderColor:
-                    "rgba(148,163,184,0.18)",
-                }}
-              >
-                Reba byose
-                <Icon name="arrow-right" size={15} />
-              </button>
-            </div>
-
-            <div className="mt-8 flex snap-x gap-4 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {featuredListings.map((listing) => (
-                <Link
-                  key={listing.id}
-                  to={`/listing/${listing.id}`}
-                  className="group w-[285px] shrink-0 snap-start overflow-hidden rounded-[1.6rem] border transition duration-300 hover:-translate-y-1.5 hover:border-blue-400/30 hover:shadow-[0_28px_65px_-28px_rgba(37,99,235,0.38)] sm:w-[320px]"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.92), rgba(239,246,255,0.70))",
-                    borderColor:
-                      "rgba(148,163,184,0.18)",
-                    backdropFilter: "blur(20px)",
-                    WebkitBackdropFilter: "blur(20px)",
-                  }}
-                >
-                  <div className="relative h-48 overflow-hidden bg-blue-50">
-                    {images[listing.id] ? (
-                      <img
-                        src={images[listing.id]}
-                        alt={listing.title}
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50 text-slate-400">
-                        <Icon
-                          name="shopping-bag"
-                          size={42}
-                          strokeWidth={1.3}
-                        />
-                      </div>
-                    )}
-
-                    <div
-                      className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/20 to-transparent"
-                      aria-hidden="true"
-                    />
-
-                    <div className="absolute left-3 top-3 rounded-full border border-white/70 bg-white/75 px-3 py-1.5 text-[10px] font-black text-slate-800 shadow-sm backdrop-blur-xl">
-                      {listing.category?.name || "Ibindi"}
-                    </div>
-                  </div>
-
-                  <div className="p-5">
-                    <h3 className="line-clamp-2 text-base font-black leading-6 text-slate-900">
-                      {listing.title}
-                    </h3>
-
-                    <p className="mt-3 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-lg font-black text-transparent">
-                      {formatPrice(listing)}
-                    </p>
-
-                    <p className="mt-2 flex items-center gap-1.5 line-clamp-1 text-xs text-slate-500">
-                      <Icon name="map-pin" size={13} />
-                      {formatLocation(listing)}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-      {/* =====================================================
-          ABOUT US
+          ABOUT
       ===================================================== */}
 
       <section
@@ -1494,7 +1596,8 @@ function Home() {
                     borderColor:
                       "rgba(148,163,184,0.18)",
                     backdropFilter: "blur(22px)",
-                    WebkitBackdropFilter: "blur(22px)",
+                    WebkitBackdropFilter:
+                      "blur(22px)",
                   }}
                 >
                   <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-blue-500/[0.06] blur-2xl transition group-hover:bg-blue-500/[0.12]" />
@@ -1555,7 +1658,8 @@ function Home() {
                 borderColor:
                   "rgba(148,163,184,0.18)",
                 backdropFilter: "blur(22px)",
-                WebkitBackdropFilter: "blur(22px)",
+                WebkitBackdropFilter:
+                  "blur(22px)",
               }}
             >
               <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-blue-500/[0.06] blur-3xl" />
@@ -1602,35 +1706,42 @@ function Home() {
                     "Mugirane amasezerano mu buryo mwumvikanyeho.",
                     "check",
                   ],
-                ].map(([number, title, description, icon]) => (
-                  <div
-                    key={number}
-                    className="flex gap-4"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-xs font-black text-white shadow-[0_10px_20px_-12px_rgba(37,99,235,0.8)]">
-                      {number}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-black text-slate-900">
-                          {title}
-                        </h4>
-
-                        <span className="text-blue-600">
-                          <Icon
-                            name={icon as IconName}
-                            size={14}
-                          />
-                        </span>
+                ].map(
+                  ([
+                    number,
+                    title,
+                    description,
+                    icon,
+                  ]) => (
+                    <div
+                      key={number}
+                      className="flex gap-4"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-xs font-black text-white shadow-[0_10px_20px_-12px_rgba(37,99,235,0.8)]">
+                        {number}
                       </div>
 
-                      <p className="mt-1 text-sm leading-6 text-slate-600">
-                        {description}
-                      </p>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-black text-slate-900">
+                            {title}
+                          </h4>
+
+                          <span className="text-blue-600">
+                            <Icon
+                              name={icon as IconName}
+                              size={14}
+                            />
+                          </span>
+                        </div>
+
+                        <p className="mt-1 text-sm leading-6 text-slate-600">
+                          {description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
             </div>
 
@@ -1644,7 +1755,8 @@ function Home() {
                 borderColor:
                   "rgba(148,163,184,0.18)",
                 backdropFilter: "blur(22px)",
-                WebkitBackdropFilter: "blur(22px)",
+                WebkitBackdropFilter:
+                  "blur(22px)",
               }}
             >
               <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-cyan-400/[0.07] blur-3xl" />
@@ -1691,35 +1803,42 @@ function Home() {
                     "Abaguzi bashobora kukwandikira no kubaza amakuru.",
                     "message",
                   ],
-                ].map(([number, title, description, icon]) => (
-                  <div
-                    key={number}
-                    className="flex gap-4"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-xs font-black text-white shadow-[0_10px_20px_-12px_rgba(37,99,235,0.8)]">
-                      {number}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-black text-slate-900">
-                          {title}
-                        </h4>
-
-                        <span className="text-blue-600">
-                          <Icon
-                            name={icon as IconName}
-                            size={14}
-                          />
-                        </span>
+                ].map(
+                  ([
+                    number,
+                    title,
+                    description,
+                    icon,
+                  ]) => (
+                    <div
+                      key={number}
+                      className="flex gap-4"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-xs font-black text-white shadow-[0_10px_20px_-12px_rgba(37,99,235,0.8)]">
+                        {number}
                       </div>
 
-                      <p className="mt-1 text-sm leading-6 text-slate-600">
-                        {description}
-                      </p>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-black text-slate-900">
+                            {title}
+                          </h4>
+
+                          <span className="text-blue-600">
+                            <Icon
+                              name={icon as IconName}
+                              size={14}
+                            />
+                          </span>
+                        </div>
+
+                        <p className="mt-1 text-sm leading-6 text-slate-600">
+                          {description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ),
+                )}
               </div>
 
               <Link
@@ -1735,11 +1854,11 @@ function Home() {
       </section>
 
       {/* =====================================================
-          LISTINGS
+          ALL LISTINGS / SEARCH RESULTS
       ===================================================== */}
 
       <section
-        id="listings"
+        id="all-listings"
         className="relative overflow-hidden border-y"
         style={{
           background:
@@ -1756,11 +1875,11 @@ function Home() {
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-600">
-                Kugezweho
+                Ku isoko ubu
               </p>
 
               <h2 className="mt-2 text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">
-                Ibicuruzwa bishya
+                Ibicuruzwa byose
               </h2>
 
               {search && (
@@ -1887,7 +2006,8 @@ function Home() {
                       borderColor:
                         "rgba(148,163,184,0.18)",
                       backdropFilter: "blur(20px)",
-                      WebkitBackdropFilter: "blur(20px)",
+                      WebkitBackdropFilter:
+                        "blur(20px)",
                     }}
                   >
                     <div className="relative h-56 overflow-hidden bg-blue-50">
@@ -1916,7 +2036,8 @@ function Home() {
                       />
 
                       <div className="absolute left-3 top-3 rounded-full border border-white/70 bg-white/75 px-3 py-1.5 text-[10px] font-black text-slate-800 shadow-sm backdrop-blur-xl">
-                        {listing.category?.name || "Ibindi"}
+                        {listing.category?.name ||
+                          "Ibindi"}
                       </div>
                     </div>
 
@@ -1931,7 +2052,10 @@ function Home() {
 
                       <div className="mt-4 space-y-2">
                         <p className="flex items-center gap-1.5 line-clamp-1 text-xs font-medium text-slate-500">
-                          <Icon name="map-pin" size={13} />
+                          <Icon
+                            name="map-pin"
+                            size={13}
+                          />
                           {formatLocation(listing)}
                         </p>
 
@@ -1939,7 +2063,10 @@ function Home() {
                           listing.condition,
                         ) && (
                           <p className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                            <Icon name="tag" size={13} />
+                            <Icon
+                              name="tag"
+                              size={13}
+                            />
                             {formatCondition(
                               listing.condition,
                             )}
@@ -1977,7 +2104,8 @@ function Home() {
           style={{
             background:
               "linear-gradient(135deg, rgba(239,246,255,0.98), rgba(224,242,254,0.90), rgba(239,246,255,0.98))",
-            borderColor: "rgba(96,165,250,0.20)",
+            borderColor:
+              "rgba(96,165,250,0.20)",
           }}
         >
           <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-500/[0.12] blur-3xl" />
