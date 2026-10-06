@@ -1,71 +1,31 @@
 @import "tailwindcss";
 
 /* =========================================================
-   KUGURISHA.COM — GLOBAL THEME
+   KUGURISHA.COM — GLOBAL LIGHT DESIGN SYSTEM
+   Premium / Glass / Mobile-first
    ========================================================= */
 
 :root {
-  --bg: #09090b;
-  --bg-secondary: #111113;
-
-  --surface: #151518;
-  --surface-hover: #1c1c20;
-
-  --text: #ffffff;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
-
-  --border: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.18);
-
-  --input-bg: rgba(255, 255, 255, 0.05);
-
-  --inverse-bg: #ffffff;
-  --inverse-text: #09090b;
-
-  --soft-bg: rgba(255, 255, 255, 0.05);
-  --soft-bg-hover: rgba(255, 255, 255, 0.09);
-
-  --danger-bg: rgba(239, 68, 68, 0.1);
-  --danger-border: rgba(239, 68, 68, 0.2);
-  --danger-text: #fca5a5;
-
-  --success-bg: rgba(34, 197, 94, 0.1);
-  --success-border: rgba(34, 197, 94, 0.2);
-  --success-text: #86efac;
-
-  --warning-bg: rgba(245, 158, 11, 0.1);
-  --warning-border: rgba(245, 158, 11, 0.2);
-  --warning-text: #fcd34d;
-
-  color-scheme: dark;
-}
-
-/* =========================================================
-   LIGHT THEME
-   ========================================================= */
-
-:root[data-theme="light"] {
-  --bg: #ffffff;
-  --bg-secondary: #f8f8f8;
+  --bg: #f8fafc;
+  --bg-secondary: #f1f5f9;
 
   --surface: #ffffff;
-  --surface-hover: #f4f4f5;
+  --surface-hover: #f8fafc;
 
-  --text: #09090b;
-  --text-secondary: #52525b;
-  --text-muted: #a1a1aa;
+  --text: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
 
-  --border: rgba(0, 0, 0, 0.1);
-  --border-strong: rgba(0, 0, 0, 0.16);
+  --border: rgba(15, 23, 42, 0.09);
+  --border-strong: rgba(15, 23, 42, 0.14);
 
   --input-bg: #ffffff;
 
-  --inverse-bg: #09090b;
+  --inverse-bg: #0f172a;
   --inverse-text: #ffffff;
 
-  --soft-bg: rgba(0, 0, 0, 0.04);
-  --soft-bg-hover: rgba(0, 0, 0, 0.07);
+  --soft-bg: rgba(15, 23, 42, 0.035);
+  --soft-bg-hover: rgba(15, 23, 42, 0.06);
 
   --danger-bg: #fef2f2;
   --danger-border: #fecaca;
@@ -78,6 +38,9 @@
   --warning-bg: #fffbeb;
   --warning-border: #fde68a;
   --warning-text: #d97706;
+
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
 
   color-scheme: light;
 }
@@ -92,21 +55,17 @@ html {
 
   background: var(--bg);
   color: var(--text);
-
-  color-scheme: dark;
-
-  transition:
-    background-color 200ms ease,
-    color 200ms ease;
-}
-
-html[data-theme="light"] {
   color-scheme: light;
+
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-
   min-width: 320px;
   min-height: 100vh;
 
@@ -122,14 +81,12 @@ body {
     "Segoe UI",
     sans-serif;
 
-  transition:
-    background-color 200ms ease,
-    color 200ms ease;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
   min-height: 100vh;
-
   background: var(--bg);
   color: var(--text);
 }
@@ -138,12 +95,14 @@ body {
    GLOBAL BOX MODEL
    ========================================================= */
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 /* =========================================================
-   TAP HIGHLIGHT
+   TAP / MOBILE BEHAVIOR
    ========================================================= */
 
 button,
@@ -154,19 +113,9 @@ select {
   -webkit-tap-highlight-color: transparent;
 }
 
-/*
-  IMPORTANT:
-  Ntidushyiramo color kuri button global.
-
-  Tailwind utilities nka:
-  text-white
-  text-black
-  text-blue-600
-  text-red-500
-  n'izindi
-
-  zigomba gukomeza kugenzura button text.
-*/
+/* =========================================================
+   BUTTONS
+   ========================================================= */
 
 button {
   font-family: inherit;
@@ -177,20 +126,28 @@ button:disabled {
 }
 
 /* =========================================================
-   FORM ELEMENTS
+   FORMS — CRITICAL INPUT VISIBILITY
    ========================================================= */
 
 input,
 textarea,
 select {
-  color: var(--text);
+  color: #0f172a;
+  background-color: #ffffff;
+
   border-color: var(--border);
-  background-color: var(--input-bg);
+
+  caret-color: #2563eb;
+
+  -webkit-text-fill-color: #0f172a;
+
+  font-family: inherit;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: var(--text-muted);
+  color: #94a3b8;
+  opacity: 1;
 }
 
 input:focus,
@@ -200,12 +157,49 @@ select:focus {
 }
 
 /* =========================================================
+   AUTOFILL — CHROME / ANDROID / IOS
+   ========================================================= */
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #0f172a;
+  caret-color: #2563eb;
+
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* =========================================================
+   DISABLED FORM FIELDS
+   ========================================================= */
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+  color: #64748b;
+  background-color: #f8fafc;
+
+  -webkit-text-fill-color: #64748b;
+
+  cursor: not-allowed;
+}
+
+/* =========================================================
    TEXT SELECTION
    ========================================================= */
 
 ::selection {
-  background: rgba(37, 99, 235, 0.25);
-  color: var(--text);
+  background: rgba(37, 99, 235, 0.18);
+  color: #0f172a;
 }
 
 /* =========================================================
@@ -222,12 +216,12 @@ select:focus {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
+  background: rgba(15, 23, 42, 0.14);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: rgba(15, 23, 42, 0.24);
 }
 
 /* =========================================================
@@ -271,9 +265,12 @@ select:focus {
 }
 
 .kg-input {
-  background: var(--input-bg);
-  color: var(--text);
+  background: #ffffff;
+  color: #0f172a;
   border-color: var(--border);
+
+  caret-color: #2563eb;
+  -webkit-text-fill-color: #0f172a;
 }
 
 .kg-soft {
@@ -285,53 +282,32 @@ select:focus {
 }
 
 /* =========================================================
-   LINKS
+   PREMIUM GLASS SYSTEM
    ========================================================= */
-/* =========================================================
-   KUGURISHA.COM — PREMIUM GLASS SYSTEM
-========================================================= */
 
 .glass {
-  background: color-mix(
-    in srgb,
-    var(--surface) 72%,
-    transparent
-  );
-  border: 1px solid color-mix(
-    in srgb,
-    var(--border-strong) 65%,
-    transparent
-  );
+  background: rgba(255, 255, 255, 0.72);
+
+  border: 1px solid rgba(15, 23, 42, 0.08);
+
   backdrop-filter: blur(24px) saturate(150%);
   -webkit-backdrop-filter: blur(24px) saturate(150%);
 }
 
 .glass-soft {
-  background: color-mix(
-    in srgb,
-    var(--surface) 58%,
-    transparent
-  );
-  border: 1px solid color-mix(
-    in srgb,
-    var(--border) 70%,
-    transparent
-  );
+  background: rgba(255, 255, 255, 0.58);
+
+  border: 1px solid rgba(15, 23, 42, 0.06);
+
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
 }
 
 .glass-strong {
-  background: color-mix(
-    in srgb,
-    var(--surface) 84%,
-    transparent
-  );
-  border: 1px solid color-mix(
-    in srgb,
-    var(--border-strong) 75%,
-    transparent
-  );
+  background: rgba(255, 255, 255, 0.84);
+
+  border: 1px solid rgba(15, 23, 42, 0.1);
+
   backdrop-filter: blur(30px) saturate(160%);
   -webkit-backdrop-filter: blur(30px) saturate(160%);
 }
@@ -345,7 +321,27 @@ select:focus {
 .glass-glow {
   box-shadow:
     0 0 0 1px rgba(59, 130, 246, 0.08),
-    0 25px 80px -35px rgba(37, 99, 235, 0.30);
+    0 25px 80px -35px rgba(37, 99, 235, 0.3);
+}
+
+/* =========================================================
+   MOBILE INPUT SAFETY
+   ========================================================= */
+
+input,
+textarea,
+select,
+button {
+  font-size: 16px;
+}
+
+@media (min-width: 768px) {
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 15px;
+  }
 }
 
 /* =========================================================
