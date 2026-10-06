@@ -211,28 +211,6 @@ function Notifications() {
     }))
   }
 
-  /*
-   * Group only notifications that belong together.
-   *
-   * Same:
-   * - type
-   * - sender
-   * - conversation
-   *
-   * Consecutive notifications are grouped.
-   *
-   * Example:
-   *
-   * John + message
-   * John + message
-   * John + message
-   * Alice + message
-   *
-   * becomes:
-   *
-   * John +3
-   * Alice +1
-   */
   const groupedNotifications =
     useMemo<NotificationGroup[]>(() => {
       const groups: NotificationGroup[] = []
@@ -262,17 +240,14 @@ function Notifications() {
               lastGroup.unreadCount += 1
             }
 
-            /*
-             * Keep the newest notification as
-             * the group's latest notification.
-             */
             lastGroup.latest = notification
           } else {
             const senderName =
               notification.sender_id
                 ? profiles[
                     notification.sender_id
-                  ] || getSenderNameFromBody(
+                  ] ||
+                  getSenderNameFromBody(
                     notification.body,
                   )
                 : getSenderNameFromBody(
@@ -285,19 +260,13 @@ function Notifications() {
               senderName,
               latest: notification,
               unreadCount:
-                notification.is_read
-                  ? 0
-                  : 1,
+                notification.is_read ? 0 : 1,
               totalCount: 1,
             })
           }
         },
       )
 
-      /*
-       * Profiles can arrive after notifications.
-       * Refresh sender names from the profile map.
-       */
       return groups.map((group) => ({
         ...group,
         senderName:
@@ -366,16 +335,7 @@ function Notifications() {
 
     const notification = group.latest
 
-    /*
-     * New message notifications now contain
-     * the exact conversation_id.
-     *
-     * This is much safer than finding a conversation
-     * using listing_id.
-     */
-    if (
-      notification.type === "new_message"
-    ) {
+    if (notification.type === "new_message") {
       if (notification.conversation_id) {
         navigate(
           `/messages/${notification.conversation_id}`,
@@ -413,6 +373,7 @@ function Notifications() {
         "Mark all notifications read error:",
         error,
       )
+
       return
     }
 
@@ -510,9 +471,26 @@ function Notifications() {
   )
 
   return (
-    <div className="min-h-screen bg-[#f6f8fb] text-slate-900">
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/85 backdrop-blur-xl">
+    <main className="relative min-h-screen overflow-hidden bg-slate-50 text-slate-900">
+      {/* =========================================================
+          PREMIUM BACKGROUND
+          ========================================================= */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -left-32 -top-32 h-[34rem] w-[34rem] rounded-full bg-blue-500/20 blur-[120px]" />
+
+        <div className="absolute right-[-8rem] top-[8%] h-[32rem] w-[32rem] rounded-full bg-indigo-500/20 blur-[120px]" />
+
+        <div className="absolute bottom-[-10rem] left-[25%] h-[34rem] w-[34rem] rounded-full bg-cyan-400/15 blur-[130px]" />
+
+        <div className="absolute bottom-[5%] right-[5%] h-[24rem] w-[24rem] rounded-full bg-blue-600/15 blur-[110px]" />
+
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(59,130,246,0.06),transparent_35%,rgba(99,102,241,0.06)_65%,rgba(6,182,212,0.04))]" />
+      </div>
+
+      {/* =========================================================
+          HEADER
+          ========================================================= */}
+      <header className="sticky top-0 z-50 border-b border-white/70 bg-white/80 backdrop-blur-2xl">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             to="/"
@@ -549,7 +527,7 @@ function Notifications() {
 
             <Link
               to="/create-listing"
-              className="flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-bold text-white shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-slate-800"
+              className="flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-bold text-white shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-blue-600"
             >
               <span className="text-base">
                 +
@@ -560,9 +538,11 @@ function Notifications() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-7 sm:px-6 sm:py-10">
-        {/* PAGE INTRO */}
-        <section className="mb-7">
+      <main className="relative z-10 mx-auto max-w-5xl px-4 py-7 sm:px-6 sm:py-10">
+        {/* =====================================================
+            PAGE INTRO
+            ===================================================== */}
+        <section className="mb-8">
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-950"
@@ -574,7 +554,7 @@ function Notifications() {
           <div className="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-blue-600">
-                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                <span className="h-2 w-2 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
                 Amakuru yawe
               </div>
 
@@ -591,7 +571,7 @@ function Notifications() {
 
             {/* STATS */}
             <div className="flex gap-3">
-              <div className="min-w-[110px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div className="min-w-[110px] rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl">
                 <div className="text-2xl font-black text-slate-950">
                   {groupedNotifications.length}
                 </div>
@@ -601,12 +581,12 @@ function Notifications() {
                 </div>
               </div>
 
-              <div className="min-w-[110px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div className="min-w-[110px] rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl">
                 <div className="flex items-center gap-2 text-2xl font-black text-slate-950">
                   {unreadCount}
 
                   {unreadCount > 0 && (
-                    <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
+                    <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-blue-600" />
                   )}
                 </div>
 
@@ -618,9 +598,11 @@ function Notifications() {
           </div>
         </section>
 
-        {/* ERROR */}
+        {/* =====================================================
+            ERROR
+            ===================================================== */}
         {error && (
-          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 text-red-700">
+          <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50/95 p-4 text-red-700 shadow-sm">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100 font-bold">
               !
             </div>
@@ -637,9 +619,11 @@ function Notifications() {
           </div>
         )}
 
-        {/* LOADING */}
+        {/* =====================================================
+            LOADING
+            ===================================================== */}
         {loading ? (
-          <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_20px_70px_-30px_rgba(15,23,42,0.25)]">
+          <section className="overflow-hidden rounded-[30px] border border-white/80 bg-white/95 shadow-2xl shadow-slate-900/10 backdrop-blur-xl">
             <div className="flex items-center justify-between border-b border-slate-100 p-5">
               <div>
                 <div className="h-5 w-32 animate-pulse rounded bg-slate-200" />
@@ -673,14 +657,16 @@ function Notifications() {
           </section>
         ) : groupedNotifications.length ===
           0 ? (
-          /* EMPTY */
-          <section className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_20px_70px_-30px_rgba(15,23,42,0.25)]">
+          /* =====================================================
+             EMPTY STATE
+             ===================================================== */
+          <section className="relative overflow-hidden rounded-[32px] border border-white/80 bg-white/95 shadow-2xl shadow-slate-900/10 backdrop-blur-xl">
             <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-100/60 blur-3xl" />
 
-            <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-slate-100 blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-indigo-100/40 blur-3xl" />
 
             <div className="relative px-6 py-20 text-center sm:px-10 sm:py-28">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[26px] bg-blue-600 text-3xl text-white shadow-xl shadow-blue-600/20">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[26px] bg-slate-950 text-3xl text-white shadow-xl shadow-slate-950/20">
                 🔔
               </div>
 
@@ -701,7 +687,7 @@ function Notifications() {
 
               <Link
                 to="/"
-                className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-6 py-3.5 text-sm font-bold text-white shadow-xl shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-slate-800"
+                className="mt-7 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-6 py-3.5 text-sm font-bold text-white shadow-xl shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-blue-600/20"
               >
                 Reba listings
                 <span>→</span>
@@ -709,10 +695,12 @@ function Notifications() {
             </div>
           </section>
         ) : (
-          /* NOTIFICATIONS */
-          <section className="overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_20px_70px_-30px_rgba(15,23,42,0.25)]">
+          /* =====================================================
+             NOTIFICATIONS LIST
+             ===================================================== */
+          <section className="overflow-hidden rounded-[30px] border border-white/80 bg-white/95 shadow-2xl shadow-slate-900/10 backdrop-blur-xl">
             {/* LIST HEADER */}
-            <div className="border-b border-slate-100 bg-white p-4 sm:p-5">
+            <div className="border-b border-slate-100 bg-white/80 p-4 sm:p-5">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-black tracking-[-0.02em] text-slate-950">
@@ -744,8 +732,7 @@ function Notifications() {
 
                   const isLast =
                     index ===
-                    groupedNotifications.length -
-                      1
+                    groupedNotifications.length - 1
 
                   const notification =
                     group.latest
@@ -765,11 +752,11 @@ function Notifications() {
                           : ""
                       } ${
                         unread
-                          ? "bg-blue-50/45"
+                          ? "bg-blue-50/50"
                           : "bg-white"
                       } hover:bg-slate-50`}
                     >
-                      {/* BLUE UNREAD BAR */}
+                      {/* UNREAD BAR */}
                       {unread && (
                         <span className="absolute bottom-0 left-0 top-0 w-1 bg-blue-600" />
                       )}
@@ -812,7 +799,6 @@ function Notifications() {
                                     : notification.title}
                                 </h3>
 
-                                {/* GROUP COUNT */}
                                 <span
                                   className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${
                                     notification.type ===
@@ -869,7 +855,9 @@ function Notifications() {
 
                               {group.totalCount > 1 && (
                                 <p className="mt-1 text-xs font-semibold text-slate-400">
-                                  Ubutumwa {group.totalCount} bushya
+                                  Ubutumwa{" "}
+                                  {group.totalCount}{" "}
+                                  bushya
                                 </p>
                               )}
                             </div>
@@ -917,7 +905,7 @@ function Notifications() {
           </div>
         )}
       </main>
-    </div>
+    </main>
   )
 }
 

@@ -43,21 +43,48 @@ function Register() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-slate-950">
-      {/* Background decoration */}
-      <div className="absolute inset-0">
-        <div className="absolute -left-32 -top-32 h-80 w-80 rounded-full bg-blue-600/20 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
+    <main className="relative min-h-screen overflow-hidden bg-slate-50 text-slate-900">
+      {/* =========================================================
+          STRONG VISIBLE GRADIENT BACKGROUND
+          ========================================================= */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {/* Main blue glow */}
+        <div className="absolute left-1/2 top-1/2 h-[38rem] w-[38rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/35 blur-[120px]" />
+
+        {/* Top-left indigo glow */}
+        <div className="absolute -left-32 -top-32 h-[32rem] w-[32rem] rounded-full bg-indigo-500/30 blur-[110px]" />
+
+        {/* Bottom-right cyan glow */}
+        <div className="absolute -bottom-32 -right-32 h-[34rem] w-[34rem] rounded-full bg-cyan-400/25 blur-[120px]" />
+
+        {/* Secondary blue glow */}
+        <div className="absolute right-[10%] top-[15%] h-[24rem] w-[24rem] rounded-full bg-blue-600/25 blur-[100px]" />
+
+        {/* Bottom indigo glow */}
+        <div className="absolute bottom-[5%] left-[15%] h-[22rem] w-[22rem] rounded-full bg-indigo-600/20 blur-[100px]" />
+
+        {/* Subtle gradient wash */}
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(59,130,246,0.08),transparent_35%,rgba(99,102,241,0.08)_65%,rgba(6,182,212,0.06))]" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-5 py-10 sm:px-8">
-        <div className="grid w-full max-w-5xl overflow-hidden rounded-[2rem] border border-white/10 bg-white shadow-2xl lg:grid-cols-[1.05fr_0.95fr]">
+      {/* =========================================================
+          MAIN CONTENT
+          ========================================================= */}
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+        <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-900/15 lg:grid-cols-[1.05fr_0.95fr]">
+          {/* =====================================================
+              BRAND PANEL
+              ===================================================== */}
+          <section className="relative hidden overflow-hidden bg-slate-900 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-12">
+            {/* Decorative glow */}
+            <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
 
-          {/* Brand section */}
-          <section className="hidden bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14">
-            <div>
+            <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+
+            <div className="relative">
+              {/* Brand */}
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-lg font-black backdrop-blur">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-base font-black text-slate-900 shadow-lg">
                   K
                 </div>
 
@@ -66,51 +93,63 @@ function Register() {
                     KUGURISHA.COM
                   </p>
 
-                  <p className="text-xs text-blue-100">
+                  <p className="text-xs text-slate-400">
                     Isoko ryawe ryo mu Rwanda
                   </p>
                 </div>
               </div>
 
-              <div className="mt-20 max-w-md">
-                <p className="mb-5 text-sm font-bold uppercase tracking-[0.2em] text-blue-100">
-                  Tangira urugendo rwawe
-                </p>
+              {/* Main message */}
+              <div className="mt-20 max-w-md xl:mt-28">
+                <div className="mb-5 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300">
+                  🇷🇼 Tangira urugendo rwawe
+                </div>
 
-                <h2 className="text-4xl font-black leading-tight xl:text-5xl">
+                <h2 className="text-4xl font-black leading-tight tracking-tight xl:text-5xl">
                   Fungura konti.
                   <br />
-                  Tangira kugura.
+
+                  <span className="text-slate-400">
+                    Tangira kugura.
+                  </span>
+
                   <br />
-                  Tangira kugurisha.
+
+                  <span className="text-slate-400">
+                    Tangira kugurisha.
+                  </span>
                 </h2>
 
-                <p className="mt-6 max-w-sm text-base leading-7 text-blue-100">
+                <p className="mt-6 max-w-sm text-sm leading-7 text-slate-400 xl:text-base">
                   Kora konti yawe kuri KUGURISHA.COM hanyuma ubone
                   uburyo bworoshye bwo kugura cyangwa kugurisha mu Rwanda.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 text-sm text-blue-100">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
+            {/* Bottom */}
+            <div className="relative flex items-center gap-3 border-t border-white/10 pt-6 text-sm text-slate-400">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5">
                 🇷🇼
               </span>
 
               <span>
-                Isoko ry'abanyarwanda, ahantu hamwe.
+                Isoko ry'abanyarwanda,
+                <br />
+                ahantu hamwe.
               </span>
             </div>
           </section>
 
-          {/* Register section */}
-          <section className="bg-white px-6 py-9 sm:px-10 sm:py-12 xl:px-14">
+          {/* =====================================================
+              REGISTER PANEL
+              ===================================================== */}
+          <section className="bg-white px-5 py-8 sm:px-10 sm:py-10 lg:px-12 xl:px-14 xl:py-12">
             <div className="mx-auto w-full max-w-md">
-
               {/* Mobile brand */}
               <div className="mb-9 lg:hidden">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-lg font-black text-white shadow-lg shadow-blue-600/20">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-base font-black text-white shadow-sm">
                     K
                   </div>
 
@@ -128,7 +167,7 @@ function Register() {
 
               {/* Header */}
               <div>
-                <div className="mb-4 inline-flex rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
+                <div className="mb-4 inline-flex items-center rounded-xl border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
                   ✨ Tangira ubu
                 </div>
 
@@ -142,21 +181,20 @@ function Register() {
                 </p>
               </div>
 
-              {/* Form */}
-              <form
-                onSubmit={handleRegister}
-                className="mt-8 space-y-5"
-              >
+              {/* =================================================
+                  FORM
+                  ================================================= */}
+              <form onSubmit={handleRegister} className="mt-8 space-y-5">
                 {/* Full name */}
-                <div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
                   <label
                     htmlFor="fullName"
-                    className="mb-2 block text-sm font-bold text-slate-800"
+                    className="block text-sm font-bold text-slate-700"
                   >
                     Amazina yawe
                   </label>
 
-                  <div className="relative">
+                  <div className="relative mt-2">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
                       <svg
                         viewBox="0 0 24 24"
@@ -170,11 +208,9 @@ function Register() {
                           strokeLinejoin="round"
                           d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
                         />
-                        <circle
-                          cx="9"
-                          cy="7"
-                          r="4"
-                        />
+
+                        <circle cx="9" cy="7" r="4" />
+
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -191,21 +227,21 @@ function Register() {
                       required
                       placeholder="Andika amazina yawe"
                       autoComplete="name"
-                      className="h-13 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50"
                     />
                   </div>
                 </div>
 
                 {/* Email */}
-                <div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
                   <label
                     htmlFor="email"
-                    className="mb-2 block text-sm font-bold text-slate-800"
+                    className="block text-sm font-bold text-slate-700"
                   >
                     Email
                   </label>
 
-                  <div className="relative">
+                  <div className="relative mt-2">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
                       <svg
                         viewBox="0 0 24 24"
@@ -230,21 +266,21 @@ function Register() {
                       required
                       placeholder="email@example.com"
                       autoComplete="email"
-                      className="h-13 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50"
                     />
                   </div>
                 </div>
 
                 {/* Password */}
-                <div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
                   <label
                     htmlFor="password"
-                    className="mb-2 block text-sm font-bold text-slate-800"
+                    className="block text-sm font-bold text-slate-700"
                   >
                     Password
                   </label>
 
-                  <div className="relative">
+                  <div className="relative mt-2">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
                       <svg
                         viewBox="0 0 24 24"
@@ -277,7 +313,7 @@ function Register() {
                       minLength={6}
                       placeholder="Nibura inyuguti 6"
                       autoComplete="new-password"
-                      className="h-13 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50"
                     />
                   </div>
 
@@ -288,7 +324,7 @@ function Register() {
 
                 {/* Role */}
                 <div>
-                  <p className="mb-3 text-sm font-bold text-slate-800">
+                  <p className="mb-3 text-sm font-bold text-slate-700">
                     Uje gukora iki?
                   </p>
 
@@ -300,7 +336,7 @@ function Register() {
                       aria-pressed={role === "buyer"}
                       className={`group rounded-2xl border p-4 text-left transition ${
                         role === "buyer"
-                          ? "border-blue-600 bg-blue-50 shadow-sm shadow-blue-600/10"
+                          ? "border-blue-500 bg-blue-50 shadow-sm shadow-blue-600/10"
                           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
                       }`}
                     >
@@ -333,6 +369,7 @@ function Register() {
                           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-white">
                             ✓
                           </span>
+
                           Wahisemo
                         </div>
                       )}
@@ -345,7 +382,7 @@ function Register() {
                       aria-pressed={role === "seller"}
                       className={`group rounded-2xl border p-4 text-left transition ${
                         role === "seller"
-                          ? "border-blue-600 bg-blue-50 shadow-sm shadow-blue-600/10"
+                          ? "border-blue-500 bg-blue-50 shadow-sm shadow-blue-600/10"
                           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
                       }`}
                     >
@@ -378,6 +415,7 @@ function Register() {
                           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-white">
                             ✓
                           </span>
+
                           Wahisemo
                         </div>
                       )}
@@ -407,7 +445,7 @@ function Register() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="group flex h-13 w-full items-center justify-center rounded-2xl bg-blue-600 px-5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/25 focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="group flex h-12 w-full items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-extrabold text-white shadow-sm transition hover:bg-slate-800 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span className="transition group-hover:translate-x-0.5">
                     {loading
@@ -448,6 +486,7 @@ function Register() {
                   className="mt-2 inline-flex items-center text-sm font-extrabold text-blue-600 transition hover:text-blue-700 hover:underline"
                 >
                   Injira muri konti
+
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"

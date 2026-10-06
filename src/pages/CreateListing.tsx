@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-
 import { supabase } from "../services/supabase"
 
 type Category = {
@@ -310,9 +309,26 @@ function CreateListing() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      {/* TOP NAV */}
-      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
+    <main className="relative min-h-screen overflow-hidden bg-slate-50 text-slate-900">
+      {/* =========================================================
+          GLOBAL BACKGROUND
+          ========================================================= */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute left-[8%] top-[8%] h-[34rem] w-[34rem] rounded-full bg-blue-500/20 blur-[120px]" />
+
+        <div className="absolute right-[4%] top-[22%] h-[32rem] w-[32rem] rounded-full bg-indigo-500/20 blur-[120px]" />
+
+        <div className="absolute bottom-[5%] left-[35%] h-[36rem] w-[36rem] rounded-full bg-cyan-400/15 blur-[130px]" />
+
+        <div className="absolute -bottom-40 -right-40 h-[34rem] w-[34rem] rounded-full bg-blue-600/15 blur-[120px]" />
+
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(59,130,246,0.06),transparent_35%,rgba(99,102,241,0.06)_65%,rgba(6,182,212,0.04))]" />
+      </div>
+
+      {/* =========================================================
+          TOP NAV
+          ========================================================= */}
+      <header className="sticky top-0 z-40 border-b border-white/70 bg-white/80 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link
             to="/"
@@ -324,7 +340,7 @@ function CreateListing() {
 
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md"
           >
             <span>←</span>
             Garuka
@@ -332,15 +348,24 @@ function CreateListing() {
         </div>
       </header>
 
-      {/* HERO */}
+      {/* =========================================================
+          HERO
+          ========================================================= */}
       <section className="relative overflow-hidden bg-slate-950">
-        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-600/20 blur-3xl" />
-        <div className="absolute -bottom-32 right-0 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -left-32 -top-32 h-[32rem] w-[32rem] rounded-full bg-blue-600/30 blur-[120px]" />
+
+          <div className="absolute right-[8%] top-[-8rem] h-[30rem] w-[30rem] rounded-full bg-indigo-600/25 blur-[120px]" />
+
+          <div className="absolute -bottom-40 left-[35%] h-[30rem] w-[30rem] rounded-full bg-cyan-500/15 blur-[130px]" />
+
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(37,99,235,0.18),transparent_38%,rgba(79,70,229,0.16)_68%,rgba(6,182,212,0.08))]" />
+        </div>
 
         <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <div className="max-w-3xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-widest text-blue-300">
-              <span className="h-2 w-2 rounded-full bg-blue-400" />
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-widest text-blue-300 backdrop-blur-md">
+              <span className="h-2 w-2 rounded-full bg-blue-400 shadow-lg shadow-blue-400/50" />
               Umwanya wo kugurisha
             </div>
 
@@ -358,15 +383,15 @@ function CreateListing() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300 backdrop-blur-md">
                 ✓ Ubuntu kuyishyiraho
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300 backdrop-blur-md">
                 ✓ Amafoto agera kuri 5
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
+              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300 backdrop-blur-md">
                 ✓ Abaguzi bo mu Rwanda
               </div>
             </div>
@@ -374,16 +399,20 @@ function CreateListing() {
         </div>
       </section>
 
-      {/* CONTENT */}
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      {/* =========================================================
+          CONTENT
+          ========================================================= */}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-          {/* FORM */}
+          {/* =====================================================
+              FORM
+              ===================================================== */}
           <form
             onSubmit={handleSubmit}
             className="space-y-6"
           >
             {/* BASIC INFO */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <section className="overflow-hidden rounded-3xl border border-white/80 bg-white/95 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
               <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
                 <div className="flex items-start gap-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-lg">
@@ -486,7 +515,7 @@ function CreateListing() {
             </section>
 
             {/* PHOTOS */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <section className="overflow-hidden rounded-3xl border border-white/80 bg-white/95 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
               <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
                 <div className="flex items-start gap-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-lg">
@@ -587,7 +616,7 @@ function CreateListing() {
             </section>
 
             {/* SALE DETAILS */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <section className="overflow-hidden rounded-3xl border border-white/80 bg-white/95 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
               <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
                 <div className="flex items-start gap-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-lg">
@@ -718,9 +747,11 @@ function CreateListing() {
                         <option value="new">
                           Bishya
                         </option>
+
                         <option value="used">
                           Byakoreshejwe
                         </option>
+
                         <option value="refurbished">
                           Byavuguruwe
                         </option>
@@ -732,7 +763,7 @@ function CreateListing() {
             </section>
 
             {/* LOCATION */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <section className="overflow-hidden rounded-3xl border border-white/80 bg-white/95 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
               <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
                 <div className="flex items-start gap-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-lg">
@@ -848,16 +879,18 @@ function CreateListing() {
             <button
               type="submit"
               disabled={loading || loadingCategories}
-              className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 px-6 py-4 text-base font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/25 disabled:cursor-not-allowed disabled:opacity-50"
+              className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-slate-950 px-6 py-4 text-base font-black text-white shadow-xl shadow-slate-900/15 transition hover:-translate-y-0.5 hover:bg-blue-600 hover:shadow-2xl hover:shadow-blue-600/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <>
                   <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+
                   Turimo kubika...
                 </>
               ) : (
                 <>
                   Shyira ku isoko
+
                   <span className="transition-transform group-hover:translate-x-1">
                     →
                   </span>
@@ -866,10 +899,12 @@ function CreateListing() {
             </button>
           </form>
 
-          {/* SUMMARY SIDEBAR */}
+          {/* =====================================================
+              SUMMARY SIDEBAR
+              ===================================================== */}
           <aside className="hidden lg:block">
             <div className="sticky top-24 space-y-5">
-              <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <div className="overflow-hidden rounded-3xl border border-white/80 bg-white/95 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
                 <div className="bg-slate-950 px-6 py-6">
                   <p className="text-xs font-bold uppercase tracking-widest text-blue-300">
                     Preview
@@ -957,7 +992,7 @@ function CreateListing() {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-blue-100 bg-blue-50 p-5">
+              <div className="rounded-3xl border border-blue-100 bg-blue-50/90 p-5 shadow-sm backdrop-blur-xl">
                 <div className="flex gap-3">
                   <div className="text-xl">💡</div>
 
