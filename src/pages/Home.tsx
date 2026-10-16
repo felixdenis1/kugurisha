@@ -278,6 +278,8 @@ function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [search, setSearch] = useState("")
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [showSplash, setShowSplash] = useState(true)
 
   const [userId, setUserId] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -311,6 +313,33 @@ function Home() {
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    const slider = document.querySelector<HTMLElement>("#listings .kug-listing-slider")
+    if (!slider || loading || filteredListings.length < 2) return
+
+    let paused = false
+    const pause = () => { paused = true }
+    const resume = () => { paused = false }
+    slider.addEventListener("mouseenter", pause)
+    slider.addEventListener("mouseleave", resume)
+    slider.addEventListener("touchstart", pause, { passive: true })
+    slider.addEventListener("touchend", resume, { passive: true })
+
+    const timer = window.setInterval(() => {
+      if (paused) return
+      const atEnd = slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 8
+      slider.scrollTo({ left: atEnd ? 0 : slider.scrollLeft + 275, behavior: "smooth" })
+    }, 4200)
+
+    return () => {
+      window.clearInterval(timer)
+      slider.removeEventListener("mouseenter", pause)
+      slider.removeEventListener("mouseleave", resume)
+      slider.removeEventListener("touchstart", pause)
+      slider.removeEventListener("touchend", resume)
+    }
+  }, [loading, listings.length, search])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -531,6 +560,7 @@ function Home() {
       setError("Habaye ikibazo mu kuzana amakuru.")
     } finally {
       setLoading(false)
+      window.setTimeout(() => setShowSplash(false), 650)
     }
   }
 
@@ -634,6 +664,37 @@ function Home() {
         color: "#0f172a",
       }}
     >
+      <style>{`
+        @keyframes kug-float { 0%,100% { transform: translate3d(0,0,0) } 50% { transform: translate3d(0,-9px,0) } }
+        @keyframes kug-glow { 0%,100% { opacity:.45; transform:scale(.96) } 50% { opacity:.8; transform:scale(1.06) } }
+        @keyframes kug-marquee { from { transform:translateX(0) } to { transform:translateX(-50%) } }
+        @keyframes kug-loader { 0% { transform:translateX(-110%) } 100% { transform:translateX(260%) } }
+        @keyframes kug-reveal { from { opacity:0; transform:translateY(12px) scale(.985) } to { opacity:1; transform:translateY(0) scale(1) } }
+        .kug-marquee-track { animation:kug-marquee 34s linear infinite }
+        .kug-marquee:hover .kug-marquee-track { animation-play-state:paused }
+        .kug-search-shell:focus-within { border-color:rgba(59,130,246,.38); box-shadow:0 16px 48px -25px rgba(37,99,235,.65) }
+        .kug-float { animation:kug-float 7s ease-in-out infinite }
+        .kug-glow { animation:kug-glow 5s ease-in-out infinite }
+        .kug-reveal { animation:kug-reveal .7s cubic-bezier(.2,.75,.25,1) both }
+        @media (prefers-reduced-motion: reduce) { .kug-marquee-track,.kug-float,.kug-glow,.kug-reveal { animation:none !important } }
+      `}</style>
+
+      {showSplash && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#f7faff] transition-opacity duration-500" role="status" aria-label="KUGURISHA irimo gufunguka">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,.15),transparent_34%),radial-gradient(circle_at_80%_75%,rgba(6,182,212,.14),transparent_35%)]" />
+          <div className="kug-glow absolute h-64 w-64 rounded-full bg-blue-400/20 blur-3xl sm:h-80 sm:w-80" />
+          <div className="kug-reveal relative flex flex-col items-center px-6 text-center">
+            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-[1.7rem] border border-blue-100 bg-white/80 shadow-[0_22px_70px_-25px_rgba(37,99,235,.5)] backdrop-blur-2xl sm:h-24 sm:w-24">
+              <img src="/favicon.svg" alt="" className="h-14 w-14 object-contain sm:h-16 sm:w-16" />
+            </div>
+            <div className="text-3xl font-black tracking-[-.07em] text-slate-950 sm:text-4xl"><span>KUGU</span><span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">RISHA</span></div>
+            <p className="mt-2 text-[10px] font-extrabold uppercase tracking-[.25em] text-slate-400">Isoko ryawe ryo mu Rwanda</p>
+            <div className="mt-8 h-1 w-44 overflow-hidden rounded-full bg-blue-100 sm:w-52"><div className="h-full w-1/3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-400" style={{ animation: "kug-loader 1.2s ease-in-out infinite" }} /></div>
+            <p className="mt-3 text-xs font-semibold text-slate-400">Turimo gutegura isoko ryawe...</p>
+          </div>
+        </div>
+      )}
+
       {/* =====================================================
           HEADER
       ===================================================== */}
@@ -667,7 +728,7 @@ function Home() {
               to="/"
               onClick={closeMenus}
               className="group flex shrink-0 items-center gap-2.5 rounded-xl px-2 py-1.5"
-              aria-label="KUGURISHA.COM Ahabanza"
+              aria-label="KUGURISHA Ahabanza"
             >
               <span
                 className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border transition duration-300 group-hover:scale-[1.04] sm:h-11 sm:w-11"
@@ -681,14 +742,13 @@ function Home() {
               >
                 <img
                   src="/favicon.svg"
-                  alt="KUGURISHA.COM"
+                  alt="KUGURISHA"
                   className="h-[72%] w-[72%] object-contain"
                 />
               </span>
 
-              <span className="hidden text-[19px] font-black tracking-[-0.055em] text-slate-950 sm:block lg:text-[21px]">
-                KUGURISHA
-                <span className="text-blue-600">.COM</span>
+              <span className="hidden text-[22px] font-black tracking-[-0.065em] text-slate-950 sm:block lg:text-[25px]">
+                <span>KUGU</span><span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">RISHA</span>
               </span>
             </Link>
 
@@ -1138,59 +1198,37 @@ function Home() {
       </header>
 
       {/* =====================================================
-          SMALL SEARCH — DIRECTLY UNDER HEADER
+          COLLAPSIBLE SEARCH — ICON FIRST, EXPANDS ON DEMAND
       ===================================================== */}
-
-      <section className="relative z-30 border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
-          <div className="mx-auto max-w-3xl">
-            <div
-              className="rounded-2xl border p-1.5 shadow-[0_15px_40px_-28px_rgba(37,99,235,0.35)]"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(239,246,255,0.88))",
-                borderColor:
-                  "rgba(37,99,235,0.12)",
-                backdropFilter: "blur(22px)",
-                WebkitBackdropFilter:
-                  "blur(22px)",
-              }}
-            >
-              <div className="flex items-center gap-1.5">
-                <div className="relative min-w-0 flex-1">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500">
-                    <Icon name="search" size={17} />
-                  </span>
-
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) =>
-                      setSearch(e.target.value)
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        scrollToListings()
-                      }
-                    }}
-                    placeholder="Urashaka iki? laptop, iPhone, inzu..."
-                    className="h-11 w-full rounded-xl border border-slate-200/70 bg-white/80 px-10 pr-3 text-[13px] font-medium text-slate-900 outline-none placeholder:text-slate-400 transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={scrollToListings}
-                  className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 text-xs font-black text-white shadow-[0_10px_22px_-12px_rgba(37,99,235,0.9)] transition hover:-translate-y-0.5 active:scale-[0.98]"
-                >
-                  <Icon name="search" size={15} />
-                  <span>Shakisha</span>
-                </button>
-              </div>
+      <section className="relative z-30 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-7xl justify-center">
+          <div className={`kug-search-shell flex items-center rounded-full border border-blue-100/80 bg-white/75 p-1.5 shadow-[0_14px_42px_-28px_rgba(37,99,235,.5)] backdrop-blur-2xl transition-all duration-500 ${searchOpen ? "w-full max-w-2xl" : "w-12"}`}>
+            <button type="button" aria-label={searchOpen ? "Funga gushakisha" : "Fungura gushakisha"} onClick={() => setSearchOpen((open) => !open)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/20 transition hover:rotate-6 hover:scale-105">
+              <Icon name={searchOpen ? "close" : "search"} size={17} />
+            </button>
+            <div className={`min-w-0 flex-1 transition-all duration-300 ${searchOpen ? "ml-2 opacity-100" : "ml-0 w-0 overflow-hidden opacity-0"}`}>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { scrollToListings(); setSearchOpen(false) } if (e.key === "Escape") setSearchOpen(false) }}
+                placeholder="Urashaka iki? Laptop, iPhone, inzu..."
+                aria-label="Shakisha ibicuruzwa"
+                tabIndex={searchOpen ? 0 : -1}
+                className="h-9 w-full border-0 bg-transparent px-1 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
+              />
             </div>
+            {searchOpen && <button type="button" onClick={() => { scrollToListings(); setSearchOpen(false) }} className="mr-0.5 flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-slate-950 px-4 text-xs font-bold text-white transition hover:bg-blue-700"><Icon name="search" size={14} /><span>Shakisha</span></button>}
           </div>
         </div>
       </section>
+
+      {/* Soft moving brand ribbon */}
+      <div className="kug-marquee relative overflow-hidden border-y border-blue-100/70 bg-white/45 py-2.5 backdrop-blur-xl" aria-label="KUGURISHA marketplace highlights">
+        <div className="kug-marquee-track flex w-max items-center gap-8 whitespace-nowrap text-[10px] font-extrabold uppercase tracking-[.2em] text-slate-500 sm:text-[11px]">
+          {Array.from({ length: 4 }).map((_, i) => <span key={i} className="flex items-center gap-8"><span className="text-blue-600">KUGURISHA</span><span>Isoko ryawe ryo mu Rwanda</span><span className="text-cyan-600">Gura. Gurisha. Bihuze.</span><span className="text-blue-400">✳</span></span>)}
+        </div>
+      </div>
 
       {/* =====================================================
           HERO + LISTINGS SLIDER
@@ -1198,7 +1236,7 @@ function Home() {
 
       <section
         id="listings"
-        className="relative overflow-hidden bg-[#f7faff]"
+        className="relative overflow-hidden bg-[linear-gradient(135deg,#f7faff_0%,#edf5ff_48%,#f8fcff_100%)]"
       >
         <div className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-blue-500/[0.08] blur-3xl" />
 
@@ -1211,7 +1249,7 @@ function Home() {
 
             {/* LEFT */}
 
-            <div className="max-w-xl">
+            <div className="kug-reveal max-w-xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/15 bg-white/70 px-3.5 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 shadow-sm backdrop-blur-xl">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
                   <Icon
@@ -1288,7 +1326,7 @@ function Home() {
 
             {/* RIGHT — SLIDER */}
 
-            <div className="min-w-0">
+            <div className="kug-float min-w-0">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
@@ -1323,7 +1361,7 @@ function Home() {
                   ))}
                 </div>
               ) : filteredListings.length > 0 ? (
-                <div className="flex snap-x gap-4 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="kug-listing-slider flex snap-x gap-4 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {filteredListings
                     .slice(0, 8)
                     .map((listing) => (
@@ -2158,14 +2196,8 @@ function Home() {
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <Link
-                to="/"
-                className="text-xl font-black tracking-[-0.05em] text-slate-950"
-              >
-                KUGURISHA
-                <span className="text-blue-600">
-                  .COM
-                </span>
+              <Link to="/" className="text-2xl font-black tracking-[-0.065em] text-slate-950">
+                <span>KUGU</span><span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">RISHA</span>
               </Link>
 
               <p className="mt-4 max-w-xs text-sm leading-6 text-slate-600">
@@ -2263,7 +2295,7 @@ function Home() {
 
           <div className="mt-10 border-t border-slate-200/70 pt-6">
             <p className="text-xs text-slate-400">
-              KUGURISHA.COM — Isoko ryawe ryo mu Rwanda. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              KUGURISHA — Isoko ryawe ryo mu Rwanda. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
