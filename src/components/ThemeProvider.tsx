@@ -1,3 +1,5 @@
+// src/components/ThemeProvider.tsx
+
 import {
   createContext,
   useContext,
@@ -24,7 +26,7 @@ const STORAGE_KEY = "kugurisha-theme"
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") {
-    return "dark"
+    return "light"
   }
 
   const savedTheme =
@@ -37,7 +39,8 @@ function getInitialTheme(): Theme {
     return savedTheme
   }
 
-  return "dark"
+  // Default theme is now light mode
+  return "light"
 }
 
 function applyTheme(theme: Theme) {
@@ -47,8 +50,16 @@ function applyTheme(theme: Theme) {
 
   const root = document.documentElement
 
+  // Set data-theme attribute
   root.setAttribute("data-theme", theme)
   root.style.colorScheme = theme
+
+  // Toggle Tailwind's .dark class globally on the <html> element
+  if (theme === "dark") {
+    root.classList.add("dark")
+  } else {
+    root.classList.remove("dark")
+  }
 }
 
 export function ThemeProvider({

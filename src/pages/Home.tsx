@@ -1,7 +1,8 @@
+// src/pages/Home.tsx
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
-
+import Header from "../components/Header"
 import { supabase } from "../services/supabase"
 import SellCTA from "../components/SellCTA"
 import HomeFooter from "../components/HomeFooter"
@@ -268,7 +269,7 @@ function Icon({
   }
 }
 
-function Home() {
+export default function Home() {
   const [listings, setListings] = useState<Listing[]>([])
   const [images, setImages] = useState<Record<string, string>>({})
 
@@ -276,83 +277,29 @@ function Home() {
   const [error, setError] = useState("")
   const [searchParams] = useSearchParams()
   const [search, setSearch] = useState(() => searchParams.get("category") ?? "")
-  const [searchOpen, setSearchOpen] = useState(false)
   const [showSplash, setShowSplash] = useState(true)
 
   const [userId, setUserId] = useState<string | null>(null)
-  const [unreadCount, setUnreadCount] = useState(0)
-
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [loggingOut, setLoggingOut] = useState(false)
-  const [headerScrolled, setHeaderScrolled] = useState(false)
+  const sliderRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    loadHome()
-    loadUserAndNotifications()
+    let active = true
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user.id ?? null)
+    })
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      const id = session?.user?.id || null
-
-      setUserId(id)
-
-      if (id) {
-        loadUnreadCount(id)
-      } else {
-        setUnreadCount(0)
-        setShowUserMenu(false)
-        setShowMobileMenu(false)
-      }
+    void supabase.auth.getUser().then(({ data: { user } }) => {
+      if (active) setUserId(user?.id ?? null)
     })
 
     return () => {
+      active = false
       subscription.unsubscribe()
     }
   }, [])
 
   useEffect(() => {
-    const slider = document.querySelector<HTMLElement>("#listings .kug-listing-slider")
-    if (!slider || loading || filteredListings.length < 2) return
-
-    let paused = false
-    const pause = () => { paused = true }
-    const resume = () => { paused = false }
-    slider.addEventListener("mouseenter", pause)
-    slider.addEventListener("mouseleave", resume)
-    slider.addEventListener("touchstart", pause, { passive: true })
-    slider.addEventListener("touchend", resume, { passive: true })
-
-    const timer = window.setInterval(() => {
-      if (paused) return
-      const atEnd = slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 8
-      slider.scrollTo({ left: atEnd ? 0 : slider.scrollLeft + 275, behavior: "smooth" })
-    }, 4200)
-
-    return () => {
-      window.clearInterval(timer)
-      slider.removeEventListener("mouseenter", pause)
-      slider.removeEventListener("mouseleave", resume)
-      slider.removeEventListener("touchstart", pause)
-      slider.removeEventListener("touchend", resume)
-    }
-  }, [loading, listings.length, search])
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setHeaderScrolled(window.scrollY > 12)
-    }
-
-    handleScroll()
-
-    window.addEventListener("scroll", handleScroll, {
-      passive: true,
-    })
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll)
-    }
+    loadHome()
   }, [])
 
   useEffect(() => {
@@ -369,7 +316,7 @@ function Home() {
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          setUnreadCount((current) => current + 1)
+          void loadUnreadCount(userId)
         },
       )
       .on(
@@ -381,7 +328,7 @@ function Home() {
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          loadUnreadCount(userId)
+          void loadUnreadCount(userId)
         },
       )
       .subscribe()
@@ -390,21 +337,6 @@ function Home() {
       supabase.removeChannel(channel)
     }
   }, [userId])
-
-  async function loadUserAndNotifications() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      setUserId(null)
-      setUnreadCount(0)
-      return
-    }
-
-    setUserId(user.id)
-    await loadUnreadCount(user.id)
-  }
 
   async function loadUnreadCount(id: string) {
     const { count, error } = await supabase
@@ -418,36 +350,10 @@ function Home() {
 
     if (error) {
       console.error("Unread notification error:", error)
-      return
+      return 0
     }
 
-    setUnreadCount(count || 0)
-  }
-
-  async function handleLogout() {
-    try {
-      setLoggingOut(true)
-
-      const { error } = await supabase.auth.signOut()
-
-      if (error) {
-        console.error("Logout error:", error)
-        alert("Ntibyashobotse gusohoka. Ongera ugerageze.")
-        return
-      }
-
-      setUserId(null)
-      setUnreadCount(0)
-      setShowUserMenu(false)
-      setShowMobileMenu(false)
-
-      window.location.replace("/")
-    } catch (error) {
-      console.error("Logout error:", error)
-      alert("Habaye ikibazo mu gusohoka.")
-    } finally {
-      setLoggingOut(false)
-    }
+    return count || 0
   }
 
   async function loadHome() {
@@ -574,21 +480,6 @@ function Home() {
       .join(", ")
   }
 
-  function formatCondition(condition: string | null) {
-    switch (condition) {
-      case "new":
-        return "Bishya"
-      case "used":
-        return "Byakoreshejwe"
-      case "refurbished":
-        return "Byavuguruwe"
-      case "not_applicable":
-        return ""
-      default:
-        return ""
-    }
-  }
-
   const filteredListings = useMemo(() => {
     const query = search.toLowerCase().trim()
 
@@ -606,10 +497,36 @@ function Home() {
     })
   }, [listings, search])
 
-  function closeMenus() {
-    setShowUserMenu(false)
-    setShowMobileMenu(false)
-  }
+  useEffect(() => {
+    const slider = sliderRef.current
+    if (!slider || loading || filteredListings.length < 2) return
+
+    let paused = false
+    const pause = () => { paused = true }
+    const resume = () => { paused = false }
+
+    slider.addEventListener("mouseenter", pause)
+    slider.addEventListener("mouseleave", resume)
+    slider.addEventListener("touchstart", pause, { passive: true })
+    slider.addEventListener("touchend", resume, { passive: true })
+
+    const timer = window.setInterval(() => {
+      if (paused) return
+      const atEnd = slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 12
+      slider.scrollTo({
+        left: atEnd ? 0 : slider.scrollLeft + 270,
+        behavior: "smooth",
+      })
+    }, 3800)
+
+    return () => {
+      window.clearInterval(timer)
+      slider.removeEventListener("mouseenter", pause)
+      slider.removeEventListener("mouseleave", resume)
+      slider.removeEventListener("touchstart", pause)
+      slider.removeEventListener("touchend", resume)
+    }
+  }, [loading, filteredListings.length])
 
   function scrollToListings() {
     document
@@ -621,612 +538,213 @@ function Home() {
   }
 
   return (
-    <main
-      className="min-h-screen overflow-x-hidden bg-[#f7faff] text-slate-950"
-      style={{
-        color: "#0f172a",
-      }}
-    >
+    <main className="min-h-screen overflow-x-hidden kg-bg kg-text transition-colors duration-300">
       <style>{`
-        @keyframes kug-float { 0%,100% { transform: translate3d(0,0,0) } 50% { transform: translate3d(0,-9px,0) } }
-        @keyframes kug-glow { 0%,100% { opacity:.45; transform:scale(.96) } 50% { opacity:.8; transform:scale(1.06) } }
+        @keyframes kug-float { 0%,100% { transform: translate3d(0,0,0) } 50% { transform: translate3d(0,-10px,0) } }
+        @keyframes kug-glow { 0%,100% { opacity:.4; transform:scale(.95) } 50% { opacity:.75; transform:scale(1.08) } }
         @keyframes kug-marquee { from { transform:translateX(0) } to { transform:translateX(-50%) } }
         @keyframes kug-loader { 0% { transform:translateX(-110%) } 100% { transform:translateX(260%) } }
-        @keyframes kug-reveal { from { opacity:0; transform:translateY(12px) scale(.985) } to { opacity:1; transform:translateY(0) scale(1) } }
-        .kug-marquee-track { animation:kug-marquee 34s linear infinite }
+        @keyframes kug-reveal { from { opacity:0; transform:translateY(16px) scale(.98) } to { opacity:1; transform:translateY(0) scale(1) } }
+        .kug-marquee-track { animation:kug-marquee 32s linear infinite }
         .kug-marquee:hover .kug-marquee-track { animation-play-state:paused }
-        .kug-search-shell:focus-within { border-color:rgba(59,130,246,.38); box-shadow:0 16px 48px -25px rgba(37,99,235,.65) }
-        .kug-float { animation:kug-float 7s ease-in-out infinite }
-        .kug-glow { animation:kug-glow 5s ease-in-out infinite }
-        .kug-reveal { animation:kug-reveal .7s cubic-bezier(.2,.75,.25,1) both }
+        .kug-search-shell:focus-within { border-color:rgba(59,130,246,.5); box-shadow:0 20px 50px -20px rgba(37,99,235,0.55) }
+        .kug-float { animation:kug-float 6s ease-in-out infinite }
+        .kug-glow { animation:kug-glow 4.5s ease-in-out infinite }
+        .kug-reveal { animation:kug-reveal .65s cubic-bezier(.16,1,.3,1) both }
         @media (prefers-reduced-motion: reduce) { .kug-marquee-track,.kug-float,.kug-glow,.kug-reveal { animation:none !important } }
       `}</style>
 
       {showSplash && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#f7faff] transition-opacity duration-500" role="status" aria-label="KUGURISHA irimo gufunguka">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,.15),transparent_34%),radial-gradient(circle_at_80%_75%,rgba(6,182,212,.14),transparent_35%)]" />
-          <div className="kug-glow absolute h-64 w-64 rounded-full bg-blue-400/20 blur-3xl sm:h-80 sm:w-80" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden kg-bg transition-opacity duration-700" role="status" aria-label="KUGURISHA irimo gufunguka">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(59,130,246,0.15),transparent_40%),radial-gradient(circle_at_75%_75%,rgba(6,182,212,0.12),transparent_40%)]" />
+          <div className="kug-glow absolute h-72 w-72 rounded-full bg-blue-500/20 blur-3xl sm:h-96 sm:w-96" />
           <div className="kug-reveal relative flex flex-col items-center px-6 text-center">
-            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-[1.7rem] border border-blue-100 bg-white/80 shadow-[0_22px_70px_-25px_rgba(37,99,235,.5)] backdrop-blur-2xl sm:h-24 sm:w-24">
-              <img src="/favicon.svg" alt="" className="h-14 w-14 object-contain sm:h-16 sm:w-16" />
+            {/* Completely transparent logo container with larger dimensions */}
+            <div className="mb-6 flex h-28 w-28 items-center justify-center bg-transparent border-transparent sm:h-36 sm:w-36">
+              <img src="/favicon.svg" alt="" className="h-full w-full object-contain bg-transparent border-transparent drop-shadow-xl transition-transform duration-300 hover:scale-105" />
             </div>
-            <div className="text-3xl font-black tracking-[-.07em] text-slate-950 sm:text-4xl"><span>KUGU</span><span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">RISHA</span></div>
-            <p className="mt-2 text-[10px] font-extrabold uppercase tracking-[.25em] text-slate-400">Isoko ryawe ryo mu Rwanda</p>
-            <div className="mt-8 h-1 w-44 overflow-hidden rounded-full bg-blue-100 sm:w-52"><div className="h-full w-1/3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-400" style={{ animation: "kug-loader 1.2s ease-in-out infinite" }} /></div>
-            <p className="mt-3 text-xs font-semibold text-slate-400">Turimo gutegura isoko ryawe...</p>
+            <div className="text-3xl font-black tracking-[-0.08em] kg-text sm:text-5xl">
+              <span>KUGU</span>
+              <span className="bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400 bg-clip-text text-transparent">RISHA</span>
+            </div>
+            <p className="mt-2.5 text-[11px] font-black uppercase tracking-[0.3em] kg-text-muted">Isoko ryawe ryo mu Rwanda</p>
+            <div className="mt-8 h-1.5 w-48 overflow-hidden rounded-full kg-bg-secondary sm:w-56">
+              <div className="h-full w-2/5 rounded-full bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 shadow-[0_0_12px_rgba(59,130,246,0.8)]" style={{ animation: "kug-loader 1.1s cubic-bezier(0.4,0,0.2,1) infinite" }} />
+            </div>
+            <p className="mt-3.5 text-xs font-semibold kg-text-muted">Turimo gutegura isoko ryawe...</p>
           </div>
         </div>
       )}
 
-      {/* HEADER */}
-      <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          headerScrolled ? "py-2" : "py-0"
-        }`}
-      >
-        <div
-          className={`mx-auto max-w-7xl px-3 transition-all duration-300 sm:px-6 ${
-            headerScrolled ? "lg:px-5" : ""
-          }`}
-        >
-          <div
-            className="relative flex h-[68px] items-center rounded-[1.35rem] border px-2.5 sm:h-[72px] sm:px-3"
-            style={{
-              background:
-                "linear-gradient(135deg, rgba(255,255,255,0.92), rgba(239,246,255,0.82))",
-              borderColor: headerScrolled
-                ? "rgba(37,99,235,0.20)"
-                : "rgba(148,163,184,0.18)",
-              boxShadow: headerScrolled
-                ? "0 20px 60px -30px rgba(15,23,42,0.30)"
-                : "0 12px 40px -30px rgba(15,23,42,0.18)",
-              backdropFilter: "blur(28px)",
-              WebkitBackdropFilter: "blur(28px)",
-            }}
-          >
-            <Link
-              to="/"
-              onClick={closeMenus}
-              className="group flex shrink-0 items-center gap-2.5 rounded-xl px-2 py-1.5"
-              aria-label="KUGURISHA Ahabanza"
-            >
-              <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border transition duration-300 group-hover:scale-[1.04] sm:h-11 sm:w-11"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #eff6ff, #ffffff)",
-                  borderColor: "rgba(37,99,235,0.12)",
-                  boxShadow:
-                    "0 8px 25px -15px rgba(37,99,235,0.45)",
-                }}
-              >
-                <img
-                  src="/favicon.svg"
-                  alt="KUGURISHA"
-                  className="h-[202%] w-[202%] object-contain"
-                />
-              </span>
-
-              <span className="hidden text-[22px] font-black tracking-[-0.065em] text-slate-950 sm:block lg:text-[25px]">
-                <span>KU</span><span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">GURISHA</span>
-              </span>
-            </Link>
-
-            <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex">
-              <Link
-                to="/"
-                onClick={closeMenus}
-                className="rounded-xl bg-blue-50 px-3.5 py-2.5 text-[13px] font-bold text-slate-950"
-              >
-                Ahabanza
-              </Link>
-
-              <Link
-                to="/categories"
-                className="rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-600"
-              >
-                Ibyiciro
-              </Link>
-
-              <a
-                href="#listings"
-                className="rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-600"
-              >
-                Ibicuruzwa
-              </a>
-
-              <Link
-                to="/about"
-                className="rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-600"
-              >
-                Ibyo dukora
-              </Link>
-
-              <Link
-                to="/how-it-works"
-                className="rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-600"
-              >
-                Uko rukora
-              </Link>
-
-              <Link
-                to="/ai-search"
-                onClick={closeMenus}
-                className="flex items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold text-slate-600 transition hover:bg-blue-50 hover:text-blue-600"
-              >
-                <Icon name="spark" size={15} />
-                <span>AI Search</span>
-              </Link>
-            </nav>
-
-            <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-              {userId && (
-                <Link
-                  to="/notifications"
-                  onClick={closeMenus}
-                  title="Notifications"
-                  aria-label="Notifications"
-                  className="group relative flex h-10 w-10 items-center justify-center rounded-xl border bg-white/60 text-slate-700 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-blue-500/30 hover:text-blue-600 sm:h-11 sm:w-11"
-                  style={{
-                    borderColor: "rgba(148,163,184,0.18)",
-                  }}
-                >
-                  <Icon name="bell" size={18} />
-
-                  {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white ring-2 ring-white">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                </Link>
-              )}
-
-              {!userId ? (
-                <Link
-                  to="/login"
-                  onClick={closeMenus}
-                  className="hidden rounded-xl px-3.5 py-2.5 text-[13px] font-bold text-slate-900 transition hover:bg-blue-50 hover:text-blue-600 sm:block"
-                >
-                  Injira
-                </Link>
-              ) : (
-                <div className="relative hidden sm:block">
-                  <button
-                    type="button"
-                    onClick={() => setShowUserMenu((current) => !current)}
-                    aria-expanded={showUserMenu}
-                    aria-label="Fungura konti yanjye"
-                    className="group flex h-11 items-center gap-2 rounded-xl border bg-white/60 px-1.5 pr-2.5 text-slate-800 backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-blue-500/30"
-                    style={{
-                      borderColor: showUserMenu
-                        ? "rgba(37,99,235,0.35)"
-                        : "rgba(148,163,184,0.18)",
-                    }}
-                  >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
-                      <Icon name="user" size={16} />
-                    </span>
-
-                    <span className="hidden text-[12px] font-black text-slate-900 md:block">
-                      Konti yanjye
-                    </span>
-
-                    <span
-                      className="ml-0.5 text-slate-400 transition"
-                      style={{
-                        transform: showUserMenu ? "rotate(180deg)" : "rotate(0deg)",
-                      }}
-                    >
-                      <Icon name="chevron-down" size={13} />
-                    </span>
-                  </button>
-
-                  {showUserMenu && (
-                    <div
-                      className="absolute right-0 top-[calc(100%+10px)] w-[292px] overflow-hidden rounded-[1.4rem] border p-2.5 shadow-[0_30px_80px_-30px_rgba(15,23,42,0.30)]"
-                      style={{
-                        background:
-                          "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(239,246,255,0.90))",
-                        borderColor: "rgba(37,99,235,0.15)",
-                        backdropFilter: "blur(28px)",
-                        WebkitBackdropFilter: "blur(28px)",
-                      }}
-                    >
-                      <div className="rounded-xl bg-blue-50/80 px-3.5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
-                            <Icon name="user" size={17} />
-                          </span>
-
-                          <div>
-                            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
-                              Konti yanjye
-                            </p>
-                            <p className="mt-0.5 text-sm font-black text-slate-900">
-                              KUGURISHA.COM
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mt-2 space-y-0.5">
-                        <Link to="/profile" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-[13px] font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                          <Icon name="user" size={17} />
-                          Profile yanjye
-                        </Link>
-
-                        <Link to="/dashboard" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-[13px] font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                          <Icon name="store" size={17} />
-                          Dashboard
-                        </Link>
-
-                        <Link to="/favorites" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-[13px] font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                          <Icon name="heart" size={17} />
-                          Ibyakunzwe
-                        </Link>
-
-                        <Link to="/messages" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-[13px] font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                          <Icon name="message" size={17} />
-                          Ubutumwa
-                        </Link>
-
-                        <Link to="/notifications" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-[13px] font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                          <Icon name="bell" size={17} />
-                          Notifications
-                          {unreadCount > 0 && (
-                            <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-black text-white">
-                              {unreadCount > 99 ? "99+" : unreadCount}
-                            </span>
-                          )}
-                        </Link>
-                      </div>
-
-                      <div className="my-2 border-t border-slate-200/70" />
-
-                      <Link to="/profile" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-[13px] font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                        <Icon name="settings" size={17} />
-                        Settings
-                      </Link>
-
-                      <div className="my-2 border-t border-slate-200/70" />
-
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        disabled={loggingOut}
-                        className="flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-[13px] font-black text-red-500 transition hover:bg-red-50 disabled:opacity-60"
-                      >
-                        <Icon name="logout" size={17} />
-                        {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <Link
-                to="/create-listing"
-                onClick={closeMenus}
-                className="hidden h-11 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-4 text-[13px] font-black text-white shadow-[0_14px_30px_-15px_rgba(37,99,235,0.9)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_35px_-14px_rgba(37,99,235,0.95)] sm:flex sm:px-5"
-              >
-                <Icon name="plus" size={16} />
-                Gurisha
-              </Link>
-
-              <button
-                type="button"
-                onClick={() => setShowMobileMenu((current) => !current)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border bg-white/60 text-slate-700 backdrop-blur-xl transition hover:border-blue-500/30 hover:text-blue-600 sm:hidden"
-                style={{
-                  borderColor: "rgba(148,163,184,0.18)",
-                }}
-                aria-label={showMobileMenu ? "Funga menu" : "Fungura menu"}
-              >
-                <Icon name={showMobileMenu ? "close" : "menu"} size={19} />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {showMobileMenu && (
-          <div className="px-3 pt-2 sm:hidden">
-            <div
-              className="mx-auto max-w-7xl overflow-hidden rounded-[1.35rem] border p-2.5 shadow-[0_30px_80px_-30px_rgba(15,23,42,0.28)]"
-              style={{
-                background:
-                  "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(239,246,255,0.90))",
-                borderColor: "rgba(37,99,235,0.14)",
-                backdropFilter: "blur(28px)",
-                WebkitBackdropFilter: "blur(28px)",
-              }}
-            >
-              <div className="space-y-0.5">
-                {[
-                  ["#", "Ahabanza", "grid"],
-                  ["/categories", "Ibyiciro", "grid"],
-                  ["#listings", "Ibicuruzwa", "shopping-bag"],
-                  ["/about", "Ibyo dukora", "info"],
-                  ["/how-it-works", "Uko rukora", "check"],
-                ].map(([href, label, icon]) => (
-                  <Link
-                    key={label}
-                    to={href === "#" ? "/" : href}
-                    onClick={closeMenus}
-                    className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600"
-                  >
-                    <Icon name={icon as IconName} size={18} />
-                    {label}
-                  </Link>
-                ))}
-
-                <Link to="/ai-search" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                  <Icon name="spark" size={18} />
-                  AI Search
-                </Link>
-
-                <div className="my-2 border-t border-slate-200/70" />
-
-                <Link to="/create-listing" onClick={closeMenus} className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-3.5 text-sm font-black text-white shadow-[0_14px_30px_-15px_rgba(37,99,235,0.9)] transition hover:-translate-y-0.5">
-                  <Icon name="plus" size={17} />
-                  Gurisha ikintu
-                </Link>
-
-                {!userId ? (
-                  <Link to="/login" onClick={closeMenus} className="mt-1 flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-black text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                    <Icon name="user" size={18} />
-                    Injira
-                  </Link>
-                ) : (
-                  <>
-                    <div className="mt-2 rounded-xl bg-blue-50/80 p-3">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
-                          <Icon name="user" size={17} />
-                        </span>
-                        <div>
-                          <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
-                            Konti yanjye
-                          </p>
-                          <p className="mt-0.5 text-sm font-black text-slate-900">
-                            KUGURISHA.COM
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Link to="/profile" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                      <Icon name="user" size={18} />
-                      Profile yanjye
-                    </Link>
-
-                    <Link to="/dashboard" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                      <Icon name="store" size={18} />
-                      Dashboard
-                    </Link>
-
-                    <Link to="/favorites" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                      <Icon name="heart" size={18} />
-                      Ibyakunzwe
-                    </Link>
-
-                    <Link to="/messages" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                      <Icon name="message" size={18} />
-                      Ubutumwa
-                    </Link>
-
-                    <Link to="/notifications" onClick={closeMenus} className="flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-bold text-slate-800 transition hover:bg-blue-50 hover:text-blue-600">
-                      <Icon name="bell" size={18} />
-                      Notifications
-                      {unreadCount > 0 && (
-                        <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-black text-white">
-                          {unreadCount > 99 ? "99+" : unreadCount}
-                        </span>
-                      )}
-                    </Link>
-
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      disabled={loggingOut}
-                      className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-black text-red-500 transition hover:bg-red-50 disabled:opacity-60"
-                    >
-                      <Icon name="logout" size={18} />
-                      {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </header>
-
-      {/* COLLAPSIBLE SEARCH */}
-      <section className="relative z-30 px-4 py-3 sm:px-6">
-        <div className="mx-auto flex max-w-7xl justify-center">
-          <div className={`kug-search-shell flex items-center rounded-full border border-blue-100/80 bg-white/75 p-1.5 shadow-[0_14px_42px_-28px_rgba(37,99,235,.5)] backdrop-blur-2xl transition-all duration-500 ${searchOpen ? "w-full max-w-2xl" : "w-12"}`}>
-            <button type="button" aria-label={searchOpen ? "Funga gushakisha" : "Fungura gushakisha"} onClick={() => setSearchOpen((open) => !open)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/20 transition hover:rotate-6 hover:scale-105">
-              <Icon name={searchOpen ? "close" : "search"} size={17} />
-            </button>
-            <div className={`min-w-0 flex-1 transition-all duration-300 ${searchOpen ? "ml-2 opacity-100" : "ml-0 w-0 overflow-hidden opacity-0"}`}>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    scrollToListings()
-                    setSearchOpen(false)
-                  }
-                  if (e.key === "Escape") setSearchOpen(false)
-                }}
-                placeholder="Urashaka iki? Laptop, iPhone, inzu..."
-                aria-label="Shakisha ibicuruzwa"
-                tabIndex={searchOpen ? 0 : -1}
-                className="h-9 w-full border-0 bg-transparent px-1 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400"
-              />
-            </div>
-            {searchOpen && (
-              <button type="button" onClick={() => { scrollToListings(); setSearchOpen(false) }} className="mr-0.5 flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-slate-950 px-4 text-xs font-bold text-white transition hover:bg-blue-700">
-                <Icon name="search" size={14} />
-                <span>Shakisha</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
+      <Header
+        searchValue={search}
+        onSearchChange={setSearch}
+        onSearchSubmit={() => {
+          scrollToListings()
+        }}
+      />
 
       {/* BRAND RIBBON */}
-      <div className="kug-marquee relative overflow-hidden border-y border-blue-100/70 bg-white/45 py-2.5 backdrop-blur-xl" aria-label="KUGURISHA marketplace highlights">
-        <div className="kug-marquee-track flex w-max items-center gap-8 whitespace-nowrap text-[10px] font-extrabold uppercase tracking-[.2em] text-slate-500 sm:text-[11px]">
+      <div className="kug-marquee relative overflow-hidden border-y kg-border kg-surface py-3 backdrop-blur-2xl shadow-sm" aria-label="KUGURISHA marketplace highlights">
+        <div className="kug-marquee-track flex w-max items-center gap-10 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.25em] kg-text-secondary sm:text-[11px]">
           {Array.from({ length: 4 }).map((_, i) => (
-            <span key={i} className="flex items-center gap-8">
-              <span className="text-blue-600">KUGURISHA</span>
+            <span key={i} className="flex items-center gap-10">
+              <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent font-black">KUGURISHA</span>
               <span>Isoko ryawe ryo mu Rwanda</span>
-              <span className="text-cyan-600">Gura. Gurisha. Bihuze.</span>
-              <span className="text-blue-400">✳</span>
+              <span className="text-cyan-500 font-bold">Gura. Gurisha. Bihuze.</span>
+              <span className="text-blue-500">✦</span>
             </span>
           ))}
         </div>
       </div>
 
-      {/* HERO + LISTINGS SLIDER */}
+      {/* HERO + LISTINGS SLIDER SECTION */}
       <section
         id="listings"
-        className="relative overflow-hidden bg-[linear-gradient(135deg,#f7faff_0%,#edf5ff_48%,#f8fcff_100%)]"
+        className="relative overflow-hidden kg-bg py-10 sm:py-16"
       >
-        <div className="pointer-events-none absolute -left-32 top-10 h-80 w-80 rounded-full bg-blue-500/[0.08] blur-3xl" />
-        <div className="pointer-events-none absolute -right-32 top-20 h-96 w-96 rounded-full bg-cyan-400/[0.08] blur-3xl" />
-        <div className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-blue-400/[0.045] blur-3xl" />
+        <div className="pointer-events-none absolute -left-20 top-1/4 h-96 w-96 rounded-full bg-blue-600/20 blur-[120px]" />
+        <div className="pointer-events-none absolute -right-20 bottom-10 h-96 w-96 rounded-full bg-cyan-500/20 blur-[130px]" />
+        <div className="pointer-events-none absolute left-1/2 top-10 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-indigo-500/15 blur-[150px]" />
 
-        <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:py-16">
-          <div className="grid items-center gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:gap-12">
-            <div className="kug-reveal max-w-xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/15 bg-white/70 px-3.5 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-blue-600 shadow-sm backdrop-blur-xl">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
-                  <Icon name="check" size={11} strokeWidth={2.5} />
-                </span>
-                Isoko ryawe ryo mu Rwanda
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="grid items-stretch gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:gap-8">
+
+            {/* LEFT CONTAINER: Hero Intro */}
+            <div className="kug-reveal relative flex flex-col justify-between overflow-hidden rounded-[2.2rem] border border-white/20 dark:border-white/10 bg-gradient-to-b from-white/80 via-white/60 to-white/40 dark:from-slate-900/80 dark:via-slate-900/60 dark:to-slate-900/40 p-7 sm:p-9 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)] backdrop-blur-3xl">
+              <div>
+                <div className="inline-flex items-center gap-2.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400 shadow-sm backdrop-blur-md">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-400 text-white shadow-sm">
+                    <Icon name="check" size={11} strokeWidth={3} />
+                  </span>
+                  Isoko ryawe ryo mu Rwanda
+                </div>
+
+                <h1 className="mt-6 text-4xl font-black leading-[1.04] tracking-[-0.055em] kg-text sm:text-5xl lg:text-[54px]">
+                  Gura icyo ushaka.
+                  <br />
+                  <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 bg-clip-text text-transparent">
+                    Gurisha icyo ufite.
+                  </span>
+                </h1>
+
+                <p className="mt-5 text-sm leading-relaxed kg-text-secondary sm:text-base font-medium">
+                  KUGURISHA.COM ni urubuga ruhuza abaguzi n'abagurisha mu Rwanda, ahantu hamwe kandi mu buryo bworoshye.
+                </p>
+
+                <div className="mt-8 flex flex-wrap items-center gap-3.5">
+                  <Link
+                    to="/create-listing"
+                    className="group relative inline-flex items-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 px-6 py-3.5 text-sm font-black text-white shadow-[0_14px_30px_-10px_rgba(37,99,235,0.6)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_35px_-8px_rgba(37,99,235,0.8)]"
+                  >
+                    <Icon name="plus" size={17} strokeWidth={2.5} />
+                    <span>Gurisha</span>
+                  </Link>
+
+                  <Link
+                    to="/ai-search"
+                    className="group flex items-center gap-2.5 rounded-2xl border border-blue-500/20 bg-white/50 dark:bg-slate-800/50 px-6 py-3.5 text-sm font-bold text-blue-600 dark:text-blue-400 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500/40 hover:bg-blue-500/10"
+                  >
+                    <Icon name="spark" size={17} />
+                    <span>Baza AI</span>
+                  </Link>
+                </div>
               </div>
 
-              <h1 className="mt-6 text-4xl font-black leading-[0.98] tracking-[-0.055em] text-slate-950 sm:text-5xl lg:text-[58px]">
-                Gura icyo ushaka.
-                <br />
-                <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent">
-                  Gurisha icyo ufite.
-                </span>
-              </h1>
-
-              <p className="mt-5 max-w-lg text-sm leading-7 text-slate-600 sm:text-base">
-                KUGURISHA.COM ni urubuga ruhuza
-                abaguzi n'abagurisha mu Rwanda,
-                ahantu hamwe kandi mu buryo bworoshye.
-              </p>
-
-              <div className="mt-7 flex flex-wrap items-center gap-3">
-                <Link to="/create-listing" className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3 text-sm font-black text-white shadow-[0_14px_30px_-15px_rgba(37,99,235,0.9)] transition hover:-translate-y-0.5">
-                  <Icon name="plus" size={16} />
-                  Gurisha
-                </Link>
-
-                <Link to="/ai-search" className="flex items-center gap-2 rounded-xl border border-blue-500/15 bg-white/70 px-5 py-3 text-sm font-bold text-blue-600 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-white">
-                  <Icon name="spark" size={16} />
-                  Baza AI
-                </Link>
-              </div>
-
-              <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-[11px] font-semibold text-slate-500">
-                <span className="flex items-center gap-1.5">
-                  <Icon name="shield" size={14} strokeWidth={2} />
+              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-slate-200/50 dark:border-slate-800/50 pt-6 text-xs font-semibold kg-text-muted">
+                <span className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                    <Icon name="shield" size={13} strokeWidth={2.2} />
+                  </span>
                   Byoroshye gukoresha
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Icon name="users" size={14} strokeWidth={2} />
+                <span className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-500">
+                    <Icon name="users" size={13} strokeWidth={2.2} />
+                  </span>
                   Abaguzi n'abagurisha
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Icon name="map-pin" size={14} strokeWidth={2} />
+                <span className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-500">
+                    <Icon name="map-pin" size={13} strokeWidth={2.2} />
+                  </span>
                   Mu Rwanda
                 </span>
               </div>
             </div>
 
-            <div className="kug-float min-w-0">
-              <div className="mb-4 flex items-end justify-between gap-4">
+            {/* RIGHT CONTAINER: Slider Container */}
+            <div className="kug-float relative flex flex-col justify-between overflow-hidden rounded-[2.2rem] border border-white/20 dark:border-white/10 bg-gradient-to-b from-white/80 via-white/60 to-white/40 dark:from-slate-900/80 dark:via-slate-900/60 dark:to-slate-900/40 p-7 sm:p-9 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)] backdrop-blur-3xl min-w-0">
+              <div className="mb-5 flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">
                     Kugezweho
                   </p>
-                  <h2 className="mt-1 text-xl font-black tracking-[-0.025em] text-slate-950 sm:text-2xl">
+                  <h2 className="mt-1 text-2xl font-black tracking-[-0.03em] kg-text sm:text-3xl">
                     Ibicuruzwa bishya
                   </h2>
                 </div>
-                <span className="hidden text-xs font-semibold text-slate-400 sm:block">
-                  Reba ibiri ku isoko
+                <span className="hidden text-xs font-bold kg-text-muted sm:block">
+                  Reba ibiri ku isoko →
                 </span>
               </div>
 
               {loading ? (
-                <div className="flex gap-4 overflow-hidden">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="w-[235px] shrink-0 overflow-hidden rounded-[1.45rem] border border-slate-200/70 bg-white/70 shadow-sm">
-                      <div className="h-44 animate-pulse bg-blue-50" />
+                <div className="flex gap-4 overflow-hidden py-2">
+                  {[1, 2].map((item) => (
+                    <div key={item} className="w-[245px] shrink-0 overflow-hidden rounded-[1.75rem] border border-white/20 dark:border-white/10 bg-white/40 dark:bg-slate-800/40 p-2 shadow-sm">
+                      <div className="h-44 animate-pulse rounded-2xl kg-bg-secondary" />
                       <div className="space-y-3 p-4">
-                        <div className="h-4 animate-pulse rounded bg-blue-50" />
-                        <div className="h-4 w-2/3 animate-pulse rounded bg-blue-50" />
-                        <div className="h-3 w-1/2 animate-pulse rounded bg-blue-50" />
+                        <div className="h-4 animate-pulse rounded-lg kg-bg-secondary" />
+                        <div className="h-4 w-2/3 animate-pulse rounded-lg kg-bg-secondary" />
+                        <div className="h-3 w-1/2 animate-pulse rounded-lg kg-bg-secondary" />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : filteredListings.length > 0 ? (
-                <div className="kug-listing-slider flex snap-x gap-4 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div 
+                  ref={sliderRef}
+                  className="kug-listing-slider flex snap-x gap-4 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
                   {filteredListings.slice(0, 8).map((listing) => (
                     <Link
                       key={listing.id}
                       to={`/listing/${listing.id}`}
-                      className="group w-[235px] shrink-0 snap-start overflow-hidden rounded-[1.45rem] border transition duration-300 hover:-translate-y-1 hover:border-blue-400/30 hover:shadow-[0_25px_55px_-25px_rgba(37,99,235,0.40)] sm:w-[255px]"
-                      style={{
-                        background:
-                          "linear-gradient(145deg, rgba(255,255,255,0.94), rgba(239,246,255,0.72))",
-                        borderColor: "rgba(148,163,184,0.18)",
-                        backdropFilter: "blur(20px)",
-                        WebkitBackdropFilter: "blur(20px)",
-                      }}
+                      className="group relative w-[235px] shrink-0 snap-start overflow-hidden rounded-[1.75rem] border border-white/30 dark:border-white/10 bg-white/60 dark:bg-slate-800/60 p-2.5 transition-all duration-300 hover:-translate-y-1.5 hover:border-blue-500/40 hover:bg-white/80 dark:hover:bg-slate-800/80 hover:shadow-[0_20px_45px_-15px_rgba(37,99,235,0.3)] sm:w-[255px]"
                     >
-                      <div className="relative h-44 overflow-hidden bg-blue-50">
+                      <div className="relative h-44 overflow-hidden rounded-2xl kg-bg-secondary">
                         {images[listing.id] ? (
-                          <img src={images[listing.id]} alt={listing.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                          <img src={images[listing.id]} alt={listing.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
                         ) : (
-                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/80 text-slate-400 shadow-sm">
+                          <div className="flex h-full items-center justify-center kg-bg-secondary">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/80 dark:bg-slate-700/80 kg-text-muted shadow-sm">
                               <Icon name="shopping-bag" size={24} />
                             </div>
                           </div>
                         )}
-
-                        <div className="absolute left-3 top-3 rounded-full border border-white/70 bg-white/80 px-2.5 py-1 text-[9px] font-black text-slate-800 shadow-sm backdrop-blur-xl">
+                        <div className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/40 px-3 py-1 text-[9px] font-black text-white shadow-md backdrop-blur-xl">
                           {listing.category?.name || "Ibindi"}
                         </div>
                       </div>
 
-                      <div className="p-4">
-                        <h3 className="line-clamp-2 min-h-[2.75rem] text-sm font-black leading-5 text-slate-900 transition group-hover:text-blue-600">
+                      <div className="p-3.5">
+                        <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-black leading-5 kg-text transition-colors group-hover:text-blue-500">
                           {listing.title}
                         </h3>
-                        <p className="mt-2 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-base font-black text-transparent">
+                        <p className="mt-2 bg-gradient-to-r from-blue-600 to-cyan-400 bg-clip-text text-base font-black text-transparent">
                           {formatPrice(listing)}
                         </p>
-                        <p className="mt-2 flex items-center gap-1.5 truncate text-[11px] font-medium text-slate-500">
-                          <Icon name="map-pin" size={12} />
+                        <p className="mt-2 flex items-center gap-1.5 truncate text-[11px] font-semibold kg-text-secondary">
+                          <Icon name="map-pin" size={13} className="text-blue-500 shrink-0" />
                           {formatLocation(listing)}
                         </p>
-                        <div className="mt-3 flex items-center justify-between border-t border-slate-200/70 pt-3">
-                          <span className="text-[10px] font-bold text-slate-400">
+                        <div className="mt-3.5 flex items-center justify-between border-t border-slate-200/50 dark:border-slate-700/50 pt-3">
+                          <span className="text-[10px] font-bold kg-text-muted">
                             Reba ibisobanuro
                           </span>
-                          <span className="text-blue-600 transition group-hover:translate-x-1">
-                            <Icon name="arrow-right" size={15} />
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/10 text-blue-500 transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-blue-600 group-hover:text-white">
+                            <Icon name="arrow-right" size={13} />
                           </span>
                         </div>
                       </div>
@@ -1234,19 +752,19 @@ function Home() {
                   ))}
                 </div>
               ) : (
-                <div className="flex min-h-[300px] items-center justify-center rounded-[1.6rem] border border-slate-200/70 bg-white/70 p-8 text-center shadow-sm backdrop-blur-xl">
+                <div className="flex min-h-[300px] items-center justify-center rounded-[1.75rem] border border-white/20 dark:border-white/10 bg-white/30 dark:bg-slate-800/30 p-8 text-center shadow-inner backdrop-blur-xl">
                   <div>
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-slate-400">
-                      <Icon name="search" size={23} />
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/60 dark:bg-slate-700/60 kg-text-muted shadow-inner">
+                      <Icon name="search" size={26} />
                     </div>
-                    <h3 className="mt-4 text-base font-black text-slate-900">
+                    <h3 className="mt-4 text-base font-black kg-text">
                       Nta bicuruzwa bihari
                     </h3>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs kg-text-secondary">
                       Gerageza irindi jambo ryo gushakisha.
                     </p>
                     {search && (
-                      <button type="button" onClick={() => setSearch("")} className="mt-4 rounded-xl bg-blue-600 px-4 py-2 text-xs font-black text-white">
+                      <button type="button" onClick={() => setSearch("")} className="mt-5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:bg-blue-700">
                         Reba byose
                       </button>
                     )}
@@ -1254,6 +772,7 @@ function Home() {
                 </div>
               )}
             </div>
+
           </div>
         </div>
       </section>
@@ -1261,50 +780,45 @@ function Home() {
       {/* ALL LISTINGS / SEARCH RESULTS */}
       <section
         id="all-listings"
-        className="relative overflow-hidden border-y"
-        style={{
-          background:
-            "linear-gradient(180deg, #f1f6ff 0%, #f8fbff 48%, #eef6ff 100%)",
-          borderColor: "rgba(148,163,184,0.18)",
-        }}
+        className="relative overflow-hidden border-y kg-border kg-bg-secondary py-16 sm:py-24"
       >
-        <div className="pointer-events-none absolute -left-32 top-20 h-80 w-80 rounded-full bg-blue-500/[0.06] blur-3xl" />
-        <div className="pointer-events-none absolute -right-32 bottom-10 h-96 w-96 rounded-full bg-cyan-400/[0.06] blur-3xl" />
+        <div className="pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full bg-blue-500/[0.05] blur-[130px]" />
+        <div className="pointer-events-none absolute -right-40 bottom-10 h-[450px] w-[450px] rounded-full bg-cyan-400/[0.05] blur-[150px]" />
 
-        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-600">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500">
                 Ku isoko ubu
               </p>
-              <h2 className="mt-2 text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">
+              <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] kg-text sm:text-4xl">
                 Ibicuruzwa byose
               </h2>
               {search && (
-                <p className="mt-2 text-sm text-slate-500">
+                <p className="mt-2 text-sm kg-text-secondary">
                   Ibisubizo bya:{" "}
-                  <span className="font-bold text-slate-900">{search}</span>
+                  <span className="font-bold kg-text bg-blue-500/10 px-2 py-0.5 rounded-md text-blue-500">{search}</span>
                 </p>
               )}
             </div>
 
             {search && (
-              <button type="button" onClick={() => setSearch("")} className="flex items-center gap-2 self-start rounded-xl bg-white/70 px-4 py-2.5 text-sm font-bold text-slate-600 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:text-blue-600 sm:self-auto">
-                <Icon name="close" size={14} />
+              <button type="button" onClick={() => setSearch("")} className="flex items-center gap-2 self-start rounded-xl border kg-border kg-surface px-4.5 py-2.5 text-sm font-bold kg-text-secondary shadow-sm backdrop-blur-2xl transition hover:-translate-y-0.5 hover:text-blue-500 sm:self-auto">
+                <Icon name="close" size={15} />
                 Siba search
               </button>
             )}
           </div>
 
           {loading && (
-            <div className="grid gap-5 pt-9 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 pt-10 sm:grid-cols-2 lg:grid-cols-4">
               {[1, 2, 3, 4].map((item) => (
-                <div key={item} className="overflow-hidden rounded-[1.6rem] border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-xl">
-                  <div className="h-56 animate-pulse bg-blue-50" />
-                  <div className="space-y-3 p-5">
-                    <div className="h-5 animate-pulse rounded-lg bg-blue-50" />
-                    <div className="h-5 w-2/3 animate-pulse rounded-lg bg-blue-50" />
-                    <div className="h-4 w-1/2 animate-pulse rounded-lg bg-blue-50" />
+                <div key={item} className="overflow-hidden rounded-[1.8rem] border kg-border kg-surface shadow-sm backdrop-blur-2xl">
+                  <div className="h-60 animate-pulse kg-bg-secondary" />
+                  <div className="space-y-3.5 p-6">
+                    <div className="h-5 animate-pulse rounded-xl kg-bg-secondary" />
+                    <div className="h-5 w-2/3 animate-pulse rounded-xl kg-bg-secondary" />
+                    <div className="h-4 w-1/2 animate-pulse rounded-xl kg-bg-secondary" />
                   </div>
                 </div>
               ))}
@@ -1312,99 +826,82 @@ function Home() {
           )}
 
           {error && !loading && (
-            <div className="mt-9 rounded-[1.6rem] border border-red-500/20 bg-red-500/10 p-7 backdrop-blur-xl">
-              <div className="flex items-start gap-3">
+            <div className="mt-10 rounded-[1.8rem] border border-red-500/25 bg-red-500/10 p-8 backdrop-blur-2xl shadow-lg">
+              <div className="flex items-start gap-3.5">
                 <div className="mt-0.5 text-red-500">
-                  <Icon name="info" size={19} />
+                  <Icon name="info" size={20} />
                 </div>
                 <div>
-                  <p className="font-black text-red-500">Habaye ikibazo</p>
+                  <p className="font-black text-red-500 text-base">Habaye ikibazo</p>
                   <p className="mt-1 text-sm text-red-400">{error}</p>
                 </div>
               </div>
-              <button type="button" onClick={loadHome} className="mt-5 flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-rose-500 px-5 py-2.5 text-sm font-black text-white shadow-[0_12px_25px_-15px_rgba(239,68,68,0.9)] transition hover:-translate-y-0.5">
-                <Icon name="refresh" size={15} />
+              <button type="button" onClick={loadHome} className="mt-6 flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-500 px-6 py-3 text-sm font-black text-white shadow-[0_12px_25px_-10px_rgba(239,68,68,0.9)] transition hover:-translate-y-0.5">
+                <Icon name="refresh" size={16} />
                 Ongera ugerageze
               </button>
             </div>
           )}
 
           {!loading && !error && filteredListings.length === 0 && (
-            <div className="mt-9 rounded-[1.6rem] border border-slate-200/70 bg-white/70 px-6 py-16 text-center shadow-sm backdrop-blur-xl">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 text-slate-500">
-                <Icon name="search" size={25} />
+            <div className="mt-10 rounded-[2rem] border kg-border kg-surface px-6 py-20 text-center shadow-sm backdrop-blur-2xl">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-500 shadow-inner">
+                <Icon name="search" size={26} />
               </div>
-              <h3 className="mt-5 text-xl font-black text-slate-900">
-                Nta kintu twabonye
+              <h3 className="mt-5 text-xl font-black kg-text">
+                Nta bicuruzwa byabonetse
               </h3>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                Gerageza irindi jambo cyangwa urebe ibyiciro biri hejuru.
+              <p className="mt-2 text-sm kg-text-secondary">
+                Nta bicuruzwa bihuje n'ayo makuru byabonetse kuri uyu mwanya.
               </p>
               {search && (
-                <button type="button" onClick={() => setSearch("")} className="mt-6 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-2.5 text-sm font-black text-white shadow-[0_12px_25px_-14px_rgba(37,99,235,0.9)] transition hover:-translate-y-0.5">
-                  Reba byose
+                <button type="button" onClick={() => setSearch("")} className="mt-6 rounded-xl bg-blue-600 px-6 py-3 text-xs font-black text-white shadow-md transition hover:bg-blue-700">
+                  Kura ho ibyo wshakishaga
                 </button>
               )}
             </div>
           )}
 
           {!loading && !error && filteredListings.length > 0 && (
-            <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 pt-10 sm:grid-cols-2 lg:grid-cols-4">
               {filteredListings.map((listing) => (
                 <Link
                   key={listing.id}
                   to={`/listing/${listing.id}`}
-                  className="group overflow-hidden rounded-[1.6rem] border transition duration-300 hover:-translate-y-1.5 hover:border-blue-400/30 hover:shadow-[0_28px_60px_-28px_rgba(37,99,235,0.38)]"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, rgba(255,255,255,0.94), rgba(239,246,255,0.68))",
-                    borderColor: "rgba(148,163,184,0.18)",
-                    backdropFilter: "blur(20px)",
-                    WebkitBackdropFilter: "blur(20px)",
-                  }}
+                  className="group relative overflow-hidden rounded-[1.8rem] border kg-border kg-surface p-3 transition-all duration-300 hover:-translate-y-1.5 hover:border-blue-500/40 hover:shadow-[0_20px_45px_-15px_rgba(37,99,235,0.25)] backdrop-blur-2xl"
                 >
-                  <div className="relative h-56 overflow-hidden bg-blue-50">
+                  <div className="relative h-60 overflow-hidden rounded-2xl kg-bg-secondary">
                     {images[listing.id] ? (
-                      <img src={images[listing.id]} alt={listing.title} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                      <img src={images[listing.id]} alt={listing.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
-                      <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-50">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/75 text-slate-400 shadow-sm backdrop-blur-xl">
-                          <Icon name="shopping-bag" size={27} strokeWidth={1.5} />
+                      <div className="flex h-full items-center justify-center kg-bg-secondary">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl kg-surface kg-text-muted shadow-sm">
+                          <Icon name="shopping-bag" size={26} />
                         </div>
                       </div>
                     )}
-
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent opacity-60" aria-hidden="true" />
-                    <div className="absolute left-3 top-3 rounded-full border border-white/70 bg-white/75 px-3 py-1.5 text-[10px] font-black text-slate-800 shadow-sm backdrop-blur-xl">
+                    <div className="absolute left-3.5 top-3.5 rounded-full border border-white/20 bg-black/40 px-3.5 py-1.5 text-[10px] font-black text-white shadow-md backdrop-blur-xl">
                       {listing.category?.name || "Ibindi"}
                     </div>
                   </div>
 
-                  <div className="p-5">
-                    <h3 className="line-clamp-2 min-h-[3rem] text-base font-black leading-6 text-slate-900 transition group-hover:text-blue-600">
+                  <div className="p-4">
+                    <h3 className="line-clamp-2 min-h-[2.75rem] text-sm font-black leading-5 kg-text transition-colors group-hover:text-blue-500">
                       {listing.title}
                     </h3>
-                    <p className="mt-3 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-lg font-black tracking-tight text-transparent">
+                    <p className="mt-3 bg-gradient-to-r from-blue-600 to-cyan-400 bg-clip-text text-lg font-black text-transparent">
                       {formatPrice(listing)}
                     </p>
-                    <div className="mt-4 space-y-2">
-                      <p className="flex items-center gap-1.5 line-clamp-1 text-xs font-medium text-slate-500">
-                        <Icon name="map-pin" size={13} />
-                        {formatLocation(listing)}
-                      </p>
-                      {formatCondition(listing.condition) && (
-                        <p className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                          <Icon name="tag" size={13} />
-                          {formatCondition(listing.condition)}
-                        </p>
-                      )}
-                    </div>
-                    <div className="mt-5 flex items-center justify-between border-t border-slate-200/70 pt-4">
-                      <span className="text-xs font-black text-slate-400">
+                    <p className="mt-2.5 flex items-center gap-1.5 truncate text-xs font-semibold kg-text-secondary">
+                      <Icon name="map-pin" size={14} className="text-blue-500 shrink-0" />
+                      {formatLocation(listing)}
+                    </p>
+                    <div className="mt-4 flex items-center justify-between border-t border-slate-200/50 dark:border-slate-800/50 pt-3.5">
+                      <span className="text-[11px] font-bold kg-text-muted">
                         Reba ibisobanuro
                       </span>
-                      <span className="text-blue-600 transition group-hover:translate-x-1">
-                        <Icon name="arrow-right" size={16} />
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-500/10 text-blue-500 transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-blue-600 group-hover:text-white">
+                        <Icon name="arrow-right" size={14} />
                       </span>
                     </div>
                   </div>
@@ -1415,13 +912,8 @@ function Home() {
         </div>
       </section>
 
-      {/* SELL CTA — extracted into its own component */}
       <SellCTA />
-
-      {/* FOOTER — extracted into its own component */}
       <HomeFooter />
     </main>
   )
 }
-
-export default Home
