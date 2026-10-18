@@ -16,7 +16,7 @@
 
     <meta
       name="theme-color"
-      content="#09090b"
+      content="#ffffff"
     />
 
     <meta
@@ -28,8 +28,8 @@
 
     <!--
       Apply the saved theme BEFORE React loads.
-      Dark is the default.
-      This prevents the white flash on page load.
+      Light is now the default for first-time users.
+      This prevents any theme flash on page load.
     -->
     <script>
       (() => {
@@ -41,7 +41,7 @@
             savedTheme === "light" ||
             savedTheme === "dark"
               ? savedTheme
-              : "dark"
+              : "light"
 
           document.documentElement.setAttribute(
             "data-theme",
@@ -50,14 +50,22 @@
 
           document.documentElement.style.colorScheme =
             theme
+
+          if (theme === "dark") {
+            document.documentElement.classList.add("dark")
+          } else {
+            document.documentElement.classList.remove("dark")
+          }
         } catch {
           document.documentElement.setAttribute(
             "data-theme",
-            "dark"
+            "light"
           )
 
           document.documentElement.style.colorScheme =
-            "dark"
+            "light"
+
+          document.documentElement.classList.remove("dark")
         }
       })()
     </script>
