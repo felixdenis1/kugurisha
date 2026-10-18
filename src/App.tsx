@@ -1,8 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 
 import { ThemeProvider } from "./components/ThemeProvider"
+import MainLayout from "./layouts/MainLayout"
 
 import Home from "./pages/Home"
+import Categories from "./pages/Categories"
+import About from "./pages/About"
+import HowItWorks from "./pages/HowItWorks"
+
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import ForgotPassword from "./pages/ForgotPassword"
@@ -29,110 +34,49 @@ function App() {
     <ThemeProvider>
       <BrowserRouter>
         <Routes>
-          <Route
-            path="/"
-            element={<Home />}
-          />
+          {/* Home retains its existing full-featured header and behavior. */}
+          <Route path="/" element={<Home />} />
 
-          <Route
-            path="/login"
-            element={<Login />}
-          />
+          {/* Shared layout for the new standalone information pages. */}
+          <Route element={<MainLayout />}>
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+          </Route>
 
-          <Route
-            path="/register"
-            element={<Register />}
-          />
+          {/* Authentication */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route
-            path="/forgot-password"
-            element={<ForgotPassword />}
-          />
+          {/* User pages */}
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/dashboard" element={<SellerDashboard />} />
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/notifications" element={<Notifications />} />
 
-          <Route
-            path="/reset-password"
-            element={<ResetPassword />}
-          />
+          {/* Listings */}
+          <Route path="/create-listing" element={<CreateListing />} />
+          <Route path="/edit-listing/:id" element={<EditListing />} />
+          <Route path="/listing/:id" element={<ListingDetails />} />
 
-          <Route
-            path="/profile"
-            element={<Profile />}
-          />
+          {/* Messages */}
+          <Route path="/messages/:conversationId" element={<Messages />} />
+          <Route path="/messages" element={<MessagesInbox />} />
 
-          <Route
-            path="/create-listing"
-            element={<CreateListing />}
-          />
+          {/* AI search */}
+          <Route path="/ai-search" element={<AISearch />} />
 
-          <Route
-            path="/admin/categories"
-            element={<AdminCategories />}
-          />
+          {/* Admin */}
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/categories" element={<AdminCategories />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/listings" element={<AdminListings />} />
+          <Route path="/admin/reports" element={<AdminReports />} />
 
-          <Route
-            path="/dashboard"
-            element={<SellerDashboard />}
-          />
-
-          <Route
-            path="/edit-listing/:id"
-            element={<EditListing />}
-          />
-
-          <Route
-            path="/listing/:id"
-            element={<ListingDetails />}
-          />
-
-          <Route
-            path="/favorites"
-            element={<Favorites />}
-          />
-
-          <Route
-            path="/notifications"
-            element={<Notifications />}
-          />
-
-          <Route
-            path="/messages/:conversationId"
-            element={<Messages />}
-          />
-
-          <Route
-            path="/messages"
-            element={<MessagesInbox />}
-          />
-
-          <Route
-            path="/ai-search"
-            element={<AISearch />}
-          />
-
-          <Route
-            path="/admin"
-            element={<AdminDashboard />}
-          />
-
-          <Route
-            path="/admin/users"
-            element={<AdminUsers />}
-          />
-
-          <Route
-            path="/admin/listings"
-            element={<AdminListings />}
-          />
-
-          <Route
-            path="/admin/reports"
-            element={<AdminReports />}
-          />
-<Route
-  path="*"
-  element={<NotFound />}
-/>
-
+          {/* Not found */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

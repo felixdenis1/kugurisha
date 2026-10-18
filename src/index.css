@@ -1,11 +1,16 @@
+
 @import "tailwindcss";
 
 /* =========================================================
-   KUGURISHA.COM — GLOBAL LIGHT DESIGN SYSTEM
+   KUGURISHA.COM — GLOBAL DESIGN SYSTEM
    Premium / Glass / Mobile-first
+   Light + Dark Mode
    ========================================================= */
 
-:root {
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
   --bg: #f8fafc;
   --bg-secondary: #f1f5f9;
 
@@ -20,6 +25,10 @@
   --border-strong: rgba(15, 23, 42, 0.14);
 
   --input-bg: #ffffff;
+  --input-text: #0f172a;
+  --input-placeholder: #94a3b8;
+  --input-disabled-bg: #f8fafc;
+  --input-disabled-text: #64748b;
 
   --inverse-bg: #0f172a;
   --inverse-text: #ffffff;
@@ -42,7 +51,85 @@
   --primary: #2563eb;
   --primary-hover: #1d4ed8;
 
-  color-scheme: light;
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-soft-bg: rgba(255, 255, 255, 0.58);
+  --glass-strong-bg: rgba(255, 255, 255, 0.84);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-soft-border: rgba(15, 23, 42, 0.06);
+  --glass-strong-border: rgba(15, 23, 42, 0.10);
+
+  --scrollbar-thumb: rgba(15, 23, 42, 0.14);
+  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.24);
+
+  --selection-bg: rgba(37, 99, 235, 0.18);
+  --selection-text: #0f172a;
+
+  --glass-shadow:
+    0 24px 80px -40px rgba(15, 23, 42, 0.35),
+    0 8px 30px -20px rgba(37, 99, 235, 0.16);
+}
+
+/* DARK MODE */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #0b1120;
+  --bg-secondary: #111827;
+
+  --surface: #151e2e;
+  --surface-hover: #1d293b;
+
+  --text: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  --border: rgba(226, 232, 240, 0.10);
+  --border-strong: rgba(226, 232, 240, 0.17);
+
+  --input-bg: #111827;
+  --input-text: #f1f5f9;
+  --input-placeholder: #94a3b8;
+  --input-disabled-bg: #1e293b;
+  --input-disabled-text: #94a3b8;
+
+  --inverse-bg: #f8fafc;
+  --inverse-text: #0f172a;
+
+  --soft-bg: rgba(226, 232, 240, 0.045);
+  --soft-bg-hover: rgba(226, 232, 240, 0.09);
+
+  --danger-bg: rgba(127, 29, 29, 0.22);
+  --danger-border: rgba(248, 113, 113, 0.28);
+  --danger-text: #fca5a5;
+
+  --success-bg: rgba(20, 83, 45, 0.24);
+  --success-border: rgba(74, 222, 128, 0.25);
+  --success-text: #86efac;
+
+  --warning-bg: rgba(120, 53, 15, 0.24);
+  --warning-border: rgba(251, 191, 36, 0.25);
+  --warning-text: #fcd34d;
+
+  --primary: #60a5fa;
+  --primary-hover: #93c5fd;
+
+  --glass-bg: rgba(21, 30, 46, 0.78);
+  --glass-soft-bg: rgba(21, 30, 46, 0.62);
+  --glass-strong-bg: rgba(15, 23, 42, 0.92);
+  --glass-border: rgba(226, 232, 240, 0.10);
+  --glass-soft-border: rgba(226, 232, 240, 0.07);
+  --glass-strong-border: rgba(226, 232, 240, 0.14);
+
+  --scrollbar-thumb: rgba(226, 232, 240, 0.16);
+  --scrollbar-thumb-hover: rgba(226, 232, 240, 0.27);
+
+  --selection-bg: rgba(96, 165, 250, 0.30);
+  --selection-text: #ffffff;
+
+  --glass-shadow:
+    0 24px 80px -40px rgba(0, 0, 0, 0.65),
+    0 8px 30px -20px rgba(37, 99, 235, 0.18);
 }
 
 /* =========================================================
@@ -64,6 +151,10 @@ html {
   scroll-behavior: smooth;
 }
 
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -83,6 +174,10 @@ body {
 
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
 #root {
@@ -113,10 +208,6 @@ select {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-
 button {
   font-family: inherit;
 }
@@ -126,27 +217,26 @@ button:disabled {
 }
 
 /* =========================================================
-   FORMS — CRITICAL INPUT VISIBILITY
+   FORMS
    ========================================================= */
 
 input,
 textarea,
 select {
-  color: #0f172a;
-  background-color: #ffffff;
+  color: var(--input-text);
+  background-color: var(--input-bg);
 
   border-color: var(--border);
 
-  caret-color: #2563eb;
-
-  -webkit-text-fill-color: #0f172a;
+  caret-color: var(--primary);
+  -webkit-text-fill-color: var(--input-text);
 
   font-family: inherit;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #94a3b8;
+  color: var(--input-placeholder);
   opacity: 1;
 }
 
@@ -154,6 +244,13 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
+}
+
+/* Keep native form controls consistent with the selected theme. */
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--primary);
 }
 
 /* =========================================================
@@ -169,11 +266,13 @@ textarea:-webkit-autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
-  -webkit-text-fill-color: #0f172a;
-  caret-color: #2563eb;
+  -webkit-text-fill-color: var(--input-text);
+  caret-color: var(--primary);
 
-  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
-  box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-box-shadow:
+    0 0 0 1000px var(--input-bg) inset;
+  box-shadow:
+    0 0 0 1000px var(--input-bg) inset;
 
   transition: background-color 9999s ease-in-out 0s;
 }
@@ -185,10 +284,10 @@ select:-webkit-autofill:focus {
 input:disabled,
 textarea:disabled,
 select:disabled {
-  color: #64748b;
-  background-color: #f8fafc;
+  color: var(--input-disabled-text);
+  background-color: var(--input-disabled-bg);
 
-  -webkit-text-fill-color: #64748b;
+  -webkit-text-fill-color: var(--input-disabled-text);
 
   cursor: not-allowed;
 }
@@ -198,8 +297,8 @@ select:disabled {
    ========================================================= */
 
 ::selection {
-  background: rgba(37, 99, 235, 0.18);
-  color: #0f172a;
+  background: var(--selection-bg);
+  color: var(--selection-text);
 }
 
 /* =========================================================
@@ -216,12 +315,12 @@ select:disabled {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(15, 23, 42, 0.14);
+  background: var(--scrollbar-thumb);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.24);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* =========================================================
@@ -265,12 +364,12 @@ select:disabled {
 }
 
 .kg-input {
-  background: #ffffff;
-  color: #0f172a;
+  background: var(--input-bg);
+  color: var(--input-text);
   border-color: var(--border);
 
-  caret-color: #2563eb;
-  -webkit-text-fill-color: #0f172a;
+  caret-color: var(--primary);
+  -webkit-text-fill-color: var(--input-text);
 }
 
 .kg-soft {
@@ -281,41 +380,59 @@ select:disabled {
   background: var(--soft-bg-hover);
 }
 
+/* Semantic backgrounds */
+
+.kg-danger {
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+.kg-success {
+  color: var(--success-text);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.kg-warning {
+  color: var(--warning-text);
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+}
+
 /* =========================================================
    PREMIUM GLASS SYSTEM
    ========================================================= */
 
 .glass {
-  background: rgba(255, 255, 255, 0.72);
+  background: var(--glass-bg);
 
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--glass-border);
 
   backdrop-filter: blur(24px) saturate(150%);
   -webkit-backdrop-filter: blur(24px) saturate(150%);
 }
 
 .glass-soft {
-  background: rgba(255, 255, 255, 0.58);
+  background: var(--glass-soft-bg);
 
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--glass-soft-border);
 
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
 }
 
 .glass-strong {
-  background: rgba(255, 255, 255, 0.84);
+  background: var(--glass-strong-bg);
 
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--glass-strong-border);
 
   backdrop-filter: blur(30px) saturate(160%);
   -webkit-backdrop-filter: blur(30px) saturate(160%);
 }
 
 .glass-shadow {
-  box-shadow:
-    0 24px 80px -40px rgba(15, 23, 42, 0.35),
-    0 8px 30px -20px rgba(37, 99, 235, 0.16);
+  box-shadow: var(--glass-shadow);
 }
 
 .glass-glow {
@@ -354,5 +471,20 @@ button {
       0px,
       env(safe-area-inset-bottom)
     );
+  }
+}
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
