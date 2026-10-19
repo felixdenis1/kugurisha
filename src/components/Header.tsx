@@ -1,6 +1,4 @@
-// src/components/Header.tsx
-
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   Link,
   NavLink,
@@ -37,13 +35,19 @@ type IconName =
   | "check"
   | "sun"
   | "moon"
+  | "zap"
+  | "compass"
 
 function Icon({
   name,
-  size = 18,
+  size = 20,
+  strokeWidth = 2,
+  className,
 }: {
   name: IconName
   size?: number
+  strokeWidth?: number
+  className?: string
 }) {
   const common = {
     width: size,
@@ -51,9 +55,10 @@ function Icon({
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: 1.8,
+    strokeWidth,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
+    className,
     "aria-hidden": true as const,
   }
 
@@ -207,6 +212,21 @@ function Icon({
         </svg>
       )
 
+    case "zap":
+      return (
+        <svg {...common}>
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+      )
+
+    case "compass":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="10" />
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+        </svg>
+      )
+
     default:
       return null
   }
@@ -233,6 +253,7 @@ export default function Header({
   const [searchOpen, setSearchOpen] = useState(false)
   const [internalSearchValue, setInternalSearchValue] = useState("")
 
+  const userMenuRef = useRef<HTMLDivElement>(null)
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
@@ -244,6 +265,19 @@ export default function Header({
     setShowUserMenu(false)
     setShowMobileMenu(false)
   }
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowUserMenu(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -315,17 +349,13 @@ export default function Header({
 
   useEffect(() => {
     const handleScroll = () => {
-      setHeaderScrolled(window.scrollY > 12)
+      setHeaderScrolled(window.scrollY > 15)
     }
 
     handleScroll()
-    window.addEventListener("scroll", handleScroll, {
-      passive: true,
-    })
+    window.addEventListener("scroll", handleScroll, { passive: true })
 
-    return () => {
-      window.removeEventListener("scroll", handleScroll)
-    }
+    return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   async function loadUnreadCount(id: string) {
@@ -370,7 +400,8 @@ export default function Header({
     }
   }
 
-  function handleSearchSubmit() {
+  function handleSearchSubmit(e?: React.FormEvent) {
+    if (e) e.preventDefault()
     closeMenus()
     setSearchOpen(false)
 
@@ -379,546 +410,487 @@ export default function Header({
       return
     }
 
-    navigate(`/?search=${encodeURIComponent(currentSearchValue.trim())}`)
+    if (currentSearchValue.trim()) {
+      navigate(`/?search=${encodeURIComponent(currentSearchValue.trim())}`)
+    }
   }
 
-  const linkClass = (path: string) =>
-    `relative rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-all duration-200 ${
-      location.pathname === path
-        ? isDark
-          ? "bg-blue-500/10 text-blue-400 shadow-sm"
-          : "bg-blue-50/80 text-blue-600 shadow-sm"
-        : isDark
-        ? "text-slate-300 hover:bg-slate-800/60 hover:text-white"
-        : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
-    }`
-
-  const mobileLinkClass = (path: string) =>
-    `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all duration-200 ${
-      location.pathname === path
-        ? isDark
-          ? "bg-blue-500/15 text-blue-400"
-          : "bg-blue-50 text-blue-600"
-        : isDark
-        ? "text-slate-300 hover:bg-slate-800/50 hover:text-white"
-        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-    }`
+  function handleInputChange(val: string) {
+    if (onSearchChange) {
+      onSearchChange(val)
+    } else {
+      setInternalSearchValue(val)
+    }
+  }
 
   return (
-    <div className="relative z-50">
+    <div className="kg-header sticky top-0 z-50">
       <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          headerScrolled ? "py-2 sm:py-2.5" : "py-1 sm:py-2"
+        className={`w-full transition-all duration-500 ${
+          headerScrolled ? "py-2 sm:py-3" : "py-3 sm:py-4"
         }`}
       >
-        <div
-          className={`mx-auto max-w-7xl px-3 transition-all duration-300 sm:px-6 ${
-            headerScrolled ? "lg:px-5" : ""
-          }`}
-        >
+        {/* Slightly reduced container width (max-w-6xl instead of max-w-7xl) */}
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          {/* Floating Pill Dock: h-[76px] increased height + rounded-full 100% radius */}
           <div
-            className="relative flex h-[66px] items-center rounded-[1.25rem] border px-3 transition-all duration-300 sm:h-[70px] sm:px-4"
+            className="group/header relative flex h-[76px] items-center justify-between rounded-full border px-4 sm:px-6 transition-all duration-500"
             style={{
               background: isDark
-                ? "linear-gradient(135deg, rgba(15,23,42,0.92), rgba(30,41,59,0.88))"
-                : "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(248,250,252,0.90))",
-              borderColor: isDark
-                ? headerScrolled
-                  ? "rgba(59,130,246,0.3)"
-                  : "rgba(51,65,85,0.5)"
-                : headerScrolled
-                ? "rgba(37,99,235,0.2)"
-                : "rgba(226,232,240,0.8)",
+                ? "rgba(15, 23, 42, 0.82)"
+                : "rgba(255, 255, 255, 0.88)",
+              borderColor: headerScrolled
+                ? isDark
+                  ? "rgba(16, 185, 129, 0.35)"
+                  : "rgba(16, 185, 129, 0.28)"
+                : isDark
+                ? "rgba(255, 255, 255, 0.15)"
+                : "rgba(0, 0, 0, 0.09)",
               boxShadow: headerScrolled
                 ? isDark
-                  ? "0 20px 50px -20px rgba(0,0,0,0.5)"
-                  : "0 20px 50px -25px rgba(37,99,235,0.15)"
-                : "0 10px 30px -20px rgba(0,0,0,0.08)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
+                  ? "0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.2)"
+                  : "0 20px 40px -15px rgba(16, 185, 129, 0.2), 0 0 20px rgba(16, 185, 129, 0.1)"
+                : "0 10px 30px -10px rgba(0, 0, 0, 0.06)",
+              backdropFilter: "blur(28px)",
+              WebkitBackdropFilter: "blur(28px)",
             }}
           >
-            {/* Left section: Logo */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Link
-                to="/"
-                onClick={closeMenus}
-                className="group flex shrink-0 items-center gap-2.5 rounded-xl transition-all duration-200 focus:outline-none"
-                aria-label="KUGURISHA Ahabanza"
-              >
-                <span
-                  className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-transparent border border-transparent transition-all duration-300 group-hover:scale-105 sm:h-10 sm:w-10"
-                >
-                  <img
-                    src="/favicon.svg"
-                    alt="KUGURISHA"
-                    className="h-full w-full object-contain bg-transparent transition-transform duration-300 group-hover:rotate-3"
-                  />
-                </span>
+            {/* Ambient Background Glow Accent */}
+            <div className="pointer-events-none absolute -inset-0.5 rounded-full bg-gradient-to-r from-slate-500/10 via-emerald-600/20 to-emerald-800/20 opacity-0 blur-xl transition-opacity duration-700 group-hover/header:opacity-100" />
 
-                <span
-                  className={`hidden text-[20px] font-black tracking-tight sm:block lg:text-[23px] ${
-                    isDark ? "text-white" : "text-slate-900"
+            {/* LEFT: Futuristic Pill Navigation */}
+            <nav className="relative z-10 flex items-center gap-1.5">
+              <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/5 dark:bg-white/5 p-1.5 backdrop-blur-md">
+                {navigation.map((item) => {
+                  const isActive = location.pathname === item.to
+                  return (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      onClick={closeMenus}
+                      className={`relative rounded-full px-4.5 py-2 text-xs sm:text-sm font-black transition-all duration-300 ${
+                        isActive
+                          ? "text-white"
+                          : isDark
+                          ? "text-slate-300 hover:text-white"
+                          : "text-slate-700 hover:text-slate-900"
+                      }`}
+                    >
+                      {isActive && (
+                        <span className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 shadow-[0_4px_15px_rgba(16,185,129,0.35)]" />
+                      )}
+                      <span className="relative z-10">{item.label}</span>
+                    </NavLink>
+                  )
+                })}
+
+                <Link
+                  to="/ai-search"
+                  onClick={closeMenus}
+                  className={`relative hidden sm:flex items-center gap-1.5 rounded-full px-4.5 py-2 text-xs sm:text-sm font-black transition-all duration-300 ${
+                    location.pathname === "/ai-search"
+                      ? "text-white"
+                      : isDark
+                      ? "text-slate-300 hover:text-white"
+                      : "text-slate-700 hover:text-slate-900"
                   }`}
                 >
-                  <span>KU</span>
-                  <span className="bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-500 bg-clip-text text-transparent">
-                    GURISHA
-                  </span>
-                </span>
-              </Link>
-            </div>
-
-            {/* Desktop Navigation */}
-            <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex">
-              {navigation.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  onClick={closeMenus}
-                  className={linkClass(item.to)}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-
-              <a
-                href="/#listings"
-                className={`rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-all duration-200 ${
-                  isDark
-                    ? "text-slate-300 hover:bg-slate-800/60 hover:text-white"
-                    : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
-                }`}
-              >
-                Ibicuruzwa
-              </a>
-
-              <Link
-                to="/ai-search"
-                onClick={closeMenus}
-                className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-all duration-200 ${
-                  location.pathname === "/ai-search"
-                    ? isDark
-                      ? "bg-blue-500/15 text-blue-400 shadow-sm"
-                      : "bg-blue-50 text-blue-600 shadow-sm"
-                    : isDark
-                    ? "text-slate-300 hover:bg-slate-800/60 hover:text-white"
-                    : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900"
-                }`}
-              >
-                <Icon name="spark" size={14} />
-                <span>AI Search</span>
-              </Link>
+                  {location.pathname === "/ai-search" && (
+                    <span className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 shadow-[0_4px_15px_rgba(16,185,129,0.35)]" />
+                  )}
+                  <Icon
+                    name="spark"
+                    size={16}
+                    className={`relative z-10 ${
+                      location.pathname === "/ai-search"
+                        ? "text-white"
+                        : "text-emerald-500"
+                    }`}
+                  />
+                  <span className="relative z-10">AI Search</span>
+                </Link>
+              </div>
             </nav>
 
-            {/* Right section actions */}
-            <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-              {/* Search toggle: visible on desktop and mobile */}
+            {/* RIGHT: Quick Action Bar */}
+            <div className="relative z-10 flex items-center gap-2.5">
+              {/* Reduced/Compact Search Toggle */}
               <button
                 type="button"
                 onClick={() => {
-                  setSearchOpen((current) => !current)
+                  setSearchOpen((prev) => !prev)
                   setShowMobileMenu(false)
                   setShowUserMenu(false)
                 }}
-                title={searchOpen ? "Funga gushakisha" : "Shakisha"}
-                aria-label={searchOpen ? "Funga gushakisha" : "Fungura gushakisha"}
-                aria-expanded={searchOpen}
-                className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-all duration-200 hover:scale-105 active:scale-95 sm:h-10 sm:w-10 ${
-                  isDark
-                    ? "border-slate-700 bg-slate-800/70 text-slate-200 hover:border-blue-500 hover:text-blue-300"
-                    : "border-slate-200 bg-white/80 text-slate-700 shadow-sm hover:border-blue-300 hover:text-blue-600"
+                className={`group flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 active:scale-95 ${
+                  searchOpen
+                    ? "border-emerald-600 bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]"
+                    : isDark
+                    ? "border-slate-800 bg-slate-900/80 text-slate-300 hover:border-emerald-500/50 hover:text-white"
+                    : "border-slate-200 bg-white/80 text-slate-700 shadow-sm hover:border-emerald-400 hover:text-emerald-700"
                 }`}
+                aria-label={searchOpen ? "Funga search" : "Shakisha"}
               >
-                <Icon name={searchOpen ? "close" : "search"} size={18} />
+                <Icon name={searchOpen ? "close" : "search"} size={19} />
               </button>
+
+              {/* Theme Toggle Button */}
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className={`hidden h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 active:scale-95 sm:flex ${
+                  isDark
+                    ? "border-slate-800 bg-slate-900/80 text-amber-400 hover:border-amber-400/50 hover:bg-slate-800"
+                    : "border-slate-200 bg-white/80 text-emerald-700 shadow-sm hover:border-emerald-300 hover:bg-emerald-50/50"
+                }`}
+                title={isDark ? "Hindura mu Light Mode" : "Hindura mu Dark Mode"}
+              >
+                <Icon name={isDark ? "sun" : "moon"} size={19} />
+              </button>
+
+              {/* Notification Link */}
               {userId && (
                 <Link
                   to="/notifications"
                   onClick={closeMenus}
-                  title="Notifications"
-                  aria-label="Notifications"
-                  className={`group relative flex h-9 w-9 items-center justify-center rounded-xl border transition-all duration-200 hover:scale-105 active:scale-95 sm:h-10 sm:w-10 ${
+                  className={`relative flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 active:scale-95 ${
                     isDark
-                      ? "border-slate-700 bg-slate-800/70 text-slate-200 hover:border-slate-600 hover:text-white"
-                      : "border-slate-200 bg-white/80 text-slate-700 hover:border-blue-300 hover:text-blue-600 shadow-sm"
+                      ? "border-slate-800 bg-slate-900/80 text-slate-300 hover:border-emerald-500/50 hover:text-white"
+                      : "border-slate-200 bg-white/80 text-slate-700 shadow-sm hover:border-emerald-400 hover:text-emerald-700"
                   }`}
+                  aria-label="Notifications"
                 >
-                  <Icon name="bell" size={17} />
+                  <Icon name="bell" size={19} />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-slate-900">
+                    <span className="absolute -right-1 -top-1 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-rose-600 px-1 text-[10px] font-black text-white ring-2 ring-white dark:ring-slate-900 shadow-md">
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
                 </Link>
               )}
 
+              {/* User Account / Auth Button */}
               {!userId ? (
                 <Link
                   to="/login"
                   onClick={closeMenus}
-                  className={`hidden rounded-xl px-4 py-2 text-[13px] font-bold transition-all duration-200 sm:block ${
-                    isDark
-                      ? "text-slate-200 hover:bg-slate-800 hover:text-white"
-                      : "text-slate-800 hover:bg-slate-100 hover:text-blue-600"
-                  }`}
+                  className="hidden items-center gap-2 rounded-full bg-slate-900/10 dark:bg-white/10 px-5 py-2.5 text-xs font-black kg-text transition-all duration-300 hover:bg-emerald-700 hover:text-white sm:flex"
                 >
-                  Injira
+                  <Icon name="user" size={16} />
+                  <span>Injira</span>
                 </Link>
               ) : (
-                <div className="relative hidden sm:block">
+                <div className="relative hidden sm:block" ref={userMenuRef}>
                   <button
                     type="button"
-                    onClick={() => setShowUserMenu((current) => !current)}
-                    aria-expanded={showUserMenu}
-                    aria-label="Fungura konti yanjye"
-                    className={`group flex h-10 items-center gap-2 rounded-xl border px-2 pr-3 transition-all duration-200 ${
-                      isDark
-                        ? "border-slate-700 bg-slate-800/80 text-slate-200 hover:border-slate-600"
-                        : "border-slate-200 bg-white/80 text-slate-800 hover:border-blue-300 shadow-sm"
+                    onClick={() => setShowUserMenu((prev) => !prev)}
+                    className={`flex h-11 items-center gap-2.5 rounded-full border px-4 transition-all duration-300 hover:scale-[1.02] active:scale-95 ${
+                      showUserMenu
+                        ? "border-emerald-600 bg-emerald-600/10 text-emerald-600"
+                        : isDark
+                        ? "border-slate-800 bg-slate-900/80 text-slate-200 hover:border-slate-700"
+                        : "border-slate-200 bg-white/80 text-slate-800 shadow-sm hover:border-emerald-300"
                     }`}
                   >
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 text-white shadow-sm">
-                      <Icon name="user" size={15} />
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-sm">
+                      <Icon name="user" size={14} />
                     </span>
-                    <span className="hidden text-[12px] font-bold md:block">
-                      Konti yanjye
-                    </span>
-                    <span
-                      className="ml-0.5 text-slate-400 transition-transform duration-200"
-                      style={{
-                        transform: showUserMenu ? "rotate(180deg)" : "rotate(0deg)",
-                      }}
-                    >
-                      <Icon name="chevron-down" size={13} />
-                    </span>
+                    <span className="text-xs sm:text-sm font-black">Konti</span>
+                    <Icon
+                      name="chevron-down"
+                      size={14}
+                      className={`text-slate-400 transition-transform duration-300 ${
+                        showUserMenu ? "rotate-180 text-emerald-600" : ""
+                      }`}
+                    />
                   </button>
 
+                  {/* Dropdown Menu Panel */}
                   {showUserMenu && (
                     <div
-                      className={`absolute right-0 top-[calc(100%+10px)] w-[280px] overflow-hidden rounded-2xl border p-2 shadow-2xl transition-all duration-200 animate-in fade-in slide-in-from-top-2 ${
+                      className={`absolute right-0 top-[calc(100%+14px)] w-72 overflow-hidden rounded-3xl border p-3 shadow-2xl transition-all duration-300 ${
                         isDark
-                          ? "border-slate-700 bg-slate-900/95 text-slate-100"
-                          : "border-slate-200/80 bg-white/95 text-slate-800"
+                          ? "border-slate-800 bg-slate-950/90 text-slate-100"
+                          : "border-slate-200/90 bg-white/95 text-slate-800"
                       }`}
                       style={{
-                        backdropFilter: "blur(24px)",
-                        WebkitBackdropFilter: "blur(24px)",
+                        backdropFilter: "blur(28px)",
+                        WebkitBackdropFilter: "blur(28px)",
                       }}
                     >
-                      <div className={`rounded-xl p-3 ${isDark ? "bg-slate-800/60" : "bg-blue-50/70"}`}>
+                      <div className="rounded-2xl bg-gradient-to-r from-slate-500/10 via-emerald-600/10 to-emerald-800/10 p-3.5 border border-emerald-500/20">
                         <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
-                            <Icon name="user" size={16} />
-                          </span>
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-md">
+                            <Icon name="user" size={18} />
+                          </div>
                           <div>
-                            <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
-                              Konti yanjye
+                            <p className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                              Mwaramutse
                             </p>
-                            <p className={`mt-0.5 text-xs font-black ${isDark ? "text-white" : "text-slate-900"}`}>
-                              KUGURISHA.COM
+                            <p className="text-xs font-black truncate max-w-[150px]">
+                              KUGURISHA User
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      {/* Theme Toggle Button inside Konti yanjye menu */}
-                      <div className="mt-2">
-                        <button
-                          type="button"
-                          onClick={toggleTheme}
-                          className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-bold transition-all ${
+                      <div className="mt-2 space-y-0.5">
+                        <Link
+                          to="/profile"
+                          onClick={closeMenus}
+                          className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
                             isDark
-                              ? "text-amber-300 hover:bg-slate-800 hover:text-amber-200"
-                              : "text-slate-700 hover:bg-blue-50 hover:text-blue-600"
+                              ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                              : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
                           }`}
                         >
-                          <Icon name={isDark ? "sun" : "moon"} size={16} />
-                          <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
-                        </button>
-                      </div>
-
-                      <div className={`my-1.5 border-t ${isDark ? "border-slate-800" : "border-slate-200/80"}`} />
-
-                      <div className="space-y-0.5">
-                        <Link to="/profile" onClick={closeMenus} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-bold transition-all ${isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-blue-50 hover:text-blue-600"}`}>
                           <Icon name="user" size={16} />
                           Profile yanjye
                         </Link>
-                        <Link to="/dashboard" onClick={closeMenus} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-bold transition-all ${isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-blue-50 hover:text-blue-600"}`}>
+                        <Link
+                          to="/dashboard"
+                          onClick={closeMenus}
+                          className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
+                            isDark
+                              ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                              : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                          }`}
+                        >
                           <Icon name="store" size={16} />
                           Dashboard
                         </Link>
-                        <Link to="/favorites" onClick={closeMenus} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-bold transition-all ${isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-blue-50 hover:text-blue-600"}`}>
+                        <Link
+                          to="/favorites"
+                          onClick={closeMenus}
+                          className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
+                            isDark
+                              ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                              : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                          }`}
+                        >
                           <Icon name="heart" size={16} />
                           Ibyakunzwe
                         </Link>
-                        <Link to="/messages" onClick={closeMenus} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-bold transition-all ${isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-blue-50 hover:text-blue-600"}`}>
+                        <Link
+                          to="/messages"
+                          onClick={closeMenus}
+                          className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
+                            isDark
+                              ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                              : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                          }`}
+                        >
                           <Icon name="message" size={16} />
                           Ubutumwa
                         </Link>
-                        <Link to="/notifications" onClick={closeMenus} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-bold transition-all ${isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-blue-50 hover:text-blue-600"}`}>
-                          <Icon name="bell" size={16} />
-                          Notifications
+                        <Link
+                          to="/notifications"
+                          onClick={closeMenus}
+                          className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
+                            isDark
+                              ? "text-slate-300 hover:bg-slate-800 hover:text-white"
+                              : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                          }`}
+                        >
+                          <span className="flex items-center gap-3">
+                            <Icon name="bell" size={16} />
+                            Notifications
+                          </span>
                           {unreadCount > 0 && (
-                            <span className="ml-auto rounded-full bg-red-500 px-1.5 py-0.5 text-[9px] font-black text-white">
-                              {unreadCount > 99 ? "99+" : unreadCount}
+                            <span className="rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-black text-white">
+                              {unreadCount}
                             </span>
                           )}
                         </Link>
-                        <Link to="/profile" onClick={closeMenus} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-bold transition-all ${isDark ? "text-slate-300 hover:bg-slate-800 hover:text-white" : "text-slate-700 hover:bg-blue-50 hover:text-blue-600"}`}>
-                          <Icon name="settings" size={16} />
-                          Settings
-                        </Link>
                       </div>
 
-                      <div className={`my-1.5 border-t ${isDark ? "border-slate-800" : "border-slate-200/80"}`} />
+                      <div className="my-1.5 border-t border-slate-200 dark:border-slate-800" />
 
                       <button
                         type="button"
                         onClick={handleLogout}
                         disabled={loggingOut}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-bold text-red-500 transition-all hover:bg-red-500/10 disabled:opacity-60"
+                        className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold text-red-500 transition-all hover:bg-red-500/10 disabled:opacity-50"
                       >
                         <Icon name="logout" size={16} />
-                        {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
+                        <span>
+                          {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
+                        </span>
                       </button>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Create Listing Button */}
+              {/* Create Listing Primary CTA Button */}
               <Link
                 to="/create-listing"
                 onClick={closeMenus}
-                className="hidden h-10 items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-4 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/30 active:scale-95 sm:flex"
+                className="group/btn relative hidden h-11 items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 px-5 text-xs sm:text-sm font-black text-white shadow-lg shadow-emerald-700/25 transition-all duration-300 hover:scale-[1.03] hover:shadow-emerald-700/40 active:scale-95 sm:flex"
               >
-                <Icon name="plus" size={15} />
-                <span>Gurisha</span>
+                <span className="absolute inset-0 bg-white/20 translate-y-full transition-transform duration-300 group-hover/btn:translate-y-0" />
+                <Icon name="plus" size={16} strokeWidth={2.5} className="relative z-10" />
+                <span className="relative z-10">Gurisha</span>
               </Link>
 
-              {/* Mobile Menu Toggle */}
+              {/* Mobile Navigation Drawer Toggle */}
               <button
                 type="button"
-                onClick={() => setShowMobileMenu((current) => !current)}
-                className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-all duration-200 hover:scale-105 active:scale-95 sm:hidden ${
-                  isDark
-                    ? "border-slate-700 bg-slate-800/70 text-slate-200 hover:border-slate-600"
-                    : "border-slate-200 bg-white/80 text-slate-700 hover:border-blue-300 shadow-sm"
+                onClick={() => setShowMobileMenu((prev) => !prev)}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 lg:hidden ${
+                  showMobileMenu
+                    ? "border-emerald-600 bg-emerald-600 text-white"
+                    : isDark
+                    ? "border-slate-800 bg-slate-900/80 text-slate-300"
+                    : "border-slate-200 bg-white/80 text-slate-700 shadow-sm"
                 }`}
-                aria-label={showMobileMenu ? "Funga menu" : "Fungura menu"}
-                aria-expanded={showMobileMenu}
+                aria-label="Toggle Menu"
               >
-                <Icon name={showMobileMenu ? "close" : "menu"} size={18} />
+                <Icon name={showMobileMenu ? "close" : "menu"} size={20} />
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Mobile Dropdown Menu */}
-        {showMobileMenu && (
-          <div className="px-3 pt-2 sm:hidden">
-            <div
-              className={`mx-auto max-w-7xl overflow-hidden rounded-2xl border p-3 shadow-2xl transition-all duration-200 animate-in fade-in slide-in-from-top-2 ${
-                isDark
-                  ? "border-slate-700 bg-slate-900/95 text-slate-100"
-                  : "border-slate-200/80 bg-white/95 text-slate-800"
-              }`}
-              style={{
-                backdropFilter: "blur(24px)",
-                WebkitBackdropFilter: "blur(24px)",
-              }}
-            >
-              <nav className="space-y-1">
-                {navigation.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={closeMenus}
-                    className={mobileLinkClass(item.to)}
-                  >
-                    {item.label}
-                  </NavLink>
-                ))}
-
-                <a
-                  href="/#listings"
-                  onClick={closeMenus}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
-                    isDark
-                      ? "text-slate-300 hover:bg-slate-800"
-                      : "text-slate-700 hover:bg-slate-100"
-                  }`}
-                >
-                  <Icon name="shopping-bag" size={18} />
-                  Ibicuruzwa
-                </a>
-
-                <Link
-                  to="/ai-search"
-                  onClick={closeMenus}
-                  className={mobileLinkClass("/ai-search")}
-                >
-                  <Icon name="spark" size={18} />
-                  AI Search
-                </Link>
-
-                <div className={`my-2 border-t ${isDark ? "border-slate-800" : "border-slate-200/80"}`} />
-
-                <Link
-                  to="/create-listing"
-                  onClick={closeMenus}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-4 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/20 active:scale-95"
-                >
-                  <Icon name="plus" size={16} />
-                  Gurisha ikintu
-                </Link>
-
-                {!userId ? (
-                  <>
-                    <div className={`my-1 border-t ${isDark ? "border-slate-800" : "border-slate-200/80"}`} />
+          {/* Reduced & Compact Search Bar Container */}
+          {searchOpen && (
+            <div className="mt-2 max-w-md mx-auto">
+              <form
+                onSubmit={handleSearchSubmit}
+                className={`relative flex items-center rounded-full border px-3 py-1.5 shadow-xl backdrop-blur-2xl transition-all ${
+                  isDark
+                    ? "border-emerald-500/30 bg-slate-950/90"
+                    : "border-emerald-500/30 bg-white/95"
+                }`}
+              >
+                <div className="flex flex-1 items-center gap-2.5 px-2">
+                  <Icon name="search" size={16} className="text-emerald-600 shrink-0" />
+                  <input
+                    type="text"
+                    value={currentSearchValue}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    placeholder="Shakisha ibicuruzwa..."
+                    className="w-full bg-transparent py-1 text-xs font-bold kg-text outline-none placeholder:kg-text-muted"
+                    autoFocus
+                  />
+                  {currentSearchValue && (
                     <button
                       type="button"
-                      onClick={toggleTheme}
-                      className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
-                        isDark ? "text-amber-300 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100"
-                      }`}
+                      onClick={() => handleInputChange("")}
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                     >
-                      <Icon name={isDark ? "sun" : "moon"} size={18} />
-                      {isDark ? "Light Mode" : "Dark Mode"}
+                      <Icon name="close" size={14} />
                     </button>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className="rounded-full bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 px-4 py-1.5 text-xs font-black text-white shadow-md transition-all hover:scale-105 active:scale-95"
+                >
+                  Shakisha
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Mobile Navigation Drawer */}
+          {showMobileMenu && (
+            <div className="mt-2.5 lg:hidden">
+              <div
+                className={`overflow-hidden rounded-3xl border p-4 shadow-2xl backdrop-blur-3xl transition-all ${
+                  isDark
+                    ? "border-slate-800 bg-slate-950/95 text-slate-100"
+                    : "border-slate-200 bg-white/95 text-slate-800"
+                }`}
+              >
+                <nav className="space-y-1">
+                  {navigation.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      onClick={closeMenus}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 rounded-2xl px-4 py-3 text-xs font-black transition-all ${
+                          isActive
+                            ? "bg-gradient-to-r from-emerald-600 to-emerald-800 text-white shadow-md"
+                            : isDark
+                            ? "text-slate-300 hover:bg-slate-900"
+                            : "text-slate-700 hover:bg-slate-100"
+                        }`
+                      }
+                    >
+                      <span>{item.label}</span>
+                    </NavLink>
+                  ))}
+
+                  <Link
+                    to="/ai-search"
+                    onClick={closeMenus}
+                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-xs font-black transition-all ${
+                      location.pathname === "/ai-search"
+                        ? "bg-gradient-to-r from-emerald-600 to-emerald-800 text-white shadow-md"
+                        : isDark
+                        ? "text-slate-300 hover:bg-slate-900"
+                        : "text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    <Icon name="spark" size={16} className="text-emerald-400" />
+                    <span>AI Search</span>
+                  </Link>
+
+                  <div className="my-2 border-t border-slate-200 dark:border-slate-800" />
+
+                  <Link
+                    to="/create-listing"
+                    onClick={closeMenus}
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 px-4 py-3 text-xs font-black text-white shadow-lg active:scale-95"
+                  >
+                    <Icon name="plus" size={16} strokeWidth={2.5} />
+                    <span>Gurisha ikintu</span>
+                  </Link>
+
+                  {!userId ? (
                     <Link
                       to="/login"
                       onClick={closeMenus}
-                      className={`mt-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
-                        isDark ? "hover:bg-slate-800" : "hover:bg-slate-100"
-                      }`}
+                      className="mt-2 flex items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-800 px-4 py-3 text-xs font-black active:scale-95"
                     >
-                      <Icon name="user" size={18} />
-                      Injira
+                      <Icon name="user" size={16} />
+                      <span>Injira mu konti</span>
                     </Link>
-                  </>
-                ) : (
-                  <>
-                    <div className={`mt-2 rounded-xl p-3 ${isDark ? "bg-slate-800/60" : "bg-blue-50/70"}`}>
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white">
-                          <Icon name="user" size={16} />
-                        </span>
-                        <div>
-                          <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">
-                            Konti yanjye
-                          </p>
-                          <p className={`mt-0.5 text-xs font-black ${isDark ? "text-white" : "text-slate-900"}`}>
-                            KUGURISHA.COM
-                          </p>
-                        </div>
-                      </div>
+                  ) : (
+                    <div className="mt-3 space-y-1">
+                      <div className="my-2 border-t border-slate-200 dark:border-slate-800" />
+                      <button
+                        type="button"
+                        onClick={toggleTheme}
+                        className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-bold transition-all ${
+                          isDark
+                            ? "text-amber-400 hover:bg-slate-900"
+                            : "text-emerald-700 hover:bg-emerald-50"
+                        }`}
+                      >
+                        <Icon name={isDark ? "sun" : "moon"} size={16} />
+                        <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        disabled={loggingOut}
+                        className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10"
+                      >
+                        <Icon name="logout" size={16} />
+                        <span>{loggingOut ? "Gusohoka..." : "Sohoka"}</span>
+                      </button>
                     </div>
-
-                    {/* Theme Toggle Button inside mobile Konti yanjye menu */}
-                    <button
-                      type="button"
-                      onClick={toggleTheme}
-                      className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${
-                        isDark ? "text-amber-300 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      <Icon name={isDark ? "sun" : "moon"} size={18} />
-                      {isDark ? "Light Mode" : "Dark Mode"}
-                    </button>
-
-                    <Link to="/profile" onClick={closeMenus} className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100"}`}>
-                      <Icon name="user" size={18} />
-                      Profile yanjye
-                    </Link>
-                    <Link to="/dashboard" onClick={closeMenus} className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100"}`}>
-                      <Icon name="store" size={18} />
-                      Dashboard
-                    </Link>
-                    <Link to="/favorites" onClick={closeMenus} className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100"}`}>
-                      <Icon name="heart" size={18} />
-                      Ibyakunzwe
-                    </Link>
-                    <Link to="/messages" onClick={closeMenus} className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100"}`}>
-                      <Icon name="message" size={18} />
-                      Ubutumwa
-                    </Link>
-                    <Link to="/notifications" onClick={closeMenus} className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100"}`}>
-                      <Icon name="bell" size={18} />
-                      Notifications
-                      {unreadCount > 0 && (
-                        <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-black text-white">
-                          {unreadCount > 99 ? "99+" : unreadCount}
-                        </span>
-                      )}
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      disabled={loggingOut}
-                      className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold text-red-500 transition-all hover:bg-red-500/10 disabled:opacity-60"
-                    >
-                      <Icon name="logout" size={18} />
-                      {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
-                    </button>
-                  </>
-                )}
-              </nav>
+                  )}
+                </nav>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </header>
-
-      {/* Floating Expandable Search Bar */}
-      {searchOpen && (
-        <section className="relative z-30 px-4 py-2 sm:px-6">
-          <form
-            onSubmit={(event) => {
-              event.preventDefault()
-              handleSearchSubmit()
-            }}
-            className={`mx-auto flex max-w-2xl items-center gap-2 rounded-2xl border p-2 shadow-xl ${
-              isDark
-                ? "border-slate-700 bg-slate-900/95"
-                : "border-slate-200 bg-white/95"
-            }`}
-            style={{
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-            }}
-          >
-            <span className={`flex h-10 w-10 shrink-0 items-center justify-center ${
-              isDark ? "text-blue-300" : "text-blue-600"
-            }`}>
-              <Icon name="search" size={20} />
-            </span>
-            <input
-              type="search"
-              value={currentSearchValue}
-              onChange={(event) => {
-                const value = event.target.value
-                setInternalSearchValue(value)
-                onSearchChange?.(value)
-              }}
-              placeholder="Urashaka iki? Urugero: laptop, iPhone, inzu..."
-              aria-label="Shakisha ibicuruzwa"
-              autoFocus
-              className={`min-w-0 flex-1 bg-transparent px-1 py-2 text-sm outline-none placeholder:text-slate-400 ${
-                isDark ? "text-white" : "text-slate-900"
-              }`}
-            />
-            <button
-              type="submit"
-              className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-4 text-sm font-bold text-white shadow-md shadow-blue-500/20 transition hover:brightness-105 active:scale-95"
-            >
-              <Icon name="search" size={16} />
-              <span className="hidden sm:inline">Shakisha</span>
-            </button>
-          </form>
-        </section>
-      )}
     </div>
   )
 }
