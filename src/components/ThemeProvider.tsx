@@ -1,4 +1,3 @@
-// src/components/ThemeProvider.tsx
 
 import {
   createContext,
@@ -22,27 +21,6 @@ const ThemeContext =
     undefined,
   )
 
-const STORAGE_KEY = "kugurisha-theme"
-
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") {
-    return "light"
-  }
-
-  const savedTheme =
-    window.localStorage.getItem(STORAGE_KEY)
-
-  if (
-    savedTheme === "dark" ||
-    savedTheme === "light"
-  ) {
-    return savedTheme
-  }
-
-  // Default theme is now light mode
-  return "light"
-}
-
 function applyTheme(theme: Theme) {
   if (typeof document === "undefined") {
     return
@@ -54,7 +32,7 @@ function applyTheme(theme: Theme) {
   root.setAttribute("data-theme", theme)
   root.style.colorScheme = theme
 
-  // Toggle Tailwind's .dark class globally on the <html> element
+  // Toggle Tailwind's .dark class globally
   if (theme === "dark") {
     root.classList.add("dark")
   } else {
@@ -67,16 +45,12 @@ export function ThemeProvider({
 }: {
   children: ReactNode
 }) {
+  // Always start in light mode on a fresh page load
   const [theme, setThemeState] =
-    useState<Theme>(getInitialTheme)
+    useState<Theme>("light")
 
   useEffect(() => {
     applyTheme(theme)
-
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      theme,
-    )
   }, [theme])
 
   const setTheme = (nextTheme: Theme) => {
