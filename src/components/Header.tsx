@@ -87,7 +87,7 @@ function Icon({
         <svg {...common}>
           <path d="M4 10v9h16v-9" />
           <path d="M3 10 5 4h14l2 6" />
-          <path d="M3 10a3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 3 0" />
+          <path d="M3 10a3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 3 0" />
           <path d="M9 19v-5h6v5" />
         </svg>
       )
@@ -220,7 +220,9 @@ const navigation = [
 ]
 
 export default function Header({
+  searchValue,
   onSearchChange,
+  onSearchSubmit,
 }: HeaderProps) {
   const [userId, setUserId] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -228,12 +230,15 @@ export default function Header({
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [headerScrolled, setHeaderScrolled] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [internalSearchValue, setInternalSearchValue] = useState("")
 
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
 
   const isDark = theme === "dark"
+  const currentSearchValue = searchValue ?? internalSearchValue
 
   function closeMenus() {
     setShowUserMenu(false)
@@ -363,6 +368,18 @@ export default function Header({
     } finally {
       setLoggingOut(false)
     }
+  }
+
+  function handleSearchSubmit() {
+    closeMenus()
+    setSearchOpen(false)
+
+    if (onSearchSubmit) {
+      onSearchSubmit()
+      return
+    }
+
+    navigate(`/?search=${encodeURIComponent(currentSearchValue.trim())}`)
   }
 
   const linkClass = (path: string) =>
@@ -496,6 +513,25 @@ export default function Header({
 
             {/* Right section actions */}
             <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+              {/* Search toggle: visible on desktop and mobile */}
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchOpen((current) => !current)
+                  setShowMobileMenu(false)
+                  setShowUserMenu(false)
+                }}
+                title={searchOpen ? "Funga gushakisha" : "Shakisha"}
+                aria-label={searchOpen ? "Funga gushakisha" : "Fungura gushakisha"}
+                aria-expanded={searchOpen}
+                className={`flex h-9 w-9 items-center justify-center rounded-xl border transition-all duration-200 hover:scale-105 active:scale-95 sm:h-10 sm:w-10 ${
+                  isDark
+                    ? "border-slate-700 bg-slate-800/70 text-slate-200 hover:border-blue-500 hover:text-blue-300"
+                    : "border-slate-200 bg-white/80 text-slate-700 shadow-sm hover:border-blue-300 hover:text-blue-600"
+                }`}
+              >
+                <Icon name={searchOpen ? "close" : "search"} size={18} />
+              </button>
               {userId && (
                 <Link
                   to="/notifications"
@@ -836,11 +872,51 @@ export default function Header({
       </header>
 
       {/* Floating Expandable Search Bar */}
-      {onSearchChange && (
+      {searchOpen && (
         <section className="relative z-30 px-4 py-2 sm:px-6">
-          <div className="mx-auto flex max-w-7xl justify-center">
-            <div />
-          </div>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault()
+              handleSearchSubmit()
+            }}
+            className={`mx-auto flex max-w-2xl items-center gap-2 rounded-2xl border p-2 shadow-xl ${
+              isDark
+                ? "border-slate-700 bg-slate-900/95"
+                : "border-slate-200 bg-white/95"
+            }`}
+            style={{
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+            }}
+          >
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center ${
+              isDark ? "text-blue-300" : "text-blue-600"
+            }`}>
+              <Icon name="search" size={20} />
+            </span>
+            <input
+              type="search"
+              value={currentSearchValue}
+              onChange={(event) => {
+                const value = event.target.value
+                setInternalSearchValue(value)
+                onSearchChange?.(value)
+              }}
+              placeholder="Urashaka iki? Urugero: laptop, iPhone, inzu..."
+              aria-label="Shakisha ibicuruzwa"
+              autoFocus
+              className={`min-w-0 flex-1 bg-transparent px-1 py-2 text-sm outline-none placeholder:text-slate-400 ${
+                isDark ? "text-white" : "text-slate-900"
+              }`}
+            />
+            <button
+              type="submit"
+              className="flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-4 text-sm font-bold text-white shadow-md shadow-blue-500/20 transition hover:brightness-105 active:scale-95"
+            >
+              <Icon name="search" size={16} />
+              <span className="hidden sm:inline">Shakisha</span>
+            </button>
+          </form>
         </section>
       )}
     </div>
