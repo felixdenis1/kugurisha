@@ -40,7 +40,7 @@ type LocalIntent = {
   words: string[]
 }
 
-function AISearch() {
+export default function AISearch() {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<Listing[]>([])
   const [loading, setLoading] = useState(false)
@@ -108,7 +108,6 @@ function AISearch() {
 
     for (const pattern of maxPatterns) {
       const match = text.match(pattern)
-
       if (match) {
         maxPrice = parsePrice(match[1])
         break
@@ -124,7 +123,6 @@ function AISearch() {
 
     for (const pattern of minPatterns) {
       const match = text.match(pattern)
-
       if (match) {
         minPrice = parsePrice(match[1])
         break
@@ -226,23 +224,12 @@ function AISearch() {
           }
         )
 
-      console.log("AI response:", data)
-
       if (error) {
         console.error("AI function error:", error)
         return null
       }
 
-      if (!data) {
-        console.error("AI returned no data")
-        return null
-      }
-
-      if (!data.intent) {
-        console.error(
-          "AI response has no intent:",
-          data
-        )
+      if (!data || !data.intent) {
         return null
       }
 
@@ -379,15 +366,8 @@ function AISearch() {
       } = await builder
 
       if (searchError) {
-        console.error(
-          "Supabase listing search error:",
-          searchError
-        )
-
-        setError(
-          "Search yanze. Ongera ugerageze."
-        )
-
+        console.error("Supabase listing search error:", searchError)
+        setError("Search yanze. Ongera ugerageze.")
         setResults([])
         return
       }
@@ -410,9 +390,7 @@ function AISearch() {
 
       if (searchIntent.category) {
         const categorySearch =
-          normalizeText(
-            searchIntent.category
-          )
+          normalizeText(searchIntent.category)
 
         filtered = filtered.filter(
           (listing) => {
@@ -438,9 +416,7 @@ function AISearch() {
 
       if (searchIntent.location) {
         const locationSearch =
-          normalizeText(
-            searchIntent.location
-          )
+          normalizeText(searchIntent.location)
 
         filtered = filtered.filter(
           (listing) => {
@@ -462,9 +438,7 @@ function AISearch() {
 
       if (searchIntent.search_text) {
         const searchWords =
-          normalizeText(
-            searchIntent.search_text
-          )
+          normalizeText(searchIntent.search_text)
             .split(/\s+/)
             .filter(
               (word) => word.length >= 2
@@ -494,15 +468,8 @@ function AISearch() {
 
       setResults(filtered)
     } catch (err) {
-      console.error(
-        "Search exception:",
-        err
-      )
-
-      setError(
-        "Hari ikibazo cyabaye muri search."
-      )
-
+      console.error("Search exception:", err)
+      setError("Hari ikibazo cyabaye muri search.")
       setResults([])
     } finally {
       setLoading(false)
@@ -525,21 +492,10 @@ function AISearch() {
   function formatCondition(condition: string) {
     const normalized = normalizeText(condition)
 
-    if (normalized === "new") {
-      return "Bishya"
-    }
-
-    if (normalized === "used") {
-      return "Byakoreshejwe"
-    }
-
-    if (normalized === "refurbished") {
-      return "Byavuguruwe"
-    }
-
-    if (normalized === "not_applicable") {
-      return ""
-    }
+    if (normalized === "new") return "Bishya"
+    if (normalized === "used") return "Byakoreshejwe"
+    if (normalized === "refurbished") return "Byavuguruwe"
+    if (normalized === "not_applicable") return ""
 
     return condition
   }
@@ -547,17 +503,9 @@ function AISearch() {
   function formatListingType(type: string) {
     const normalized = normalizeText(type)
 
-    if (normalized === "sale") {
-      return "Kugurisha"
-    }
-
-    if (normalized === "free") {
-      return "Ubuntu"
-    }
-
-    if (normalized === "rent") {
-      return "Ubukode"
-    }
+    if (normalized === "sale") return "Kugurisha"
+    if (normalized === "free") return "Ubuntu"
+    if (normalized === "rent") return "Ubukode"
 
     return type
   }
@@ -567,23 +515,13 @@ function AISearch() {
 
     const parts: string[] = []
 
-    if (aiIntent.search_text) {
-      parts.push(`🔎 ${aiIntent.search_text}`)
-    }
-
-    if (aiIntent.category) {
-      parts.push(`📦 ${aiIntent.category}`)
-    }
-
-    if (aiIntent.location) {
-      parts.push(`📍 ${aiIntent.location}`)
-    }
+    if (aiIntent.search_text) parts.push(`Shakisha: "${aiIntent.search_text}"`)
+    if (aiIntent.category) parts.push(`Icyiciro: ${aiIntent.category}`)
+    if (aiIntent.location) parts.push(`Aho biherereye: ${aiIntent.location}`)
 
     if (aiIntent.max_price !== null) {
       parts.push(
-        `💰 kugeza kuri ${new Intl.NumberFormat(
-          "en-RW"
-        ).format(
+        `Kugeza kuri ${new Intl.NumberFormat("en-RW").format(
           aiIntent.max_price
         )} RWF`
       )
@@ -591,23 +529,14 @@ function AISearch() {
 
     if (aiIntent.min_price !== null) {
       parts.push(
-        `💰 guhera kuri ${new Intl.NumberFormat(
-          "en-RW"
-        ).format(
+        `Guhera kuri ${new Intl.NumberFormat("en-RW").format(
           aiIntent.min_price
         )} RWF`
       )
     }
 
-    if (aiIntent.condition) {
-      parts.push(`🏷️ ${aiIntent.condition}`)
-    }
-
-    if (aiIntent.listing_type) {
-      parts.push(
-        `📋 ${aiIntent.listing_type}`
-      )
-    }
+    if (aiIntent.condition) parts.push(`Imiterere: ${aiIntent.condition}`)
+    if (aiIntent.listing_type) parts.push(`Ubwoko: ${aiIntent.listing_type}`)
 
     return parts.join(" • ")
   }
@@ -619,97 +548,109 @@ function AISearch() {
   ]
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="relative min-h-screen overflow-hidden kg-bg kg-text transition-colors duration-300">
+      {/* GLOBAL BACKGROUND ACCENTS */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute left-[8%] top-[8%] h-[34rem] w-[34rem] rounded-full bg-[#569ab5]/10 blur-[120px]" />
+        <div className="absolute right-[4%] top-[22%] h-[32rem] w-[32rem] rounded-full bg-slate-500/10 blur-[120px]" />
+        <div className="absolute bottom-[5%] left-[35%] h-[36rem] w-[36rem] rounded-full bg-[#569ab5]/10 blur-[130px]" />
+      </div>
+
       {/* HEADER */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950 text-white shadow-lg">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 border-b kg-border kg-surface backdrop-blur-2xl">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
           <Link
             to="/"
-            className="group flex items-center gap-3"
+            className="group inline-flex items-center gap-3 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#569ab5]"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-sm font-black text-slate-950 shadow-lg transition group-hover:scale-105">
-              K
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-500/10 via-[#569ab5]/15 to-[#427c94]/20 p-1 border border-[#569ab5]/30">
+              <img
+                src="/favicon.svg"
+                alt=""
+                className="h-full w-full object-contain rounded-full bg-transparent"
+              />
             </div>
-
-            <div>
-              <div className="text-lg font-black tracking-tight sm:text-xl">
-                KUGURISHA.COM
-              </div>
-              <div className="hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400 sm:block">
-                Isoko ryawe ryo mu Rwanda
-              </div>
-            </div>
+            <span className="text-2xl font-black tracking-[-0.07em] bg-gradient-to-r from-slate-500 via-[#569ab5] to-[#36677b] dark:from-slate-300 dark:via-[#569ab5] dark:to-[#73afc9] bg-clip-text text-transparent">
+              KUGURISHA
+            </span>
           </Link>
 
           <Link
             to="/"
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"
+            className="inline-flex items-center gap-2 rounded-2xl border kg-border kg-surface px-4 py-2 text-xs font-bold kg-text shadow-sm transition hover:border-[#569ab5]"
           >
-            ← Ahabanza
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Ahabanza
           </Link>
         </div>
       </header>
 
       {/* HERO */}
-      <section className="relative overflow-hidden bg-slate-950 pb-24 pt-14 text-white sm:pt-20">
-        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
-        <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-5xl px-4 text-center sm:px-6">
-          <div className="mx-auto mb-5 flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-blue-200 backdrop-blur">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500/20">
-              ✨
-            </span>
-            AI Search ya KUGURISHA.COM
+      <section className="relative overflow-hidden bg-slate-950 text-white py-14 px-4 sm:px-6 lg:py-20">
+        <div className="relative mx-auto max-w-4xl text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#73afc9] backdrop-blur-md">
+            <svg className="w-4 h-4 text-[#73afc9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            AI Search ya KUGURISHA
           </div>
 
-          <h1 className="text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">
-            Bwira AI icyo
-            <span className="block text-blue-400">
-              ushaka kugura.
-            </span>
+          <h1 className="text-3xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+            Bwira AI icyo <span className="block text-[#73afc9] mt-1">ushaka kugura.</span>
           </h1>
 
-          <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-            Andika ibyo ushaka mu buryo busanzwe.
-            AI irabisesengura, igashaka mu bicuruzwa
-            biri kuri KUGURISHA.COM.
+          <p className="mx-auto mt-4 max-w-xl text-xs sm:text-sm text-slate-400">
+            Andika ibyo ushaka mu buryo busanzwe. AI irabisesengura, igashaka mu bicuruzwa biri ku isoko.
           </p>
 
           {/* SEARCH BOX */}
-          <div className="mx-auto mt-9 max-w-4xl">
+          <div className="mx-auto mt-8 max-w-3xl">
             <div className="rounded-3xl border border-white/10 bg-white/10 p-2 shadow-2xl backdrop-blur-xl">
               <div className="flex flex-col gap-2 sm:flex-row">
                 <div className="relative flex-1">
-                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-xl">
-                    🔎
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
                   </span>
 
                   <input
                     value={query}
-                    onChange={(event) =>
-                      setQuery(event.target.value)
-                    }
+                    onChange={(event) => setQuery(event.target.value)}
                     onKeyDown={(event) => {
-                      if (
-                        event.key === "Enter"
-                      ) {
-                        searchListings()
+                      if (event.key === "Enter") {
+                        void searchListings()
                       }
                     }}
                     placeholder="Urugero: Ndashaka iPhone munsi ya 500k mu Kigali"
-                    className="min-h-14 w-full rounded-2xl border border-white/10 bg-white px-12 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/20"
+                    className="min-h-14 w-full rounded-2xl border border-white/10 bg-white px-12 pr-4 text-xs sm:text-sm font-bold text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[#569ab5] focus:ring-4 focus:ring-[#569ab5]/20"
                   />
                 </div>
 
                 <button
-                  onClick={searchListings}
+                  type="button"
+                  onClick={() => void searchListings()}
                   disabled={loading}
-                  className="min-h-14 rounded-2xl bg-blue-500 px-7 text-sm font-black text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-h-14 flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#4b8aa3] via-[#569ab5] to-[#36677b] px-7 text-xs font-black text-white shadow-lg shadow-[#569ab5]/25 transition hover:scale-[1.01] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {loading
-                    ? "🤖 Irashakisha..."
-                    : "✨ Shakisha"}
+                  {loading ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <span>Irashakisha...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                      <span>Shakisha</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -719,11 +660,13 @@ function AISearch() {
               {examples.map((example) => (
                 <button
                   key={example}
-                  onClick={() =>
-                    setQuery(example)
-                  }
-                  className="rounded-full border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-semibold text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
+                  type="button"
+                  onClick={() => setQuery(example)}
+                  className="rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-[11px] font-semibold text-slate-300 transition hover:border-[#569ab5]/40 hover:bg-white/10 hover:text-white flex items-center gap-1.5"
                 >
+                  <svg className="w-3 h-3 text-[#73afc9]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
                   {example}
                 </button>
               ))}
@@ -733,20 +676,21 @@ function AISearch() {
       </section>
 
       {/* CONTENT */}
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
         {/* AI STATUS */}
         {loading && aiStatus && (
-          <div className="mx-auto mb-6 max-w-4xl">
-            <div className="flex items-center gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-              <div className="flex h-11 w-11 shrink-0 animate-pulse items-center justify-center rounded-2xl bg-blue-100 text-xl">
-                🤖
+          <div className="mx-auto mb-6 max-w-3xl">
+            <div className="flex items-center gap-4 rounded-3xl border border-[#569ab5]/20 bg-[#569ab5]/10 p-4 backdrop-blur-xl">
+              <div className="flex h-11 w-11 shrink-0 animate-pulse items-center justify-center rounded-2xl bg-[#569ab5]/20 text-[#569ab5]">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
               </div>
-
               <div>
-                <p className="text-sm font-black text-blue-950">
+                <p className="text-xs font-black uppercase tracking-wider text-[#427c94] dark:text-[#73afc9]">
                   AI irakumva...
                 </p>
-                <p className="mt-0.5 text-xs text-blue-700">
+                <p className="mt-0.5 text-xs font-medium kg-text-secondary">
                   {aiStatus}
                 </p>
               </div>
@@ -756,17 +700,18 @@ function AISearch() {
 
         {/* ERROR */}
         {error && !loading && (
-          <div className="mx-auto mb-6 max-w-4xl">
-            <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100">
-                ⚠️
+          <div className="mx-auto mb-6 max-w-3xl">
+            <div className="flex items-start gap-3 rounded-3xl border border-amber-500/20 bg-amber-500/10 p-4 backdrop-blur-xl">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-amber-500/20 kg-surface text-amber-600 dark:text-amber-400 shadow-sm">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
               </div>
-
               <div>
-                <p className="text-sm font-black text-amber-950">
+                <p className="text-xs font-black uppercase tracking-wider text-amber-900 dark:text-amber-300">
                   Icyitonderwa
                 </p>
-                <p className="mt-1 text-sm text-amber-800">
+                <p className="mt-1 text-xs font-medium text-amber-800/90 dark:text-amber-200/80">
                   {error}
                 </p>
               </div>
@@ -775,122 +720,111 @@ function AISearch() {
         )}
 
         {/* AI INTERPRETATION */}
-        {searched &&
-          !loading &&
-          aiIntent && (
-            <section className="mx-auto mb-10 max-w-4xl">
-              <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                <div className="border-b border-slate-100 bg-slate-50 px-5 py-4 sm:px-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-xl shadow-sm">
-                      🤖
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
-                        AI Assistant
-                      </p>
-                      <h2 className="font-black text-slate-950">
-                        AI yumvise ibyo ushaka
-                      </h2>
-                    </div>
-                  </div>
+        {searched && !loading && aiIntent && (
+          <section className="mx-auto mb-8 max-w-3xl">
+            <div className="overflow-hidden rounded-3xl border kg-border kg-surface shadow-xl backdrop-blur-xl">
+              <div className="border-b kg-border px-5 py-4 sm:px-6 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#569ab5]/10 text-[#569ab5]">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
                 </div>
-
-                <div className="px-5 py-5 sm:px-6">
-                  <p className="text-sm leading-7 text-slate-600">
-                    {formatIntent()}
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-[#427c94] dark:text-[#73afc9]">
+                    AI Assistant
                   </p>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {aiIntent.category && (
-                      <span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
-                        📦 {aiIntent.category}
-                      </span>
-                    )}
-
-                    {aiIntent.location && (
-                      <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                        📍 {aiIntent.location}
-                      </span>
-                    )}
-
-                    {aiIntent.max_price !== null && (
-                      <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">
-                        💰 ≤{" "}
-                        {new Intl.NumberFormat(
-                          "en-RW"
-                        ).format(
-                          aiIntent.max_price
-                        )}{" "}
-                        RWF
-                      </span>
-                    )}
-
-                    {aiIntent.min_price !== null && (
-                      <span className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-700">
-                        💰 ≥{" "}
-                        {new Intl.NumberFormat(
-                          "en-RW"
-                        ).format(
-                          aiIntent.min_price
-                        )}{" "}
-                        RWF
-                      </span>
-                    )}
-                  </div>
+                  <h2 className="text-sm font-black kg-text">
+                    AI yumvise ibyo ushaka
+                  </h2>
                 </div>
               </div>
-            </section>
-          )}
+
+              <div className="p-5 sm:p-6">
+                <p className="text-xs sm:text-sm font-medium leading-relaxed kg-text-secondary">
+                  {formatIntent()}
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {aiIntent.category && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#569ab5]/20 bg-[#569ab5]/10 px-3 py-1 text-xs font-bold text-[#36677b] dark:text-[#73afc9]">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                      {aiIntent.category}
+                    </span>
+                  )}
+                  {aiIntent.location && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#569ab5]/20 bg-[#569ab5]/10 px-3 py-1 text-xs font-bold text-[#36677b] dark:text-[#73afc9]">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      {aiIntent.location}
+                    </span>
+                  )}
+                  {aiIntent.max_price !== null && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      ≤ {new Intl.NumberFormat("en-RW").format(aiIntent.max_price)} RWF
+                    </span>
+                  )}
+                  {aiIntent.min_price !== null && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      ≥ {new Intl.NumberFormat("en-RW").format(aiIntent.min_price)} RWF
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* RESULTS */}
         {searched && !loading && (
           <section>
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#427c94] dark:text-[#73afc9]">
                   Ibyabonetse
                 </p>
-
-                <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+                <h2 className="text-2xl font-black tracking-tight kg-text">
                   Search results
                 </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  {results.length}{" "}
-                  {results.length === 1
-                    ? "listing"
-                    : "listings"}{" "}
-                  zabonetse
+                <p className="text-xs font-medium kg-text-secondary">
+                  {results.length} {results.length === 1 ? "listing" : "listings"} zabonetse
                 </p>
               </div>
 
               {results.length > 0 && (
-                <div className="rounded-xl bg-white px-3 py-2 text-xs font-bold text-slate-500 shadow-sm ring-1 ring-slate-200">
-                  ✨ AI yatoranyije ibisubizo
+                <div className="inline-flex items-center gap-1.5 rounded-2xl border kg-border kg-surface px-3 py-1.5 text-[11px] font-bold kg-text-secondary shadow-sm">
+                  <svg className="w-3.5 h-3.5 text-[#569ab5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                  <span>AI yatoranyije ibisubizo</span>
                 </div>
               )}
             </div>
 
             {results.length === 0 ? (
-              <div className="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-white px-6 py-14 text-center shadow-sm">
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100 text-4xl">
-                  🔍
+              <div className="mx-auto max-w-xl rounded-3xl border kg-border kg-surface px-6 py-14 text-center shadow-xl backdrop-blur-xl">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border kg-border kg-bg-secondary text-[#569ab5]">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </div>
-
-                <h3 className="mt-6 text-xl font-black text-slate-950">
-                  Nta listing ihuye
-                  n&apos;ibyo washakaga.
+                <h3 className="mt-5 text-base font-black kg-text">
+                  Nta listing ihuye n&apos;ibyo washakaga.
                 </h3>
-
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                  Gerageza guhindura amagambo
-                  wakoresheje, igiciro cyangwa
-                  location.
+                <p className="mx-auto mt-1.5 max-w-sm text-xs font-medium kg-text-secondary">
+                  Gerageza guhindura amagambo wakoresheje, igiciro cyangwa location.
                 </p>
-
                 <button
+                  type="button"
                   onClick={() => {
                     setQuery("")
                     setSearched(false)
@@ -898,99 +832,87 @@ function AISearch() {
                     setAiIntent(null)
                     setError("")
                   }}
-                  className="mt-6 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+                  className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#4b8aa3] via-[#569ab5] to-[#36677b] px-5 py-2.5 text-xs font-black text-white shadow-lg shadow-[#569ab5]/25 transition hover:scale-105"
                 >
-                  Ongera ushakishe
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Ongera ushakishe</span>
                 </button>
               </div>
             ) : (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {results.map((listing) => (
                   <Link
                     key={listing.id}
                     to={`/listing/${listing.id}`}
-                    className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                    className="group overflow-hidden rounded-3xl border kg-border kg-surface shadow-xl backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-[#569ab5]/50"
                   >
                     {/* IMAGE PLACEHOLDER */}
-                    <div className="relative flex h-48 items-center justify-center overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
-                      <div className="text-5xl transition duration-300 group-hover:scale-110">
-                        🛍️
+                    <div className="relative flex h-44 items-center justify-center overflow-hidden kg-bg-secondary text-[#569ab5]/40">
+                      <svg className="w-12 h-12 transition duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                      </svg>
+
+                      <div className="absolute left-3 top-3 rounded-full border kg-border kg-surface px-2.5 py-1 text-[9px] font-black uppercase tracking-wide kg-text shadow-sm backdrop-blur-md">
+                        {listing.category?.name || "Ibindi"}
                       </div>
 
-                      <div className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wide text-slate-700 shadow-sm backdrop-blur">
-                        {listing.category?.name ||
-                          "Ibindi"}
-                      </div>
-
-                      {listing.status ===
-                        "active" && (
-                        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-emerald-500 px-2.5 py-1.5 text-[10px] font-black text-white shadow-sm">
-                          <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                      {listing.status === "active" && (
+                        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-[#569ab5] px-2.5 py-1 text-[9px] font-black text-white shadow-sm">
+                          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                           Biracyahari
                         </div>
                       )}
                     </div>
 
                     {/* CARD BODY */}
-                    <div className="p-5">
-                      <h3 className="line-clamp-2 min-h-12 text-base font-black leading-6 text-slate-950 transition group-hover:text-blue-600">
+                    <div className="p-4 sm:p-5">
+                      <h3 className="line-clamp-2 min-h-[2.5rem] text-xs sm:text-sm font-black leading-snug kg-text transition group-hover:text-[#569ab5]">
                         {listing.title}
                       </h3>
 
-                      <p className="mt-3 text-xl font-black tracking-tight text-slate-950">
-                        {formatPrice(
-                          listing.price,
-                          listing.currency
-                        )}
+                      <p className="mt-2 text-base sm:text-lg font-black tracking-tight kg-text">
+                        {formatPrice(listing.price, listing.currency)}
                       </p>
 
-                      <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
-                        <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                          <span>📍</span>
+                      <div className="mt-3 space-y-1.5 border-t kg-border pt-3">
+                        <div className="flex items-center gap-2 text-[11px] font-medium kg-text-secondary">
+                          <svg className="w-3.5 h-3.5 shrink-0 text-[#569ab5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          </svg>
                           <span className="line-clamp-1">
                             {[
-                              listing.location
-                                ?.district,
-                              listing.location
-                                ?.sector,
+                              listing.location?.district,
+                              listing.location?.sector,
                             ]
                               .filter(Boolean)
-                              .join(", ") ||
-                              "Location ntashyizweho"}
+                              .join(", ") || "Location ntashyizweho"}
                           </span>
                         </div>
 
-                        {listing.condition &&
-                          listing.condition !==
-                            "not_applicable" && (
-                            <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                              <span>🏷️</span>
-                              <span>
-                                {formatCondition(
-                                  listing.condition
-                                )}
-                              </span>
-                            </div>
-                          )}
+                        {listing.condition && listing.condition !== "not_applicable" && (
+                          <div className="flex items-center gap-2 text-[11px] font-medium kg-text-secondary">
+                            <svg className="w-3.5 h-3.5 shrink-0 text-[#569ab5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                            </svg>
+                            <span>{formatCondition(listing.condition)}</span>
+                          </div>
+                        )}
 
                         {listing.listing_type && (
-                          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                            <span>📋</span>
-                            <span>
-                              {formatListingType(
-                                listing.listing_type
-                              )}
-                            </span>
+                          <div className="flex items-center gap-2 text-[11px] font-medium kg-text-secondary">
+                            <svg className="w-3.5 h-3.5 shrink-0 text-[#569ab5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            <span>{formatListingType(listing.listing_type)}</span>
                           </div>
                         )}
                       </div>
 
-                      <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-                        <span className="text-xs font-bold text-slate-400">
-                          Reba ibisobanuro
-                        </span>
-
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm transition group-hover:bg-blue-600 group-hover:text-white">
+                      <div className="mt-4 flex items-center justify-between border-t kg-border pt-3">
+                        <span className="text-[11px] font-bold kg-text-muted">Reba ibisobanuro</span>
+                        <span className="flex h-7 w-7 items-center justify-center rounded-xl kg-bg-secondary text-xs font-bold transition group-hover:bg-[#569ab5] group-hover:text-white">
                           →
                         </span>
                       </div>
@@ -1004,38 +926,48 @@ function AISearch() {
 
         {/* INITIAL STATE */}
         {!searched && !loading && (
-          <section className="mx-auto max-w-4xl py-8">
+          <section className="mx-auto max-w-4xl py-6">
             <div className="grid gap-4 sm:grid-cols-3">
               {[
                 {
-                  icon: "💬",
+                  icon: (
+                    <svg className="w-6 h-6 text-[#569ab5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                  ),
                   title: "Andika uko ubishaka",
                   text: "Ntugomba kumenya category nyayo.",
                 },
                 {
-                  icon: "🤖",
+                  icon: (
+                    <svg className="w-6 h-6 text-[#569ab5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  ),
                   title: "AI irabisesengura",
                   text: "AI imenya ibyo ushaka n'ibisabwa.",
                 },
                 {
-                  icon: "🎯",
+                  icon: (
+                    <svg className="w-6 h-6 text-[#569ab5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ),
                   title: "Shaka ibisubizo",
                   text: "Uhabwa listings zijyanye n'icyo ushaka.",
                 },
               ].map((item) => (
                 <div
                   key={item.title}
-                  className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+                  className="rounded-3xl border kg-border kg-surface p-6 shadow-xl backdrop-blur-xl"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-2xl">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border kg-border kg-bg-secondary">
                     {item.icon}
                   </div>
-
-                  <h3 className="mt-5 font-black text-slate-950">
+                  <h3 className="mt-4 text-sm font-black kg-text">
                     {item.title}
                   </h3>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                  <p className="mt-1.5 text-xs font-medium leading-relaxed kg-text-secondary">
                     {item.text}
                   </p>
                 </div>
@@ -1046,27 +978,26 @@ function AISearch() {
       </main>
 
       {/* FOOTER */}
-      <footer className="mt-10 border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+      <footer className="mt-12 border-t kg-border kg-surface backdrop-blur-2xl">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div>
-            <p className="font-black text-slate-950">
-              KUGURISHA.COM
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Isoko ryawe ryo mu Rwanda 🇷🇼
+            <span className="text-xl font-black tracking-[-0.07em] bg-gradient-to-r from-slate-500 via-[#569ab5] to-[#36677b] dark:from-slate-300 dark:via-[#569ab5] dark:to-[#73afc9] bg-clip-text text-transparent">
+              KUGURISHA
+            </span>
+            <p className="mt-1 text-xs font-bold kg-text-muted">
+              Isoko ryawe ryo mu Rwanda
             </p>
           </div>
 
           <Link
             to="/"
-            className="text-sm font-bold text-slate-500 transition hover:text-slate-950"
+            className="text-xs font-bold kg-text-secondary transition hover:text-[#569ab5] flex items-center gap-1"
           >
-            Ahabanza →
+            <span>Ahabanza</span>
+            <span>→</span>
           </Link>
         </div>
       </footer>
     </div>
   )
 }
-
-export default AISearch

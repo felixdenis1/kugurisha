@@ -1,8 +1,9 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "../services/supabase"
 
 function Register() {
+  const navigate = useNavigate()
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -18,7 +19,7 @@ function Register() {
     setMessage("")
     setSuccess(false)
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -36,10 +37,20 @@ function Register() {
     }
 
     setSuccess(true)
-    setMessage(
-      "Konti yakozwe neza. Reba email yawe niba verification isabwa."
-    )
     setLoading(false)
+
+    // Check if session exists (Confirm email is OFF in Supabase dashboard)
+    if (data.session) {
+      setMessage("Konti yakozwe neza! Turimo kukujyana ahatangirira...")
+      setTimeout(() => {
+        navigate("/home") // Change "/home" if your home route uses a different path (e.g. "/")
+      }, 1000)
+    } else {
+      // If email confirmation is still ON in Supabase dashboard
+      setMessage(
+        "Konti yakozwe neza. Reba email yawe niba verification isabwa."
+      )
+    }
   }
 
   return (
