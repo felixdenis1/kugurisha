@@ -1,3 +1,5 @@
+// src/pages/Home.tsx
+
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import Header from "../components/Header"
@@ -108,7 +110,7 @@ function Icon({
         <svg {...common}>
           <path d="M4 10v9h16v-9" />
           <path d="M3 10 5 4h14l2 6" />
-          <path d="M3 10a3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 3 0" />
+          <path d="M3 10a3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 3 0" />
           <path d="M9 19v-5h6v5" />
         </svg>
       )
@@ -549,10 +551,10 @@ export default function Home() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(86,154,181,0.12),transparent_40%),radial-gradient(circle_at_75%_75%,rgba(66,124,148,0.1),transparent_40%)]" />
           <div className="kug-glow absolute h-72 w-72 rounded-full bg-[#569ab5]/20 blur-3xl sm:h-96 sm:w-96" />
           <div className="kug-reveal relative flex flex-col items-center px-6 text-center">
-            <div className="mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-slate-500/10 via-[#569ab5]/15 to-[#36677b]/20 p-2 border border-[#569ab5]/40 shadow-xl sm:h-36 sm:w-36">
+            <div className="mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-transparent border-transparent sm:h-36 sm:w-36">
               <img src="/favicon.svg" alt="" className="h-full w-full object-contain rounded-full bg-transparent transition-transform duration-300 hover:scale-105" />
             </div>
-            <div className="text-3xl font-black tracking-[-0.07em] sm:text-5xl bg-gradient-to-r from-slate-500 via-[#569ab5] to-[#36677b] dark:from-slate-300 dark:via-[#569ab5] dark:to-[#73afc9] bg-clip-text text-transparent">
+            <div className="text-3xl font-black tracking-[-0.07em] sm:text-5xl bg-gradient-to-r from-slate-700 via-[#569ab5] to-[#36677b] dark:from-slate-300 dark:via-[#569ab5] dark:to-[#73afc9] bg-clip-text text-transparent">
               KUGURISHA
             </div>
             <p className="mt-2.5 text-[11px] font-black uppercase tracking-[0.3em] text-[#569ab5] dark:text-[#73afc9]">Isoko ryawe ryo mu Rwanda</p>
@@ -564,23 +566,19 @@ export default function Home() {
         </div>
       )}
 
-      {/* ================= UNIFIED CONTAINER WITH BACKGROUND IMAGE & TOP-LEFT GRADIENT ================= */}
+      {/* ================= UNIFIED CONTAINER WITH HIGH-CONTRAST BACKGROUND & VIVID RIGHT-TOP TO DOWN GRADIENT ================= */}
       <div className="relative overflow-hidden">
         
-        {/* CLEAR PUBLIC IMAGE LAYER (/homeimg.png) WITH MINIMAL BLUR */}
+        {/* BACKGROUND IMAGE LAYER (/homeimg.png) WITH HIGH VISIBILITY & MINIMAL BLUR */}
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden select-none">
           <img
             src="/homeimg.png"
             alt=""
-            className="h-full w-full object-cover object-center opacity-65 filter blur-[2px] scale-102"
+            className="h-full w-full object-cover object-center opacity-90 filter blur-[0.5px] scale-102"
           />
-          {/* SMOOTH LINEAR GRADIENT OVERLAY FROM TOP-LEFT SIDE */}
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-950/50 to-transparent" />
+          {/* HIGHLY VIVID LINEAR GRADIENT OVERLAY FROM RIGHT-TOP TO DOWN */}
+          <div className="absolute inset-0 bg-gradient-to-bl from-transparent via-white/30 to-white/95 dark:from-transparent dark:via-slate-950/40 dark:to-slate-950/95" />
         </div>
-
-        {/* Subtle Ambient Accent Glows */}
-        <div className="pointer-events-none absolute -left-20 top-1/4 h-96 w-96 rounded-full bg-[#569ab5]/15 blur-2xl" />
-        <div className="pointer-events-none absolute -right-20 bottom-10 h-96 w-96 rounded-full bg-[#427c94]/15 blur-2xl" />
 
         {/* HEADER CONTAINER */}
         <div className="relative z-20">
@@ -593,13 +591,13 @@ export default function Home() {
           />
         </div>
 
-        {/* BRAND LOGO SECTION (LIGHT BACKDROP BLUR TO SHOW BACKGROUND) */}
+        {/* BRAND LOGO SECTION (NO BOX CONTAINER) */}
         <section className="relative z-10 pt-6 pb-2 px-4 sm:px-6 max-w-7xl mx-auto">
           <Link
             to="/"
-            className="group relative inline-flex items-center gap-4 rounded-3xl border border-white/20 bg-slate-900/40 px-6 py-4 shadow-md backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] hover:border-[#569ab5]/60 hover:bg-slate-900/60"
+            className="group relative inline-flex items-center gap-4 bg-transparent px-2 py-2 transition-all duration-300 hover:scale-[1.02]"
           >
-            <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-full bg-slate-900/50 p-2 border border-[#569ab5]/40 transition-all duration-500 group-hover:scale-105 group-hover:border-[#569ab5]/80">
+            <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-full bg-transparent p-2 transition-all duration-500 group-hover:scale-105">
               <img
                 src="/favicon.svg"
                 alt="KUGURISHA Logo"
@@ -612,17 +610,17 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col justify-center">
-              <span className="text-3xl sm:text-4xl font-black tracking-[-0.07em] leading-none bg-gradient-to-r from-white via-slate-100 to-[#73afc9] bg-clip-text text-transparent transition-all duration-300 group-hover:brightness-110">
+              <span className="text-3xl sm:text-4xl font-black tracking-[-0.07em] leading-none bg-gradient-to-r from-slate-900 via-slate-800 to-[#427c94] dark:from-white dark:via-slate-100 dark:to-[#73afc9] bg-clip-text text-transparent transition-all duration-300 group-hover:brightness-110">
                 KUGURISHA
               </span>
-              <span className="mt-1 text-[10px] sm:text-xs font-black tracking-[0.3em] text-[#73afc9] uppercase opacity-95">
+              <span className="mt-1 text-[10px] sm:text-xs font-black tracking-[0.3em] text-[#427c94] dark:text-[#73afc9] uppercase opacity-95">
                 Isoko ryawe ryo mu Rwanda
               </span>
             </div>
           </Link>
         </section>
 
-        {/* HERO + LISTINGS SLIDER SECTION */}
+        {/* HERO + LISTINGS SLIDER SECTION (NO BOX CONTAINERS) */}
         <section
           id="listings"
           className="relative z-10 py-8 sm:py-12"
@@ -630,25 +628,25 @@ export default function Home() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="grid items-stretch gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:gap-8">
 
-              {/* LEFT CONTAINER: Hero Intro (Lightened blur to reveal image) */}
-              <div className="kug-reveal relative flex flex-col justify-between overflow-hidden rounded-[2.2rem] border border-white/20 bg-slate-900/40 p-7 sm:p-9 shadow-xl backdrop-blur-sm">
+              {/* LEFT CONTAINER: Hero Intro (Transparent, no card container box) */}
+              <div className="kug-reveal relative flex flex-col justify-between bg-transparent p-2 sm:p-4">
                 <div>
-                  <div className="inline-flex items-center gap-2.5 rounded-full border border-[#569ab5]/40 bg-[#569ab5]/20 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-[#73afc9] shadow-sm">
+                  <div className="inline-flex items-center gap-2.5 rounded-full border border-[#569ab5]/40 bg-[#569ab5]/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-[#427c94] dark:text-[#73afc9] shadow-sm backdrop-blur-sm">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-[#427c94] to-[#36677b] text-white shadow-sm">
                       <Icon name="check" size={11} strokeWidth={3} />
                     </span>
                     Isoko ryawe ryo mu Rwanda
                   </div>
 
-                  <h1 className="mt-6 text-4xl font-black leading-[1.06] tracking-[-0.05em] text-white sm:text-5xl lg:text-[52px]">
+                  <h1 className="mt-6 text-4xl font-black leading-[1.06] tracking-[-0.05em] text-slate-900 dark:text-white sm:text-5xl lg:text-[52px]">
                     Gura icyo ushaka.
                     <br />
-                    <span className="bg-gradient-to-r from-slate-200 via-[#73afc9] to-white bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-blue-600 via-[#569ab5] to-[#36677b] dark:from-slate-200 dark:via-[#73afc9] dark:to-white bg-clip-text text-transparent">
                       Gurisha icyo ufite.
                     </span>
                   </h1>
 
-                  <p className="mt-5 text-sm leading-relaxed text-slate-200 sm:text-base font-medium">
+                  <p className="mt-5 text-sm leading-relaxed text-slate-700 dark:text-slate-200 sm:text-base font-semibold">
                     KUGURISHA.COM ni urubuga ruhuza abaguzi n'abagurisha mu Rwanda, ahantu hamwe kandi mu buryo bworoshye.
                   </p>
 
@@ -663,7 +661,7 @@ export default function Home() {
 
                     <Link
                       to="/ai-search"
-                      className="group flex items-center gap-2.5 rounded-2xl border border-white/20 bg-slate-900/30 px-6 py-3.5 text-sm font-bold text-[#73afc9] shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#569ab5]/50 hover:bg-[#569ab5]/20"
+                      className="group flex items-center gap-2.5 rounded-2xl border border-slate-300 dark:border-white/20 bg-white/40 dark:bg-slate-900/30 px-6 py-3.5 text-sm font-bold text-[#427c94] dark:text-[#73afc9] shadow-sm backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[#569ab5]/50 hover:bg-[#569ab5]/10"
                     >
                       <Icon name="spark" size={17} />
                       <span>Baza AI</span>
@@ -671,21 +669,21 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-white/15 pt-6 text-xs font-semibold text-slate-200">
+                <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-slate-300/60 dark:border-white/15 pt-6 text-xs font-bold text-slate-700 dark:text-slate-200">
                   <span className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#569ab5]/20 text-[#73afc9]">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#569ab5]/20 text-[#427c94] dark:text-[#73afc9]">
                       <Icon name="shield" size={13} strokeWidth={2.2} />
                     </span>
                     Byoroshye gukoresha
                   </span>
                   <span className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#427c94]/20 text-[#73afc9]">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#427c94]/20 text-[#427c94] dark:text-[#73afc9]">
                       <Icon name="users" size={13} strokeWidth={2.2} />
                     </span>
                     Abaguzi n'abagurisha
                   </span>
                   <span className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-700/50 text-slate-200">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-300/60 dark:bg-slate-700/50 text-slate-800 dark:text-slate-200">
                       <Icon name="map-pin" size={13} strokeWidth={2.2} />
                     </span>
                     Mu Rwanda
@@ -693,18 +691,18 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* RIGHT CONTAINER: Slider Container (Reduced blur to show background image clearly) */}
-              <div className="kug-float relative flex flex-col justify-between overflow-hidden rounded-[2.2rem] border border-white/20 bg-slate-900/40 p-7 sm:p-9 shadow-xl backdrop-blur-sm min-w-0">
+              {/* RIGHT CONTAINER: Slider Container (Transparent, no card container box) */}
+              <div className="kug-float relative flex flex-col justify-between bg-transparent p-2 sm:p-4 min-w-0">
                 <div className="mb-5 flex items-end justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#73afc9]">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#427c94] dark:text-[#73afc9]">
                       Kugezweho
                     </p>
-                    <h2 className="mt-1 text-2xl font-black tracking-[-0.03em] text-white sm:text-3xl">
+                    <h2 className="mt-1 text-2xl font-black tracking-[-0.03em] text-slate-900 dark:text-white sm:text-3xl">
                       Ibicuruzwa bishya
                     </h2>
                   </div>
-                  <span className="hidden text-xs font-bold text-slate-200 sm:block">
+                  <span className="hidden text-xs font-bold text-slate-700 dark:text-slate-200 sm:block">
                     Reba ibiri ku isoko →
                   </span>
                 </div>
@@ -712,12 +710,12 @@ export default function Home() {
                 {loading ? (
                   <div className="flex gap-4 overflow-hidden py-2">
                     {[1, 2].map((item) => (
-                      <div key={item} className="w-[245px] shrink-0 overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-900/40 p-2 shadow-sm">
-                        <div className="h-44 animate-pulse rounded-2xl bg-white/10" />
+                      <div key={item} className="w-[245px] shrink-0 overflow-hidden rounded-[1.75rem] border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-slate-900/40 p-2 shadow-sm">
+                        <div className="h-44 animate-pulse rounded-2xl bg-slate-200 dark:bg-white/10" />
                         <div className="space-y-3 p-4">
-                          <div className="h-4 animate-pulse rounded-lg bg-white/10" />
-                          <div className="h-4 w-2/3 animate-pulse rounded-lg bg-white/10" />
-                          <div className="h-3 w-1/2 animate-pulse rounded-lg bg-white/10" />
+                          <div className="h-4 animate-pulse rounded-lg bg-slate-200 dark:bg-white/10" />
+                          <div className="h-4 w-2/3 animate-pulse rounded-lg bg-slate-200 dark:bg-white/10" />
+                          <div className="h-3 w-1/2 animate-pulse rounded-lg bg-slate-200 dark:bg-white/10" />
                         </div>
                       </div>
                     ))}
@@ -731,14 +729,14 @@ export default function Home() {
                       <Link
                         key={listing.id}
                         to={`/listing/${listing.id}`}
-                        className="group relative w-[235px] shrink-0 snap-start overflow-hidden rounded-[1.75rem] border border-white/20 bg-slate-900/80 p-2.5 transition-all duration-300 hover:-translate-y-1.5 hover:border-[#569ab5] hover:shadow-2xl sm:w-[255px]"
+                        className="group relative w-[235px] shrink-0 snap-start overflow-hidden rounded-[1.75rem] border border-slate-200/80 dark:border-white/20 bg-white/95 dark:bg-slate-900/90 p-2.5 transition-all duration-300 hover:-translate-y-1.5 hover:border-[#569ab5] hover:shadow-2xl sm:w-[255px]"
                       >
-                        <div className="relative h-44 overflow-hidden rounded-2xl bg-slate-800">
+                        <div className="relative h-44 overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
                           {images[listing.id] ? (
                             <img src={images[listing.id]} alt={listing.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
                           ) : (
-                            <div className="flex h-full items-center justify-center bg-slate-800">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-slate-300 shadow-sm border border-white/10">
+                            <div className="flex h-full items-center justify-center bg-slate-100 dark:bg-slate-800">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 shadow-sm border border-slate-200 dark:border-white/10">
                                 <Icon name="shopping-bag" size={24} />
                               </div>
                             </div>
@@ -749,21 +747,21 @@ export default function Home() {
                         </div>
 
                         <div className="p-3.5">
-                          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-black leading-5 text-white transition-colors group-hover:text-[#73afc9]">
+                          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-black leading-5 text-slate-900 dark:text-white transition-colors group-hover:text-[#427c94] dark:group-hover:text-[#73afc9]">
                             {listing.title}
                           </h3>
-                          <p className="mt-2 bg-gradient-to-r from-white via-[#73afc9] to-slate-200 bg-clip-text text-base font-black text-transparent">
+                          <p className="mt-2 bg-gradient-to-r from-blue-600 via-[#569ab5] to-[#36677b] dark:from-white dark:via-[#73afc9] dark:to-slate-200 bg-clip-text text-base font-black text-transparent">
                             {formatPrice(listing)}
                           </p>
-                          <p className="mt-2 flex items-center gap-1.5 truncate text-[11px] font-semibold text-slate-200">
-                            <Icon name="map-pin" size={13} className="text-[#73afc9] shrink-0" />
+                          <p className="mt-2 flex items-center gap-1.5 truncate text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                            <Icon name="map-pin" size={13} className="text-[#427c94] dark:text-[#73afc9] shrink-0" />
                             {formatLocation(listing)}
                           </p>
-                          <div className="mt-3.5 flex items-center justify-between border-t border-white/10 pt-3">
-                            <span className="text-[10px] font-bold text-slate-300">
+                          <div className="mt-3.5 flex items-center justify-between border-t border-slate-200 dark:border-white/10 pt-3">
+                            <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
                               Reba ibisobanuro
                             </span>
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#569ab5]/30 text-[#73afc9] transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-[#569ab5] group-hover:text-white">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#569ab5]/20 text-[#427c94] dark:text-[#73afc9] transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-[#569ab5] group-hover:text-white">
                               <Icon name="arrow-right" size={13} />
                             </span>
                           </div>
@@ -772,15 +770,15 @@ export default function Home() {
                     ))}
                   </div>
                 ) : (
-                  <div className="flex min-h-[300px] items-center justify-center rounded-[1.75rem] border border-white/20 bg-slate-900/30 p-8 text-center shadow-inner backdrop-blur-sm">
+                  <div className="flex min-h-[300px] items-center justify-center rounded-[1.75rem] border border-slate-200/80 dark:border-white/20 bg-white/60 dark:bg-slate-900/30 p-8 text-center shadow-inner backdrop-blur-sm">
                     <div>
-                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-slate-200 shadow-inner">
+                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200 shadow-inner">
                         <Icon name="search" size={26} />
                       </div>
-                      <h3 className="mt-4 text-base font-black text-white">
+                      <h3 className="mt-4 text-base font-black text-slate-900 dark:text-white">
                         Nta bicuruzwa bihari
                       </h3>
-                      <p className="mt-1 text-xs text-slate-200">
+                      <p className="mt-1 text-xs text-slate-700 dark:text-slate-200">
                         Gerageza irindi jambo ryo gushakisha.
                       </p>
                       {search && (
@@ -809,7 +807,7 @@ export default function Home() {
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end mb-8">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#569ab5] dark:text-[#73afc9]">
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#427c94] dark:text-[#73afc9]">
                 Ku isoko ubu
               </p>
               <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] kg-text sm:text-4xl">
@@ -818,13 +816,13 @@ export default function Home() {
               {search && (
                 <p className="mt-2 text-sm kg-text-secondary">
                   Ibisubizo bya:{" "}
-                  <span className="font-bold kg-text bg-[#569ab5]/10 px-2 py-0.5 rounded-md text-[#569ab5]">{search}</span>
+                  <span className="font-bold kg-text bg-[#569ab5]/10 px-2 py-0.5 rounded-md text-[#427c94] dark:text-[#569ab5]">{search}</span>
                 </p>
               )}
             </div>
 
             {search && (
-              <button type="button" onClick={() => setSearch("")} className="flex items-center gap-2 self-start rounded-xl border kg-border kg-surface px-4.5 py-2.5 text-sm font-bold kg-text-secondary shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:text-[#569ab5] sm:self-auto">
+              <button type="button" onClick={() => setSearch("")} className="flex items-center gap-2 self-start rounded-xl border kg-border kg-surface px-4.5 py-2.5 text-sm font-bold kg-text-secondary shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:text-[#427c94] dark:hover:text-[#569ab5] sm:self-auto">
                 <Icon name="close" size={15} />
                 Siba search
               </button>
@@ -844,41 +842,62 @@ export default function Home() {
                 <Link
                   key={listing.id}
                   to={`/listing/${listing.id}`}
-                  className="group block overflow-hidden rounded-3xl border kg-border kg-surface shadow-xl backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-[#569ab5]/50 hover:shadow-[#569ab5]/10"
+                  className="group block overflow-hidden rounded-3xl border kg-border kg-surface shadow-md backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-[#569ab5]/50 hover:shadow-xl"
                 >
                   <div className="relative h-48 overflow-hidden kg-bg-secondary">
                     {images[listing.id] ? (
                       <img src={images[listing.id]} alt={listing.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
                       <div className="flex h-full items-center justify-center kg-bg-secondary">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl kg-surface kg-text-muted shadow-sm border kg-border">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl kg-surface kg-text-muted shadow-sm">
                           <Icon name="shopping-bag" size={24} />
                         </div>
                       </div>
                     )}
-                    <span className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/50 px-3 py-1 text-[9px] font-black text-white shadow-md backdrop-blur-sm">
+                    <div className="absolute left-3.5 top-3.5 rounded-full border border-white/20 bg-black/50 px-3.5 py-1.5 text-[10px] font-black text-white shadow-md backdrop-blur-md">
                       {listing.category?.name || "Ibindi"}
-                    </span>
+                    </div>
                   </div>
 
-                  <div className="p-5">
-                    <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-black kg-text group-hover:text-[#569ab5]">
+                  <div className="p-4">
+                    <h3 className="line-clamp-2 min-h-[2.75rem] text-sm font-black leading-5 kg-text transition-colors group-hover:text-[#427c94] dark:group-hover:text-[#73afc9]">
                       {listing.title}
                     </h3>
-                    <p className="mt-2 text-base font-black text-[#569ab5]">
+                    <p className="mt-3 bg-gradient-to-r from-blue-600 via-[#569ab5] to-[#36677b] dark:from-white dark:via-[#73afc9] dark:to-slate-200 bg-clip-text text-lg font-black text-transparent">
                       {formatPrice(listing)}
                     </p>
-                    <p className="mt-2 flex items-center gap-1.5 truncate text-[11px] font-semibold kg-text-secondary">
-                      <Icon name="map-pin" size={13} className="text-[#569ab5] shrink-0" />
+                    <p className="mt-2.5 flex items-center gap-1.5 truncate text-xs font-semibold kg-text-secondary">
+                      <Icon name="map-pin" size={14} className="text-[#427c94] dark:text-[#73afc9] shrink-0" />
                       {formatLocation(listing)}
                     </p>
+                    <div className="mt-4 flex items-center justify-between border-t border-slate-200/50 dark:border-slate-800/50 pt-3.5">
+                      <span className="text-[11px] font-bold kg-text-muted">
+                        Reba ibisobanuro
+                      </span>
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#569ab5]/20 text-[#427c94] dark:text-[#73afc9] transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-[#569ab5] group-hover:text-white">
+                        <Icon name="arrow-right" size={14} />
+                      </span>
+                    </div>
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="rounded-3xl border kg-border kg-surface p-12 text-center">
-              <p className="text-sm font-medium kg-text-secondary">Nta bicuruzwa bihari ku isoko.</p>
+            <div className="rounded-3xl border kg-border kg-surface px-6 py-20 text-center shadow-sm backdrop-blur-md">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#569ab5]/10 text-[#427c94] dark:text-[#73afc9] shadow-inner">
+                <Icon name="search" size={26} />
+              </div>
+              <h3 className="mt-5 text-xl font-black kg-text">
+                Nta bicuruzwa byabonetse
+              </h3>
+              <p className="mt-2 text-sm kg-text-secondary">
+                Nta bicuruzwa bihuje n'ayo makuru byabonetse kuri uyu mwanya.
+              </p>
+              {search && (
+                <button type="button" onClick={() => setSearch("")} className="mt-6 rounded-xl bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] px-6 py-3 text-xs font-black text-white shadow-md transition hover:opacity-90">
+                  Kura ho ibyo washakishaga
+                </button>
+              )}
             </div>
           )}
         </div>
