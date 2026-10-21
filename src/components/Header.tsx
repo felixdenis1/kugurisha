@@ -1,3 +1,5 @@
+// src/components/Header.tsx
+
 import { useEffect, useRef, useState } from "react"
 import {
   Link,
@@ -92,7 +94,7 @@ function Icon({
         <svg {...common}>
           <path d="M4 10v9h16v-9" />
           <path d="M3 10 5 4h14l2 6" />
-          <path d="M3 10a3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 3 0" />
+          <path d="M3 10a3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 3 0" />
           <path d="M9 19v-5h6v5" />
         </svg>
       )
@@ -234,6 +236,7 @@ function Icon({
 
 const navigation = [
   { label: "Ahabanza", to: "/" },
+  { label: "Ibicuruzwa byose", to: "/listings" },
   { label: "Ibyiciro", to: "/categories" },
   { label: "Ibyo dukora", to: "/about" },
   { label: "Uko rukora", to: "/how-it-works" },
@@ -411,7 +414,7 @@ export default function Header({
     }
 
     if (currentSearchValue.trim()) {
-      navigate(`/?search=${encodeURIComponent(currentSearchValue.trim())}`)
+      navigate(`/listings?search=${encodeURIComponent(currentSearchValue.trim())}`)
     }
   }
 
@@ -430,9 +433,7 @@ export default function Header({
           headerScrolled ? "py-2 sm:py-3" : "py-3 sm:py-4"
         }`}
       >
-        {/* Slightly reduced container width (max-w-6xl instead of max-w-7xl) */}
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          {/* Floating Pill Dock: h-[76px] increased height + rounded-full 100% radius */}
           <div
             className="group/header relative flex h-[76px] items-center justify-between rounded-full border px-4 sm:px-6 transition-all duration-500"
             style={{
@@ -441,22 +442,21 @@ export default function Header({
                 : "rgba(255, 255, 255, 0.88)",
               borderColor: headerScrolled
                 ? isDark
-                  ? "rgba(16, 185, 129, 0.35)"
-                  : "rgba(16, 185, 129, 0.28)"
+                  ? "rgba(86, 154, 181, 0.35)"
+                  : "rgba(86, 154, 181, 0.28)"
                 : isDark
                 ? "rgba(255, 255, 255, 0.15)"
                 : "rgba(0, 0, 0, 0.09)",
               boxShadow: headerScrolled
                 ? isDark
-                  ? "0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.2)"
-                  : "0 20px 40px -15px rgba(16, 185, 129, 0.2), 0 0 20px rgba(16, 185, 129, 0.1)"
+                  ? "0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 30px rgba(86, 154, 181, 0.2)"
+                  : "0 20px 40px -15px rgba(86, 154, 181, 0.2), 0 0 20px rgba(86, 154, 181, 0.1)"
                 : "0 10px 30px -10px rgba(0, 0, 0, 0.06)",
               backdropFilter: "blur(28px)",
               WebkitBackdropFilter: "blur(28px)",
             }}
           >
-            {/* Ambient Background Glow Accent */}
-            <div className="pointer-events-none absolute -inset-0.5 rounded-full bg-gradient-to-r from-slate-500/10 via-emerald-600/20 to-emerald-800/20 opacity-0 blur-xl transition-opacity duration-700 group-hover/header:opacity-100" />
+            <div className="pointer-events-none absolute -inset-0.5 rounded-full bg-gradient-to-r from-slate-500/10 via-[#569ab5]/20 to-[#36677b]/20 opacity-0 blur-xl transition-opacity duration-700 group-hover/header:opacity-100" />
 
             {/* LEFT: Futuristic Pill Navigation */}
             <nav className="relative z-10 flex items-center gap-1.5">
@@ -468,7 +468,7 @@ export default function Header({
                       key={item.to}
                       to={item.to}
                       onClick={closeMenus}
-                      className={`relative rounded-full px-4.5 py-2 text-xs sm:text-sm font-black transition-all duration-300 ${
+                      className={`relative rounded-full px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-black transition-all duration-300 ${
                         isActive
                           ? "text-white"
                           : isDark
@@ -477,7 +477,7 @@ export default function Header({
                       }`}
                     >
                       {isActive && (
-                        <span className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 shadow-[0_4px_15px_rgba(16,185,129,0.35)]" />
+                        <span className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] shadow-[0_4px_15px_rgba(86,154,181,0.35)]" />
                       )}
                       <span className="relative z-10">{item.label}</span>
                     </NavLink>
@@ -487,7 +487,7 @@ export default function Header({
                 <Link
                   to="/ai-search"
                   onClick={closeMenus}
-                  className={`relative hidden sm:flex items-center gap-1.5 rounded-full px-4.5 py-2 text-xs sm:text-sm font-black transition-all duration-300 ${
+                  className={`relative hidden sm:flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs sm:text-sm font-black transition-all duration-300 ${
                     location.pathname === "/ai-search"
                       ? "text-white"
                       : isDark
@@ -496,7 +496,7 @@ export default function Header({
                   }`}
                 >
                   {location.pathname === "/ai-search" && (
-                    <span className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 shadow-[0_4px_15px_rgba(16,185,129,0.35)]" />
+                    <span className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] shadow-[0_4px_15px_rgba(86,154,181,0.35)]" />
                   )}
                   <Icon
                     name="spark"
@@ -504,7 +504,7 @@ export default function Header({
                     className={`relative z-10 ${
                       location.pathname === "/ai-search"
                         ? "text-white"
-                        : "text-emerald-500"
+                        : "text-[#569ab5]"
                     }`}
                   />
                   <span className="relative z-10">AI Search</span>
@@ -514,7 +514,6 @@ export default function Header({
 
             {/* RIGHT: Quick Action Bar */}
             <div className="relative z-10 flex items-center gap-2.5">
-              {/* Reduced/Compact Search Toggle */}
               <button
                 type="button"
                 onClick={() => {
@@ -524,39 +523,37 @@ export default function Header({
                 }}
                 className={`group flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 active:scale-95 ${
                   searchOpen
-                    ? "border-emerald-600 bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.35)]"
+                    ? "border-[#569ab5] bg-[#569ab5] text-white shadow-[0_0_15px_rgba(86,154,181,0.35)]"
                     : isDark
-                    ? "border-slate-800 bg-slate-900/80 text-slate-300 hover:border-emerald-500/50 hover:text-white"
-                    : "border-slate-200 bg-white/80 text-slate-700 shadow-sm hover:border-emerald-400 hover:text-emerald-700"
+                    ? "border-slate-800 bg-slate-900/80 text-slate-300 hover:border-[#569ab5]/50 hover:text-white"
+                    : "border-slate-200 bg-white/80 text-slate-700 shadow-sm hover:border-[#569ab5] hover:text-[#427c94]"
                 }`}
                 aria-label={searchOpen ? "Funga search" : "Shakisha"}
               >
                 <Icon name={searchOpen ? "close" : "search"} size={19} />
               </button>
 
-              {/* Theme Toggle Button */}
               <button
                 type="button"
                 onClick={toggleTheme}
                 className={`hidden h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 active:scale-95 sm:flex ${
                   isDark
                     ? "border-slate-800 bg-slate-900/80 text-amber-400 hover:border-amber-400/50 hover:bg-slate-800"
-                    : "border-slate-200 bg-white/80 text-emerald-700 shadow-sm hover:border-emerald-300 hover:bg-emerald-50/50"
+                    : "border-slate-200 bg-white/80 text-[#427c94] shadow-sm hover:border-[#569ab5] hover:bg-[#569ab5]/10"
                 }`}
                 title={isDark ? "Hindura mu Light Mode" : "Hindura mu Dark Mode"}
               >
                 <Icon name={isDark ? "sun" : "moon"} size={19} />
               </button>
 
-              {/* Notification Link */}
               {userId && (
                 <Link
                   to="/notifications"
                   onClick={closeMenus}
                   className={`relative flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 active:scale-95 ${
                     isDark
-                      ? "border-slate-800 bg-slate-900/80 text-slate-300 hover:border-emerald-500/50 hover:text-white"
-                      : "border-slate-200 bg-white/80 text-slate-700 shadow-sm hover:border-emerald-400 hover:text-emerald-700"
+                      ? "border-slate-800 bg-slate-900/80 text-slate-300 hover:border-[#569ab5]/50 hover:text-white"
+                      : "border-slate-200 bg-white/80 text-slate-700 shadow-sm hover:border-[#569ab5] hover:text-[#427c94]"
                   }`}
                   aria-label="Notifications"
                 >
@@ -569,12 +566,11 @@ export default function Header({
                 </Link>
               )}
 
-              {/* User Account / Auth Button */}
               {!userId ? (
                 <Link
                   to="/login"
                   onClick={closeMenus}
-                  className="hidden items-center gap-2 rounded-full bg-slate-900/10 dark:bg-white/10 px-5 py-2.5 text-xs font-black kg-text transition-all duration-300 hover:bg-emerald-700 hover:text-white sm:flex"
+                  className="hidden items-center gap-2 rounded-full bg-slate-900/10 dark:bg-white/10 px-5 py-2.5 text-xs font-black kg-text transition-all duration-300 hover:bg-[#427c94] hover:text-white sm:flex"
                 >
                   <Icon name="user" size={16} />
                   <span>Injira</span>
@@ -586,13 +582,13 @@ export default function Header({
                     onClick={() => setShowUserMenu((prev) => !prev)}
                     className={`flex h-11 items-center gap-2.5 rounded-full border px-4 transition-all duration-300 hover:scale-[1.02] active:scale-95 ${
                       showUserMenu
-                        ? "border-emerald-600 bg-emerald-600/10 text-emerald-600"
+                        ? "border-[#569ab5] bg-[#569ab5]/10 text-[#427c94]"
                         : isDark
                         ? "border-slate-800 bg-slate-900/80 text-slate-200 hover:border-slate-700"
-                        : "border-slate-200 bg-white/80 text-slate-800 shadow-sm hover:border-emerald-300"
+                        : "border-slate-200 bg-white/80 text-slate-800 shadow-sm hover:border-[#569ab5]"
                     }`}
                   >
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-sm">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#427c94] to-[#36677b] text-white shadow-sm">
                       <Icon name="user" size={14} />
                     </span>
                     <span className="text-xs sm:text-sm font-black">Konti</span>
@@ -600,12 +596,11 @@ export default function Header({
                       name="chevron-down"
                       size={14}
                       className={`text-slate-400 transition-transform duration-300 ${
-                        showUserMenu ? "rotate-180 text-emerald-600" : ""
+                        showUserMenu ? "rotate-180 text-[#569ab5]" : ""
                       }`}
                     />
                   </button>
 
-                  {/* Dropdown Menu Panel */}
                   {showUserMenu && (
                     <div
                       className={`absolute right-0 top-[calc(100%+14px)] w-72 overflow-hidden rounded-3xl border p-3 shadow-2xl transition-all duration-300 ${
@@ -618,17 +613,17 @@ export default function Header({
                         WebkitBackdropFilter: "blur(28px)",
                       }}
                     >
-                      <div className="rounded-2xl bg-gradient-to-r from-slate-500/10 via-emerald-600/10 to-emerald-800/10 p-3.5 border border-emerald-500/20">
+                      <div className="rounded-2xl bg-gradient-to-r from-slate-500/10 via-[#569ab5]/10 to-[#36677b]/10 p-3.5 border border-[#569ab5]/20">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-md">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#427c94] to-[#36677b] text-white shadow-md">
                             <Icon name="user" size={18} />
                           </div>
                           <div>
-                            <p className="text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                            <p className="text-[10px] font-black uppercase tracking-wider text-[#427c94] dark:text-[#73afc9]">
                               Mwaramutse
                             </p>
                             <p className="text-xs font-black truncate max-w-[150px]">
-                              KUGURISHA User
+                              kugurisha User
                             </p>
                           </div>
                         </div>
@@ -641,7 +636,7 @@ export default function Header({
                           className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
                             isDark
                               ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                              : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                              : "text-slate-700 hover:bg-[#569ab5]/10 hover:text-[#427c94]"
                           }`}
                         >
                           <Icon name="user" size={16} />
@@ -653,7 +648,7 @@ export default function Header({
                           className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
                             isDark
                               ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                              : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                              : "text-slate-700 hover:bg-[#569ab5]/10 hover:text-[#427c94]"
                           }`}
                         >
                           <Icon name="store" size={16} />
@@ -665,7 +660,7 @@ export default function Header({
                           className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
                             isDark
                               ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                              : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                              : "text-slate-700 hover:bg-[#569ab5]/10 hover:text-[#427c94]"
                           }`}
                         >
                           <Icon name="heart" size={16} />
@@ -677,7 +672,7 @@ export default function Header({
                           className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
                             isDark
                               ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                              : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                              : "text-slate-700 hover:bg-[#569ab5]/10 hover:text-[#427c94]"
                           }`}
                         >
                           <Icon name="message" size={16} />
@@ -689,7 +684,7 @@ export default function Header({
                           className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
                             isDark
                               ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                              : "text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                              : "text-slate-700 hover:bg-[#569ab5]/10 hover:text-[#427c94]"
                           }`}
                         >
                           <span className="flex items-center gap-3">
@@ -722,24 +717,22 @@ export default function Header({
                 </div>
               )}
 
-              {/* Create Listing Primary CTA Button */}
               <Link
                 to="/create-listing"
                 onClick={closeMenus}
-                className="group/btn relative hidden h-11 items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 px-5 text-xs sm:text-sm font-black text-white shadow-lg shadow-emerald-700/25 transition-all duration-300 hover:scale-[1.03] hover:shadow-emerald-700/40 active:scale-95 sm:flex"
+                className="group/btn relative hidden h-11 items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] px-5 text-xs sm:text-sm font-black text-white shadow-lg shadow-[#569ab5]/25 transition-all duration-300 hover:scale-[1.03] hover:shadow-[#569ab5]/40 active:scale-95 sm:flex"
               >
                 <span className="absolute inset-0 bg-white/20 translate-y-full transition-transform duration-300 group-hover/btn:translate-y-0" />
                 <Icon name="plus" size={16} strokeWidth={2.5} className="relative z-10" />
                 <span className="relative z-10">Gurisha</span>
               </Link>
 
-              {/* Mobile Navigation Drawer Toggle */}
               <button
                 type="button"
                 onClick={() => setShowMobileMenu((prev) => !prev)}
                 className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 lg:hidden ${
                   showMobileMenu
-                    ? "border-emerald-600 bg-emerald-600 text-white"
+                    ? "border-[#569ab5] bg-[#569ab5] text-white"
                     : isDark
                     ? "border-slate-800 bg-slate-900/80 text-slate-300"
                     : "border-slate-200 bg-white/80 text-slate-700 shadow-sm"
@@ -751,19 +744,18 @@ export default function Header({
             </div>
           </div>
 
-          {/* Reduced & Compact Search Bar Container */}
           {searchOpen && (
             <div className="mt-2 max-w-md mx-auto">
               <form
                 onSubmit={handleSearchSubmit}
                 className={`relative flex items-center rounded-full border px-3 py-1.5 shadow-xl backdrop-blur-2xl transition-all ${
                   isDark
-                    ? "border-emerald-500/30 bg-slate-950/90"
-                    : "border-emerald-500/30 bg-white/95"
+                    ? "border-[#569ab5]/30 bg-slate-950/90"
+                    : "border-[#569ab5]/30 bg-white/95"
                 }`}
               >
                 <div className="flex flex-1 items-center gap-2.5 px-2">
-                  <Icon name="search" size={16} className="text-emerald-600 shrink-0" />
+                  <Icon name="search" size={16} className="text-[#569ab5] shrink-0" />
                   <input
                     type="text"
                     value={currentSearchValue}
@@ -785,7 +777,7 @@ export default function Header({
 
                 <button
                   type="submit"
-                  className="rounded-full bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 px-4 py-1.5 text-xs font-black text-white shadow-md transition-all hover:scale-105 active:scale-95"
+                  className="rounded-full bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] px-4 py-1.5 text-xs font-black text-white shadow-md transition-all hover:scale-105 active:scale-95"
                 >
                   Shakisha
                 </button>
@@ -793,7 +785,6 @@ export default function Header({
             </div>
           )}
 
-          {/* Mobile Navigation Drawer */}
           {showMobileMenu && (
             <div className="mt-2.5 lg:hidden">
               <div
@@ -812,7 +803,7 @@ export default function Header({
                       className={({ isActive }) =>
                         `flex items-center gap-3 rounded-2xl px-4 py-3 text-xs font-black transition-all ${
                           isActive
-                            ? "bg-gradient-to-r from-emerald-600 to-emerald-800 text-white shadow-md"
+                            ? "bg-gradient-to-r from-[#427c94] to-[#36677b] text-white shadow-md"
                             : isDark
                             ? "text-slate-300 hover:bg-slate-900"
                             : "text-slate-700 hover:bg-slate-100"
@@ -828,13 +819,13 @@ export default function Header({
                     onClick={closeMenus}
                     className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-xs font-black transition-all ${
                       location.pathname === "/ai-search"
-                        ? "bg-gradient-to-r from-emerald-600 to-emerald-800 text-white shadow-md"
+                        ? "bg-gradient-to-r from-[#427c94] to-[#36677b] text-white shadow-md"
                         : isDark
                         ? "text-slate-300 hover:bg-slate-900"
                         : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <Icon name="spark" size={16} className="text-emerald-400" />
+                    <Icon name="spark" size={16} className="text-[#569ab5]" />
                     <span>AI Search</span>
                   </Link>
 
@@ -843,7 +834,7 @@ export default function Header({
                   <Link
                     to="/create-listing"
                     onClick={closeMenus}
-                    className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-900 px-4 py-3 text-xs font-black text-white shadow-lg active:scale-95"
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] px-4 py-3 text-xs font-black text-white shadow-lg active:scale-95"
                   >
                     <Icon name="plus" size={16} strokeWidth={2.5} />
                     <span>Gurisha ikintu</span>
@@ -863,25 +854,12 @@ export default function Header({
                       <div className="my-2 border-t border-slate-200 dark:border-slate-800" />
                       <button
                         type="button"
-                        onClick={toggleTheme}
-                        className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-bold transition-all ${
-                          isDark
-                            ? "text-amber-400 hover:bg-slate-900"
-                            : "text-emerald-700 hover:bg-emerald-50"
-                        }`}
-                      >
-                        <Icon name={isDark ? "sun" : "moon"} size={16} />
-                        <span>{isDark ? "Light Mode" : "Dark Mode"}</span>
-                      </button>
-
-                      <button
-                        type="button"
                         onClick={handleLogout}
                         disabled={loggingOut}
-                        className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10"
+                        className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-black text-red-500 hover:bg-red-500/10"
                       >
                         <Icon name="logout" size={16} />
-                        <span>{loggingOut ? "Gusohoka..." : "Sohoka"}</span>
+                        <span>Sohoka</span>
                       </button>
                     </div>
                   )}

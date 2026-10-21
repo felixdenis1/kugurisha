@@ -1,3 +1,5 @@
+// src/pages/Profile.tsx
+
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { supabase } from "../services/supabase"
@@ -11,16 +13,23 @@ type ProfileData = {
   is_active: boolean
 }
 
-function Profile() {
-  const [profile, setProfile] =
-    useState<ProfileData | null>(null)
+export default function Profile() {
+  const [profile, setProfile] = useState<ProfileData | null>(null)
+  const [email, setEmail] = useState("")
 
   const [fullName, setFullName] = useState("")
   const [phone, setPhone] = useState("")
   const [avatarUrl, setAvatarUrl] = useState("")
 
+  // Security state
+  const [newEmail, setNewEmail] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [savingEmail, setSavingEmail] = useState(false)
+  const [savingPassword, setSavingPassword] = useState(false)
 
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
@@ -40,27 +49,23 @@ function Profile() {
       } = await supabase.auth.getUser()
 
       if (userError || !user) {
-        setError(
-          "Ugomba kubanza kwinjira muri konti yawe."
-        )
+        setError("Ugomba kubanza kwinjira muri konti yawe.")
         return
       }
+
+      setEmail(user.email ?? "")
 
       const {
         data,
         error: profileError,
       } = await supabase
         .from("profiles")
-        .select(
-          "id, full_name, phone, avatar_url, role, is_active"
-        )
+        .select("id, full_name, phone, avatar_url, role, is_active")
         .eq("id", user.id)
         .maybeSingle()
 
       if (profileError) {
-        setError(
-          `Ntitwashoboye kubona profile yawe. ${profileError.message}`
-        )
+        setError(`Ntitwashoboye kubona profile yawe. ${profileError.message}`)
         return
       }
 
@@ -73,23 +78,17 @@ function Profile() {
       setFullName(data.full_name ?? "")
       setPhone(data.phone ?? "")
       setAvatarUrl(data.avatar_url ?? "")
-    } catch (error) {
-      console.error("PROFILE LOAD ERROR:", error)
-
-      setError(
-        "Habaye ikibazo mu kubona amakuru ya profile yawe."
-      )
+    } catch (err) {
+      console.error("PROFILE LOAD ERROR:", err)
+      setError("Habaye ikibazo mu kubona amakuru ya profile yawe.")
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleSave(
-    e: React.FormEvent
-  ) {
+  async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault()
-
-    setSaving(true)
+    setSavingProfile(true)
     setMessage("")
     setError("")
 
@@ -99,10 +98,7 @@ function Profile() {
         return
       }
 
-      const {
-        data,
-        error: updateError,
-      } = await supabase
+      const { data, error: updateError } = await supabase
         .from("profiles")
         .update({
           full_name: fullName.trim() || null,
@@ -111,15 +107,11 @@ function Profile() {
           updated_at: new Date().toISOString(),
         })
         .eq("id", profile.id)
-        .select(
-          "id, full_name, phone, avatar_url, role, is_active"
-        )
+        .select("id, full_name, phone, avatar_url, role, is_active")
         .single()
 
       if (updateError) {
-        setError(
-          `Ntibyashobotse kubika profile. ${updateError.message}`
-        )
+        setError(`Ntibyashobotse kubika profile. ${updateError.message}`)
         return
       }
 
@@ -127,103 +119,138 @@ function Profile() {
       setFullName(data.full_name ?? "")
       setPhone(data.phone ?? "")
       setAvatarUrl(data.avatar_url ?? "")
-
-      setMessage(
-        "Amakuru ya profile yawe yabitswe neza."
-      )
-    } catch (error) {
-      console.error(
-        "PROFILE UPDATE ERROR:",
-        error
-      )
-
-      setError(
-        "Habaye ikibazo mu kubika amakuru yawe."
-      )
+      setMessage("Amakuru ya profile yawe yabitswe neza.")
+    } catch (err) {
+      console.error("PROFILE UPDATE ERROR:", err)
+      setError("Habaye ikibazo mu kubika amakuru yawe.")
     } finally {
-      setSaving(false)
+      setSavingProfile(false)
+    }
+  }
+
+  async function handleUpdateEmail(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newEmail.trim()) return
+
+    setSavingEmail(true)
+    setMessage("")
+    setError("")
+
+    try {
+      const { error: emailError } = await supabase.auth.updateUser({
+        email: newEmail.trim(),
+      })
+
+      if (emailError) {
+        setError(`Ntibyashobotse guhindura email. ${emailError.message}`)
+        return
+      }
+
+      setMessage("Email yahinduwe neza. Reba ubutumwa muri email yawe nshya kugira ngo uyemeze.")
+      setEmail(newEmail.trim())
+      setNewEmail("")
+    } catch (err) {
+      console.error("EMAIL UPDATE ERROR:", err)
+      setError("Habaye ikibazo mu guhindura email.")
+    } finally {
+      setSavingEmail(false)
+    }
+  }
+
+  async function handleUpdatePassword(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newPassword || !confirmPassword) {
+      setError("Ugomba kuzuza amagambo yombi y'ibanga.")
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Amagambo y'ibanga yombi ntahuye.")
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setError("Ijambo ry'ibanga rigomba kugira nibura inyuguti 6.")
+      return
+    }
+
+    setSavingPassword(true)
+    setMessage("")
+    setError("")
+
+    try {
+      const { error: passwordError } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+
+      if (passwordError) {
+        setError(`Ntibyashobotse guhindura ijambo ry'ibanga. ${passwordError.message}`)
+        return
+      }
+
+      setMessage("Ijambo ry'ibanga ryahinduwe neza.")
+      setNewPassword("")
+      setConfirmPassword("")
+    } catch (err) {
+      console.error("PASSWORD UPDATE ERROR:", err)
+      setError("Habaye ikibazo mu guhindura ijambo ry'ibanga.")
+    } finally {
+      setSavingPassword(false)
     }
   }
 
   function getInitials(name: string) {
-    const parts = name
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-
-    if (parts.length === 0) {
-      return "U"
-    }
-
-    if (parts.length === 1) {
-      return parts[0].charAt(0).toUpperCase()
-    }
-
-    return (
-      parts[0].charAt(0) +
-      parts[parts.length - 1].charAt(0)
-    ).toUpperCase()
+    const parts = name.trim().split(/\s+/).filter(Boolean)
+    if (parts.length === 0) return "U"
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
   }
 
   function formatRole(role: string) {
     const normalized = role.toLowerCase()
-
-    if (normalized === "buyer") {
-      return "Umuguzi"
-    }
-
-    if (normalized === "seller") {
-      return "Umucuruzi"
-    }
-
-    if (normalized === "admin") {
-      return "Admin"
-    }
-
+    if (normalized === "buyer") return "Umuguzi"
+    if (normalized === "seller") return "Umucuruzi"
+    if (normalized === "admin") return "Admin"
     return role
   }
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50">
-        <div className="flex min-h-screen items-center justify-center px-4">
-          <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950">
-              <div className="h-7 w-7 animate-spin rounded-full border-4 border-white/20 border-t-white" />
-            </div>
-
-            <h2 className="mt-5 font-black text-slate-950">
-              Turabona profile yawe...
-            </h2>
-
-            <p className="mt-2 text-sm text-slate-500">
-              Tegereza akanya gato.
-            </p>
+      <main className="min-h-screen kg-bg kg-text flex items-center justify-center">
+        <div className="w-full max-w-sm rounded-[2rem] border border-slate-200/80 dark:border-white/15 bg-white/90 dark:bg-slate-900/80 p-8 text-center shadow-xl backdrop-blur-md">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#427c94] to-[#36677b] text-white shadow-md">
+            <div className="h-7 w-7 animate-spin rounded-full border-4 border-white/20 border-t-white" />
           </div>
+          <h2 className="mt-5 font-black text-slate-900 dark:text-white text-lg">
+            Turabona profile yawe...
+          </h2>
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Tegereza akanya gato.
+          </p>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      {/* Header */}
-      <header className="border-b border-white/10 bg-slate-950 text-white">
+    <main className="min-h-screen overflow-x-hidden kg-bg kg-text transition-colors duration-300">
+      {/* VIVID GRADIENT BACKGROUND LAYER */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden select-none">
+        <div className="absolute inset-0 bg-gradient-to-bl from-transparent via-white/40 to-white/95 dark:from-transparent dark:via-slate-950/50 dark:to-slate-950/95" />
+      </div>
+
+      {/* HEADER */}
+      <header className="relative z-20 border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link
-            to="/"
-            className="group flex items-center gap-3"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-sm font-black text-slate-950 shadow-lg transition group-hover:scale-105">
+          <Link to="/" className="group flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#427c94] to-[#36677b] text-sm font-black text-white shadow-lg transition group-hover:scale-105">
               K
             </div>
-
             <div>
-              <div className="text-lg font-black tracking-tight sm:text-xl">
+              <div className="text-lg font-black tracking-tight sm:text-xl bg-gradient-to-r from-slate-900 via-slate-800 to-[#427c94] dark:from-white dark:via-slate-100 dark:to-[#73afc9] bg-clip-text text-transparent">
                 KUGURISHA.COM
               </div>
-
-              <div className="hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-400 sm:block">
+              <div className="hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-[#427c94] dark:text-[#73afc9] sm:block">
                 Isoko ryawe ryo mu Rwanda
               </div>
             </div>
@@ -231,133 +258,110 @@ function Profile() {
 
           <Link
             to="/"
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"
+            className="rounded-xl border border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/5 px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white transition hover:bg-slate-100 dark:hover:bg-white/10 shadow-sm backdrop-blur-sm"
           >
             ← Ahabanza
           </Link>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-slate-950 pb-20 pt-10 text-white sm:pt-14">
-        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
-        <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300">
-              👤 Konti yanjye
-            </div>
-
-            <h1 className="text-4xl font-black tracking-tight sm:text-5xl">
-              Profile yawe
-            </h1>
-
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-              Genzura kandi uhindure amakuru yawe
-              bwite kuri KUGURISHA.COM.
-            </p>
-          </div>
+      {/* HERO SECTION */}
+      <section className="relative z-10 pb-16 pt-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#569ab5]/40 bg-[#569ab5]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#427c94] dark:text-[#73afc9] shadow-sm backdrop-blur-sm">
+          <span>👤 Konti yanjye</span>
         </div>
+        <h1 className="text-4xl font-black tracking-tight sm:text-5xl text-slate-900 dark:text-white">
+          Profile yawe
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-slate-300 font-medium">
+          Genzura kandi uhindure amakuru yawe bwite, email, n'ijambo ry'ibanga kuri KUGURISHA.COM.
+        </p>
       </section>
 
-      {/* Content */}
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-          {/* Profile summary */}
+      {/* MAIN CONTENT GRID */}
+      <section className="relative z-10 mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-[340px_1fr]">
+          
+          {/* PROFILE SUMMARY SIDEBAR */}
           <aside>
-            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="h-24 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950" />
+            <div className="overflow-hidden rounded-[2.2rem] border border-slate-200/80 dark:border-white/15 bg-white/90 dark:bg-slate-900/80 shadow-xl backdrop-blur-md">
+              <div className="h-28 bg-gradient-to-br from-[#427c94] via-[#569ab5] to-[#36677b]" />
 
-              <div className="-mt-12 px-6 pb-6">
+              <div className="-mt-12 px-6 pb-7">
                 <div className="flex items-end justify-between">
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
                       alt="Profile"
-                      className="h-24 w-24 rounded-3xl border-4 border-white bg-slate-100 object-cover shadow-lg"
+                      className="h-24 w-24 rounded-3xl border-4 border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 object-cover shadow-xl"
                       onError={(e) => {
-                        e.currentTarget.style.display =
-                          "none"
+                        e.currentTarget.style.display = "none"
                       }}
                     />
                   ) : (
-                    <div className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white bg-blue-600 text-3xl font-black text-white shadow-lg">
+                    <div className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white dark:border-slate-900 bg-gradient-to-br from-[#427c94] to-[#36677b] text-3xl font-black text-white shadow-xl">
                       {getInitials(fullName)}
                     </div>
                   )}
 
                   <div
-                    className={`mb-2 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-wide ${
+                    className={`mb-2 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-wide shadow-sm ${
                       profile?.is_active
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-red-100 text-red-700"
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300/50"
+                        : "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border border-red-300/50"
                     }`}
                   >
-                    {profile?.is_active
-                      ? "Active"
-                      : "Inactive"}
+                    {profile?.is_active ? "Active" : "Inactive"}
                   </div>
                 </div>
 
                 <div className="mt-5">
-                  <h2 className="text-xl font-black text-slate-950">
+                  <h2 className="text-xl font-black text-slate-900 dark:text-white truncate">
                     {fullName || "Umukoresha"}
                   </h2>
-
-                  <p className="mt-1 text-sm font-semibold text-slate-500">
-                    {profile?.role
-                      ? formatRole(profile.role)
-                      : "Umukoresha"}
+                  <p className="mt-1 text-xs font-bold text-[#427c94] dark:text-[#73afc9]">
+                    {profile?.role ? formatRole(profile.role) : "Umukoresha"}
                   </p>
                 </div>
 
-                <div className="mt-6 space-y-3 border-t border-slate-100 pt-5">
+                <div className="mt-6 space-y-4 border-t border-slate-200/60 dark:border-white/10 pt-5 text-sm">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100">
-                      📱
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      ✉️
                     </div>
-
                     <div className="min-w-0">
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                        Telefoni
-                      </p>
-
-                      <p className="truncate text-sm font-semibold text-slate-700">
-                        {phone || "Ntabwo irashyirwaho"}
-                      </p>
+                      <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Email</p>
+                      <p className="truncate text-xs font-bold text-slate-700 dark:text-slate-200">{email || "Ntabwo irimo"}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      📱
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Telefoni</p>
+                      <p className="truncate text-xs font-bold text-slate-700 dark:text-slate-200">{phone || "Ntabwo irashyirwaho"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                       🛡️
                     </div>
-
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                        Status
-                      </p>
-
-                      <p
-                        className={`text-sm font-bold ${
-                          profile?.is_active
-                            ? "text-emerald-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {profile?.is_active
-                          ? "Konti irakora"
-                          : "Konti yahagaritswe"}
+                      <p className="text-[10px] font-black uppercase tracking-wide text-slate-400">Status</p>
+                      <p className={`text-xs font-bold ${profile?.is_active ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                        {profile?.is_active ? "Konti irakora neza" : "Konti yahagaritswe"}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6">
+                <div className="mt-7">
                   <Link
                     to="/dashboard"
-                    className="flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+                    className="flex w-full items-center justify-center rounded-2xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-800/80 px-4 py-3 text-sm font-black text-slate-800 dark:text-white transition hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm"
                   >
                     Dashboard →
                   </Link>
@@ -366,219 +370,204 @@ function Profile() {
             </div>
           </aside>
 
-          {/* Form */}
-          <div>
-            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-5 py-5 sm:px-7">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
-                  Amakuru ya konti
+          {/* EDIT FORMS CONTAINER */}
+          <div className="space-y-8">
+            
+            {/* 1. GENERAL PROFILE FORM */}
+            <div className="overflow-hidden rounded-[2.2rem] border border-slate-200/80 dark:border-white/15 bg-white/90 dark:bg-slate-900/80 shadow-xl backdrop-blur-md">
+              <div className="border-b border-slate-200/60 dark:border-white/10 px-6 py-5 sm:px-8">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#427c94] dark:text-[#73afc9]">
+                  Amakuru rusange
                 </p>
-
-                <h2 className="mt-1 text-xl font-black text-slate-950 sm:text-2xl">
+                <h2 className="mt-1 text-xl font-black text-slate-900 dark:text-white sm:text-2xl">
                   Hindura profile yawe
                 </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Shyiramo amakuru ushaka ko agaragara
-                  kuri konti yawe.
-                </p>
               </div>
 
-              <form
-                onSubmit={handleSave}
-                className="p-5 sm:p-7"
-              >
-                <div className="grid gap-6">
-                  {/* Full name */}
-                  <div>
-                    <label className="mb-2 block text-sm font-black text-slate-800">
-                      Amazina yuzuye
-                    </label>
+              <form onSubmit={handleSaveProfile} className="p-6 sm:p-8 space-y-6">
+                <div>
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Amazina yuzuye
+                  </label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Andika amazina yawe"
+                    className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-950/60 px-4 text-sm font-medium text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-[#569ab5]/60 focus:border-[#569ab5] focus:ring-4 focus:ring-[#569ab5]/20"
+                  />
+                </div>
 
+                <div>
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Telefoni
+                  </label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base">📱</span>
                     <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) =>
-                        setFullName(e.target.value)
-                      }
-                      placeholder="Andika amazina yawe"
-                      className="min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="07XXXXXXXX"
+                      className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-950/60 px-4 pl-11 text-sm font-medium text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-[#569ab5]/60 focus:border-[#569ab5] focus:ring-4 focus:ring-[#569ab5]/20"
                     />
-
-                    <p className="mt-2 text-xs text-slate-400">
-                      Amazina azagaragara kuri profile
-                      yawe.
-                    </p>
                   </div>
+                </div>
 
-                  {/* Phone */}
-                  <div>
-                    <label className="mb-2 block text-sm font-black text-slate-800">
-                      Telefoni
-                    </label>
-
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base">
-                        📱
-                      </span>
-
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) =>
-                          setPhone(e.target.value)
-                        }
-                        placeholder="07XXXXXXXX"
-                        autoComplete="tel"
-                        className="min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pl-11 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                      />
-                    </div>
+                <div>
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Link y&apos;ifoto ya profile (Avatar URL)
+                  </label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base">🖼️</span>
+                    <input
+                      type="url"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-950/60 px-4 pl-11 text-sm font-medium text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-[#569ab5]/60 focus:border-[#569ab5] focus:ring-4 focus:ring-[#569ab5]/20"
+                    />
                   </div>
+                </div>
 
-                  {/* Avatar */}
-                  <div>
-                    <label className="mb-2 block text-sm font-black text-slate-800">
-                      Link y&apos;ifoto ya profile
-                    </label>
-
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base">
-                        🖼️
-                      </span>
-
-                      <input
-                        type="url"
-                        value={avatarUrl}
-                        onChange={(e) =>
-                          setAvatarUrl(e.target.value)
-                        }
-                        placeholder="https://..."
-                        className="min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pl-11 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                      />
-                    </div>
-
-                    <p className="mt-2 text-xs leading-5 text-slate-400">
-                      Ubu dukoresha image URL.
-                      Upload y&apos;ifoto muri Supabase
-                      Storage tuzayongeraho nyuma.
-                    </p>
-                  </div>
-
-                  {/* Account status */}
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                          profile?.is_active
-                            ? "bg-emerald-100"
-                            : "bg-red-100"
-                        }`}
-                      >
-                        {profile?.is_active
-                          ? "✓"
-                          : "!"}
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-black text-slate-800">
-                          Status ya konti
-                        </p>
-
-                        <p
-                          className={`mt-1 text-sm font-semibold ${
-                            profile?.is_active
-                              ? "text-emerald-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {profile?.is_active
-                            ? "Konti yawe irakora neza."
-                            : "Konti yawe yahagaritswe."}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Messages */}
-                  {message && (
-                    <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                        ✓
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-black text-emerald-900">
-                          Byagenze neza
-                        </p>
-
-                        <p className="mt-1 text-sm text-emerald-700">
-                          {message}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {error && (
-                    <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-700">
-                        !
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-black text-red-900">
-                          Habaye ikibazo
-                        </p>
-
-                        <p className="mt-1 text-sm text-red-700">
-                          {error}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Save */}
-                  <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:justify-end">
-                    <Link
-                      to="/"
-                      className="flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-sm font-black text-slate-700 transition hover:bg-slate-50"
-                    >
-                      Kureka
-                    </Link>
-
-                    <button
-                      type="submit"
-                      disabled={saving}
-                      className="min-h-12 rounded-2xl bg-slate-950 px-7 text-sm font-black text-white shadow-lg shadow-slate-950/10 transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {saving
-                        ? "Turabika..."
-                        : "Bika amakuru"}
-                    </button>
-                  </div>
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="min-h-12 rounded-2xl bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] px-7 text-sm font-black text-white shadow-lg shadow-[#569ab5]/30 transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {savingProfile ? "Turabika..." : "Bika amakuru ya profile"}
+                  </button>
                 </div>
               </form>
             </div>
+
+            {/* 2. CHANGE EMAIL FORM */}
+            <div className="overflow-hidden rounded-[2.2rem] border border-slate-200/80 dark:border-white/15 bg-white/90 dark:bg-slate-900/80 shadow-xl backdrop-blur-md">
+              <div className="border-b border-slate-200/60 dark:border-white/10 px-6 py-5 sm:px-8">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#427c94] dark:text-[#73afc9]">
+                  Umutekano wa Konti
+                </p>
+                <h2 className="mt-1 text-xl font-black text-slate-900 dark:text-white sm:text-2xl">
+                  Hindura Email
+                </h2>
+              </div>
+
+              <form onSubmit={handleUpdateEmail} className="p-6 sm:p-8 space-y-6">
+                <div>
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Email nshya
+                  </label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base">✉️</span>
+                    <input
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="andika.email@example.com"
+                      className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-950/60 px-4 pl-11 text-sm font-medium text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-[#569ab5]/60 focus:border-[#569ab5] focus:ring-4 focus:ring-[#569ab5]/20"
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    Uzamenyeshwa cyangwa usabwe kwemeza email nshya.
+                  </p>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={savingEmail || !newEmail.trim()}
+                    className="min-h-12 rounded-2xl bg-slate-950 dark:bg-slate-800 px-7 text-sm font-black text-white shadow-lg transition hover:bg-slate-800 dark:hover:bg-slate-700 active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {savingEmail ? "Birimo koherezwa..." : "Hindura Email"}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* 3. CHANGE PASSWORD FORM */}
+            <div className="overflow-hidden rounded-[2.2rem] border border-slate-200/80 dark:border-white/15 bg-white/90 dark:bg-slate-900/80 shadow-xl backdrop-blur-md">
+              <div className="border-b border-slate-200/60 dark:border-white/10 px-6 py-5 sm:px-8">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#427c94] dark:text-[#73afc9]">
+                  Ijambo ry&apos;ibanga
+                </p>
+                <h2 className="mt-1 text-xl font-black text-slate-900 dark:text-white sm:text-2xl">
+                  Hindura ijambo ry&apos;ibanga (Password)
+                </h2>
+              </div>
+
+              <form onSubmit={handleUpdatePassword} className="p-6 sm:p-8 space-y-6">
+                <div>
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Ijambo ry&apos;ibanga rishya
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-950/60 px-4 text-sm font-medium text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-[#569ab5]/60 focus:border-[#569ab5] focus:ring-4 focus:ring-[#569ab5]/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Wemeze ijambo ry&apos;ibanga rishya
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-950/60 px-4 text-sm font-medium text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-[#569ab5]/60 focus:border-[#569ab5] focus:ring-4 focus:ring-[#569ab5]/20"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={savingPassword || !newPassword || !confirmPassword}
+                    className="min-h-12 rounded-2xl bg-slate-950 dark:bg-slate-800 px-7 text-sm font-black text-white shadow-lg transition hover:bg-slate-800 dark:hover:bg-slate-700 active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {savingPassword ? "Birimo guhinduka..." : "Hindura Password"}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* STATUS NOTIFICATIONS */}
+            {message && (
+              <div className="flex items-start gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 p-4 shadow-sm backdrop-blur-sm">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 font-bold">✓</div>
+                <div>
+                  <p className="text-sm font-black text-emerald-900 dark:text-emerald-200">Byagenze neza</p>
+                  <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">{message}</p>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="flex items-start gap-3 rounded-2xl border border-red-300 bg-red-50 dark:bg-red-950/40 p-4 shadow-sm backdrop-blur-sm">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 font-bold">!</div>
+                <div>
+                  <p className="text-sm font-black text-red-900 dark:text-red-200">Habaye ikibazo</p>
+                  <p className="mt-1 text-xs text-red-700 dark:text-red-300">{error}</p>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white">
+      {/* FOOTER */}
+      <footer className="relative z-10 border-t border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <div>
-            <p className="font-black text-slate-950">
-              KUGURISHA.COM
-            </p>
-
-            <p className="mt-1 text-xs text-slate-500">
-              Isoko ryawe ryo mu Rwanda 🇷🇼
-            </p>
+            <p className="font-black text-slate-900 dark:text-white">KUGURISHA.COM</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Isoko ryawe ryo mu Rwanda 🇷🇼</p>
           </div>
-
-          <Link
-            to="/"
-            className="text-sm font-bold text-slate-500 transition hover:text-slate-950"
-          >
+          <Link to="/" className="text-sm font-bold text-slate-600 dark:text-slate-300 transition hover:text-[#427c94] dark:hover:text-[#73afc9]">
             Ahabanza →
           </Link>
         </div>
@@ -586,5 +575,3 @@ function Profile() {
     </main>
   )
 }
-
-export default Profile

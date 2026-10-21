@@ -1,98 +1,71 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0F172A"/>
-      <stop offset="100%" stop-color="#1E293B"/>
+    <!-- Elite Geometric Modernist Gradients -->
+    <linearGradient id="kg-cyan-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#73afc9" />
+      <stop offset="50%" stop-color="#569ab5" />
+      <stop offset="100%" stop-color="#36677b" />
     </linearGradient>
 
-    <!-- Buyer (Blue) Gradient -->
-    <linearGradient id="buyerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8"/>
-      <stop offset="100%" stop-color="#0284C7"/>
+    <linearGradient id="kg-purple-indigo" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#36677b" />
+      <stop offset="50%" stop-color="#5b78c4" />
+      <stop offset="100%" stop-color="#9d73c9" />
     </linearGradient>
 
-    <!-- Seller (Emerald) Gradient -->
-    <linearGradient id="sellerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34D399"/>
-      <stop offset="100%" stop-color="#059669"/>
+    <linearGradient id="kg-vibrant-glow" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="40%" stop-color="#73afc9" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#36677b" stop-opacity="0.95" />
     </linearGradient>
 
-    <!-- Handshake Connection (Teal/Cyan) Gradient -->
-    <linearGradient id="shakeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#0284C7"/>
-      <stop offset="50%" stop-color="#38BDF8"/>
-      <stop offset="100%" stop-color="#059669"/>
-    </linearGradient>
-
-    <!-- Glow Filter -->
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    <filter id="kg-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#36677b" flood-opacity="0.4" />
     </filter>
   </defs>
 
-  <!-- Favicon Container / Background Layer -->
-  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
-  <rect width="504" height="504" x="4" y="4" rx="108" fill="none" stroke="#334155" stroke-width="4" opacity="0.5"/>
+  <!-- Background container for preview contrast -->
+  <rect width="512" height="512" rx="112" fill="#0b131a" />
 
-  <!-- Main Symbol Group -->
-  <g transform="translate(0, 0)">
-    
-    <!-- LEFT SIDE: BUYER (Shopping Bag Entity) -->
-    <g id="buyer-node">
-      <!-- Outer Orbit Arch -->
-      <path d="M 120,230 A 100,100 0 0,1 256,130" fill="none" stroke="url(#buyerGrad)" stroke-width="12" stroke-linecap="round"/>
-      
-      <!-- Buyer Node Circle -->
-      <circle cx="120" cy="230" r="32" fill="url(#buyerGrad)" filter="url(#glow)"/>
-      
-      <!-- Shopping Bag Icon (Inside Circle) -->
-      <path d="M 112,222 h 16 v 18 a 8,8 0 0,1 -16,0 z" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M 116,222 v -4 a 4,4 0 0,1 8,0 v 4" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
-    </g>
+  <!-- Outer Geometric Interlocking Ring (Symbolizing Marketplace Exchange & Unity) -->
+  <g filter="url(#kg-shadow)">
+    <!-- Left Dynamic Fold (Representing Buying / Incoming) -->
+    <path d="M 220 110 
+             C 140 110, 100 150, 100 230 
+             L 100 290 
+             C 100 370, 140 410, 220 410 
+             L 260 410 
+             L 260 340 
+             L 220 340 
+             C 180 340, 160 320, 160 280 
+             L 160 240 
+             C 160 200, 180 180, 220 180 
+             L 280 180 
+             L 280 110 Z" fill="url(#kg-cyan-blue)" />
 
-    <!-- RIGHT SIDE: SELLER (Tag / Growth Entity) -->
-    <g id="seller-node">
-      <!-- Outer Orbit Arch -->
-      <path d="M 392,230 A 100,100 0 0,1 256,330" fill="none" stroke="url(#sellerGrad)" stroke-width="12" stroke-linecap="round"/>
-      
-      <!-- Seller Node Circle -->
-      <circle cx="392" cy="230" r="32" fill="url(#sellerGrad)" filter="url(#glow)"/>
-      
-      <!-- Price Tag Icon (Inside Circle) -->
-      <path d="M 385,221 l 12,-12 h 12 v 12 l -12,12 z" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="394" cy="218" r="1.5" fill="#FFFFFF"/>
-    </g>
+    <!-- Right Dynamic Fold (Representing Selling / Outgoing & Expansion) -->
+    <path d="M 292 102 
+             L 252 102 
+             L 252 172 
+             L 292 172 
+             C 332 172, 352 192, 352 232 
+             L 352 272 
+             C 352 312, 332 332, 292 332 
+             L 232 332 
+             L 232 402 
+             L 292 402 
+             C 372 402, 412 362, 412 282 
+             L 412 222 
+             C 412 142, 372 102, 292 102 Z" fill="url(#kg-purple-indigo)" opacity="0.95" />
 
-    <!-- CENTER: THE HANDSHAKE (Meeting Point) -->
-    <g id="handshake-core" transform="translate(0, 10)">
-      
-      <!-- Left Arm / Hand (Buyer side) -->
-      <path d="M 148,240 L 210,240 L 240,270 L 220,290 L 195,265 L 148,265 Z" fill="url(#buyerGrad)"/>
-      
-      <!-- Right Arm / Hand (Seller side) -->
-      <path d="M 364,240 L 302,240 L 272,270 L 292,290 L 317,265 L 364,265 Z" fill="url(#sellerGrad)"/>
-      
-      <!-- Clasping Hands Center Overlay -->
-      <!-- Top Hand Grip -->
-      <path d="M 225,240 L 260,225 C 270,220 280,228 275,238 L 260,260 L 240,270 Z" fill="#38BDF8"/>
-      
-      <!-- Interlocking Fingers -->
-      <path d="M 235,270 L 252,287 C 257,292 265,292 270,287 C 275,282 275,274 270,269 L 260,260" fill="none" stroke="#059669" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M 222,257 L 239,274 C 244,279 252,279 257,274" fill="none" stroke="#0284C7" stroke-width="8" stroke-linecap="round"/>
-      
-      <!-- Central Spark / Agreement Light -->
-      <circle cx="256" cy="230" r="6" fill="#FFFFFF" filter="url(#glow)"/>
-      <path d="M 256,218 V 242 M 244,230 H 268" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/>
-    </g>
-
-    <!-- EXCHANGE ARROWS (Flow of Value & Goods) -->
-    <!-- Top Arrow (Left to Right) -->
-    <path d="M 270,130 L 285,130 L 278,120" fill="none" stroke="#34D399" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-    
-    <!-- Bottom Arrow (Right to Left) -->
-    <path d="M 242,330 L 227,330 L 234,340" fill="none" stroke="#38BDF8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-
+    <!-- Central Core Nexus Spark (Representing Rwanda's Heart & Fast Matching) -->
+    <path d="M 256 196 
+             L 282 244 
+             L 330 270 
+             L 282 296 
+             L 256 344 
+             L 230 296 
+             L 182 270 
+             L 230 244 Z" fill="url(#kg-vibrant-glow)" />
   </g>
 </svg>

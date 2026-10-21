@@ -524,15 +524,6 @@ export default function Home() {
     }
   }, [loading, filteredListings.length])
 
-  function scrollToListings() {
-    document
-      .getElementById("all-listings")
-      ?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      })
-  }
-
   return (
     <main className="min-h-screen overflow-x-hidden kg-bg kg-text transition-colors duration-300">
       <style>{`
@@ -547,15 +538,15 @@ export default function Home() {
       `}</style>
 
       {showSplash && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden kg-bg transition-opacity duration-700" role="status" aria-label="KUGURISHA irimo gufunguka">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden kg-bg transition-opacity duration-700" role="status" aria-label="kugurisha irimo gufunguka">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(86,154,181,0.12),transparent_40%),radial-gradient(circle_at_75%_75%,rgba(66,124,148,0.1),transparent_40%)]" />
           <div className="kug-glow absolute h-72 w-72 rounded-full bg-[#569ab5]/20 blur-3xl sm:h-96 sm:w-96" />
           <div className="kug-reveal relative flex flex-col items-center px-6 text-center">
             <div className="mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-transparent border-transparent sm:h-36 sm:w-36">
               <img src="/favicon.svg" alt="" className="h-full w-full object-contain rounded-full bg-transparent transition-transform duration-300 hover:scale-105" />
             </div>
-            <div className="text-3xl font-black tracking-[-0.07em] sm:text-5xl bg-gradient-to-r from-slate-700 via-[#569ab5] to-[#36677b] dark:from-slate-300 dark:via-[#569ab5] dark:to-[#73afc9] bg-clip-text text-transparent">
-              KUGURISHA
+            <div className="text-3xl font-black tracking-[0.18em] sm:text-5xl bg-gradient-to-r from-slate-700 via-[#569ab5] to-[#36677b] dark:from-slate-300 dark:via-[#569ab5] dark:to-[#73afc9] bg-clip-text text-transparent">
+              kugurisha
             </div>
             <p className="mt-2.5 text-[11px] font-black uppercase tracking-[0.3em] text-[#569ab5] dark:text-[#73afc9]">Isoko ryawe ryo mu Rwanda</p>
             <div className="mt-8 h-1.5 w-48 overflow-hidden rounded-full kg-bg-secondary sm:w-56">
@@ -585,9 +576,7 @@ export default function Home() {
           <Header
             searchValue={search}
             onSearchChange={setSearch}
-            onSearchSubmit={() => {
-              scrollToListings()
-            }}
+            onSearchSubmit={() => {}}
           />
         </div>
 
@@ -600,7 +589,7 @@ export default function Home() {
             <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-full bg-transparent p-2 transition-all duration-500 group-hover:scale-105">
               <img
                 src="/favicon.svg"
-                alt="KUGURISHA Logo"
+                alt="kugurisha Logo"
                 className="h-full w-full object-contain rounded-full bg-transparent transition-transform duration-500 group-hover:rotate-6"
               />
               <span className="absolute right-1 top-1 flex h-4 w-4">
@@ -610,8 +599,8 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col justify-center">
-              <span className="text-3xl sm:text-4xl font-black tracking-[-0.07em] leading-none bg-gradient-to-r from-slate-900 via-slate-800 to-[#427c94] dark:from-white dark:via-slate-100 dark:to-[#73afc9] bg-clip-text text-transparent transition-all duration-300 group-hover:brightness-110">
-                KUGURISHA
+              <span className="text-3xl sm:text-4xl font-black tracking-[0.15em] leading-none bg-gradient-to-r from-slate-900 via-slate-800 to-[#427c94] dark:from-white dark:via-slate-100 dark:to-[#73afc9] bg-clip-text text-transparent transition-all duration-300 group-hover:brightness-110">
+                kugurisha
               </span>
               <span className="mt-1 text-[10px] sm:text-xs font-black tracking-[0.3em] text-[#427c94] dark:text-[#73afc9] uppercase opacity-95">
                 Isoko ryawe ryo mu Rwanda
@@ -623,7 +612,7 @@ export default function Home() {
         {/* HERO + LISTINGS SLIDER SECTION (NO BOX CONTAINERS) */}
         <section
           id="listings"
-          className="relative z-10 py-8 sm:py-12"
+          className="relative z-10 py-8 sm:py-12 pb-24"
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="grid items-stretch gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:gap-8">
@@ -647,7 +636,7 @@ export default function Home() {
                   </h1>
 
                   <p className="mt-5 text-sm leading-relaxed text-slate-700 dark:text-slate-200 sm:text-base font-semibold">
-                    KUGURISHA.COM ni urubuga ruhuza abaguzi n'abagurisha mu Rwanda, ahantu hamwe kandi mu buryo bworoshye.
+                    kugurisha.com ni urubuga ruhuza abaguzi n'abagurisha mu Rwanda, ahantu hamwe kandi mu buryo bworoshye.
                   </p>
 
                   <div className="mt-8 flex flex-wrap items-center gap-3.5">
@@ -702,9 +691,9 @@ export default function Home() {
                       Ibicuruzwa bishya
                     </h2>
                   </div>
-                  <span className="hidden text-xs font-bold text-slate-700 dark:text-slate-200 sm:block">
-                    Reba ibiri ku isoko →
-                  </span>
+                  <Link to="/listings" className="text-xs font-bold text-[#427c94] dark:text-[#73afc9] hover:underline">
+                    Reba byose →
+                  </Link>
                 </div>
 
                 {loading ? (
@@ -781,11 +770,6 @@ export default function Home() {
                       <p className="mt-1 text-xs text-slate-700 dark:text-slate-200">
                         Gerageza irindi jambo ryo gushakisha.
                       </p>
-                      {search && (
-                        <button type="button" onClick={() => setSearch("")} className="mt-5 rounded-xl bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] px-4 py-2.5 text-xs font-black text-white shadow-md transition hover:opacity-90">
-                          Reba byose
-                        </button>
-                      )}
                     </div>
                   </div>
                 )}
@@ -795,113 +779,6 @@ export default function Home() {
           </div>
         </section>
       </div>
-
-      {/* ALL LISTINGS / SEARCH RESULTS GRID */}
-      <section
-        id="all-listings"
-        className="relative overflow-hidden border-y kg-border kg-bg-secondary py-16 sm:py-24"
-      >
-        <div className="pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full bg-slate-500/[0.04] blur-2xl" />
-        <div className="pointer-events-none absolute -right-40 bottom-10 h-[450px] w-[450px] rounded-full bg-[#569ab5]/[0.05] blur-2xl" />
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end mb-8">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#427c94] dark:text-[#73afc9]">
-                Ku isoko ubu
-              </p>
-              <h2 className="mt-2 text-3xl font-black tracking-[-0.04em] kg-text sm:text-4xl">
-                Ibicuruzwa byose
-              </h2>
-              {search && (
-                <p className="mt-2 text-sm kg-text-secondary">
-                  Ibisubizo bya:{" "}
-                  <span className="font-bold kg-text bg-[#569ab5]/10 px-2 py-0.5 rounded-md text-[#427c94] dark:text-[#569ab5]">{search}</span>
-                </p>
-              )}
-            </div>
-
-            {search && (
-              <button type="button" onClick={() => setSearch("")} className="flex items-center gap-2 self-start rounded-xl border kg-border kg-surface px-4.5 py-2.5 text-sm font-bold kg-text-secondary shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:text-[#427c94] dark:hover:text-[#569ab5] sm:self-auto">
-                <Icon name="close" size={15} />
-                Siba search
-              </button>
-            )}
-          </div>
-
-          {/* MAIN PRODUCT GRID */}
-          {loading ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                <div key={n} className="h-72 rounded-3xl kg-surface animate-pulse border kg-border" />
-              ))}
-            </div>
-          ) : filteredListings.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredListings.map((listing) => (
-                <Link
-                  key={listing.id}
-                  to={`/listing/${listing.id}`}
-                  className="group block overflow-hidden rounded-3xl border kg-border kg-surface shadow-md backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-[#569ab5]/50 hover:shadow-xl"
-                >
-                  <div className="relative h-48 overflow-hidden kg-bg-secondary">
-                    {images[listing.id] ? (
-                      <img src={images[listing.id]} alt={listing.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                    ) : (
-                      <div className="flex h-full items-center justify-center kg-bg-secondary">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl kg-surface kg-text-muted shadow-sm">
-                          <Icon name="shopping-bag" size={24} />
-                        </div>
-                      </div>
-                    )}
-                    <div className="absolute left-3.5 top-3.5 rounded-full border border-white/20 bg-black/50 px-3.5 py-1.5 text-[10px] font-black text-white shadow-md backdrop-blur-md">
-                      {listing.category?.name || "Ibindi"}
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    <h3 className="line-clamp-2 min-h-[2.75rem] text-sm font-black leading-5 kg-text transition-colors group-hover:text-[#427c94] dark:group-hover:text-[#73afc9]">
-                      {listing.title}
-                    </h3>
-                    <p className="mt-3 bg-gradient-to-r from-blue-600 via-[#569ab5] to-[#36677b] dark:from-white dark:via-[#73afc9] dark:to-slate-200 bg-clip-text text-lg font-black text-transparent">
-                      {formatPrice(listing)}
-                    </p>
-                    <p className="mt-2.5 flex items-center gap-1.5 truncate text-xs font-semibold kg-text-secondary">
-                      <Icon name="map-pin" size={14} className="text-[#427c94] dark:text-[#73afc9] shrink-0" />
-                      {formatLocation(listing)}
-                    </p>
-                    <div className="mt-4 flex items-center justify-between border-t border-slate-200/50 dark:border-slate-800/50 pt-3.5">
-                      <span className="text-[11px] font-bold kg-text-muted">
-                        Reba ibisobanuro
-                      </span>
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#569ab5]/20 text-[#427c94] dark:text-[#73afc9] transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-[#569ab5] group-hover:text-white">
-                        <Icon name="arrow-right" size={14} />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-3xl border kg-border kg-surface px-6 py-20 text-center shadow-sm backdrop-blur-md">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#569ab5]/10 text-[#427c94] dark:text-[#73afc9] shadow-inner">
-                <Icon name="search" size={26} />
-              </div>
-              <h3 className="mt-5 text-xl font-black kg-text">
-                Nta bicuruzwa byabonetse
-              </h3>
-              <p className="mt-2 text-sm kg-text-secondary">
-                Nta bicuruzwa bihuje n'ayo makuru byabonetse kuri uyu mwanya.
-              </p>
-              {search && (
-                <button type="button" onClick={() => setSearch("")} className="mt-6 rounded-xl bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] px-6 py-3 text-xs font-black text-white shadow-md transition hover:opacity-90">
-                  Kura ho ibyo washakishaga
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
 
       <SellCTA />
       <HomeFooter />

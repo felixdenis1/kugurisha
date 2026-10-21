@@ -1,9 +1,12 @@
+// src/App.tsx
+
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 
 import { ThemeProvider } from "./components/ThemeProvider"
 import MainLayout from "./layouts/MainLayout"
 
 import Home from "./pages/Home"
+import AllListings from "./pages/AllListings"
 import Categories from "./pages/Categories"
 import About from "./pages/About"
 import HowItWorks from "./pages/HowItWorks"
@@ -36,6 +39,10 @@ function App() {
         <Routes>
           {/* Home retains its existing full-featured header and behavior. */}
           <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
+
+          {/* Dedicated All Listings page */}
+          <Route path="/listings" element={<AllListings />} />
 
           {/* Shared layout for the new standalone information pages. */}
           <Route element={<MainLayout />}>
