@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local development backups
+*.bak
+
+# Temporary upgrade scripts
+/upgrade_kugurisha.py
+/upgrade_story_2d.py
