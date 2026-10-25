@@ -1,13 +1,16 @@
-// src/components/Header.tsx
-
-import { useEffect, useRef, useState } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react"
 import {
   Link,
   NavLink,
   useLocation,
   useNavigate,
 } from "react-router-dom"
-
 import { supabase } from "../services/supabase"
 import { useTheme } from "./ThemeProvider"
 
@@ -24,222 +27,121 @@ type IconName =
   | "store"
   | "heart"
   | "message"
-  | "settings"
   | "logout"
   | "menu"
   | "close"
   | "spark"
   | "plus"
-  | "shopping-bag"
-  | "chevron-down"
-  | "info"
-  | "grid"
-  | "check"
+  | "chevron"
   | "sun"
   | "moon"
-  | "zap"
-  | "compass"
+  | "arrow"
 
 function Icon({
   name,
-  size = 20,
-  strokeWidth = 2,
-  className,
+  size = 19,
 }: {
   name: IconName
   size?: number
-  strokeWidth?: number
-  className?: string
 }) {
-  const common = {
-    width: size,
-    height: size,
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    className,
-    "aria-hidden": true as const,
+  const paths: Record<IconName, ReactNode> = {
+    search: (
+      <>
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </>
+    ),
+    bell: (
+      <>
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+        <path d="M10 21h4" />
+      </>
+    ),
+    user: (
+      <>
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5 20a7 7 0 0 1 14 0" />
+      </>
+    ),
+    store: (
+      <>
+        <path d="M4 10v9h16v-9M3 10l2-6h14l2 6" />
+        <path d="M3 10a3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 3 0" />
+      </>
+    ),
+    heart: (
+      <path d="M20.8 8.8c0 5-8.8 10.2-8.8 10.2S3.2 13.8 3.2 8.8A4.8 4.8 0 0 1 12 6.2a4.8 4.8 0 0 1 8.8 2.6Z" />
+    ),
+    message: (
+      <path d="M20 11.5a7 7 0 0 1-7.5 7H8l-4 2v-5.2a7 7 0 1 1 16-3.8Z" />
+    ),
+    logout: (
+      <>
+        <path d="m10 17 5-5-5-5M15 12H3M14 4h5v16h-5" />
+      </>
+    ),
+    menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+    close: <path d="M6 6l12 12M18 6 6 18" />,
+    spark: (
+      <>
+        <path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z" />
+        <path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z" />
+      </>
+    ),
+    plus: <path d="M12 5v14M5 12h14" />,
+    chevron: <path d="m6 9 6 6 6-6" />,
+    sun: (
+      <>
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+      </>
+    ),
+    moon: (
+      <path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15.1Z" />
+    ),
+    arrow: (
+      <>
+        <path d="M5 12h14" />
+        <path d="m13 6 6 6-6 6" />
+      </>
+    ),
   }
 
-  switch (name) {
-    case "search":
-      return (
-        <svg {...common}>
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-4-4" />
-        </svg>
-      )
-
-    case "bell":
-      return (
-        <svg {...common}>
-          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-          <path d="M10 21h4" />
-        </svg>
-      )
-
-    case "user":
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="8" r="3.5" />
-          <path d="M5 20a7 7 0 0 1 14 0" />
-        </svg>
-      )
-
-    case "store":
-      return (
-        <svg {...common}>
-          <path d="M4 10v9h16v-9" />
-          <path d="M3 10 5 4h14l2 6" />
-          <path d="M3 10a3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 5 0 3 3 0 0 0 3 0" />
-          <path d="M9 19v-5h6v5" />
-        </svg>
-      )
-
-    case "heart":
-      return (
-        <svg {...common}>
-          <path d="M20.8 8.8c0 5-8.8 10.2-8.8 10.2S3.2 13.8 3.2 8.8A4.8 4.8 0 0 1 12 6.2a4.8 4.8 0 0 1 8.8 2.6Z" />
-        </svg>
-      )
-
-    case "message":
-      return (
-        <svg {...common}>
-          <path d="M20 11.5a7 7 0 0 1-7.5 7H8l-4 2v-5.2a7 7 0 1 1 16-3.8Z" />
-        </svg>
-      )
-
-    case "settings":
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="3" />
-          <path d="m19.4 15 .1.1a2 2 0 0 1-2.8 2.8l-.1-.1a2 2 0 0 0-3.4 1.4v.2a2 2 0 0 1-4 0v-.2a2 2 0 0 0-3.4-1.4l-.1.1A2 2 0 0 1 3 15.1l.1-.1a2 2 0 0 0-1.4-3.4h-.2a2 2 0 0 1 0-4h.2A2 2 0 0 0 3.1 4.2L3 4.1a2 2 0 0 1 2.8-2.8l.1.1a2 2 0 0 0 3.4-1.4V0" />
-        </svg>
-      )
-
-    case "logout":
-      return (
-        <svg {...common}>
-          <path d="M10 17l5-5-5-5" />
-          <path d="M15 12H3" />
-          <path d="M14 4h5v16h-5" />
-        </svg>
-      )
-
-    case "menu":
-      return (
-        <svg {...common}>
-          <path d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      )
-
-    case "close":
-      return (
-        <svg {...common}>
-          <path d="m6 6 12 12M18 6 6 18" />
-        </svg>
-      )
-
-    case "spark":
-      return (
-        <svg {...common}>
-          <path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z" />
-          <path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z" />
-        </svg>
-      )
-
-    case "plus":
-      return (
-        <svg {...common}>
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-      )
-
-    case "shopping-bag":
-      return (
-        <svg {...common}>
-          <path d="M5 8h14l-1 12H6L5 8Z" />
-          <path d="M9 8a3 3 0 0 1 6 0" />
-        </svg>
-      )
-
-    case "chevron-down":
-      return (
-        <svg {...common}>
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      )
-
-    case "info":
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 11v5M12 8h.01" />
-        </svg>
-      )
-
-    case "grid":
-      return (
-        <svg {...common}>
-          <rect x="4" y="4" width="6" height="6" rx="1" />
-          <rect x="14" y="4" width="6" height="6" rx="1" />
-          <rect x="4" y="14" width="6" height="6" rx="1" />
-          <rect x="14" y="14" width="6" height="6" rx="1" />
-        </svg>
-      )
-
-    case "check":
-      return (
-        <svg {...common}>
-          <path d="m5 12 4 4L19 6" />
-        </svg>
-      )
-
-    case "sun":
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="4" />
-          <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
-        </svg>
-      )
-
-    case "moon":
-      return (
-        <svg {...common}>
-          <path d="M20.2 15.1A8.5 8.5 0 0 1 8.9 3.8 8.5 8.5 0 1 0 20.2 15.1Z" />
-        </svg>
-      )
-
-    case "zap":
-      return (
-        <svg {...common}>
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-        </svg>
-      )
-
-    case "compass":
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="10" />
-          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-        </svg>
-      )
-
-    default:
-      return null
-  }
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {paths[name]}
+    </svg>
+  )
 }
 
 const navigation = [
   { label: "Ahabanza", to: "/" },
-  { label: "Ibicuruzwa byose", to: "/listings" },
+  { label: "Ibicuruzwa", to: "/listings" },
   { label: "Ibyiciro", to: "/categories" },
   { label: "Ibyo dukora", to: "/about" },
   { label: "Uko rukora", to: "/how-it-works" },
+]
+
+const accountLinks: {
+  label: string
+  to: string
+  icon: IconName
+}[] = [
+  { label: "Umwirondoro", to: "/profile", icon: "user" },
+  { label: "Ibicuruzwa byanjye", to: "/dashboard", icon: "store" },
+  { label: "Ibyakunzwe", to: "/favorites", icon: "heart" },
+  { label: "Ubutumwa", to: "/messages", icon: "message" },
+  { label: "Imenyesha", to: "/notifications", icon: "bell" },
 ]
 
 export default function Header({
@@ -249,85 +151,110 @@ export default function Header({
 }: HeaderProps) {
   const [userId, setUserId] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [loggingOut, setLoggingOut] = useState(false)
-  const [headerScrolled, setHeaderScrolled] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
-  const [internalSearchValue, setInternalSearchValue] = useState("")
+  const [internalSearch, setInternalSearch] = useState("")
+  const [loggingOut, setLoggingOut] = useState(false)
 
-  const userMenuRef = useRef<HTMLDivElement>(null)
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
+  const accountRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
-  const isDark = theme === "dark"
-  const currentSearchValue = searchValue ?? internalSearchValue
+  const search = searchValue ?? internalSearch
 
   function closeMenus() {
-    setShowUserMenu(false)
-    setShowMobileMenu(false)
+    setMobileOpen(false)
+    setAccountOpen(false)
+    setSearchOpen(false)
   }
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(event.target as Node)
-      ) {
-        setShowUserMenu(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
+    closeMenus()
+  }, [location.pathname, location.search])
+
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 18)
+    update()
+    window.addEventListener("scroll", update, { passive: true })
+    return () => window.removeEventListener("scroll", update)
   }, [])
 
   useEffect(() => {
-    let mounted = true
+    function handleOutside(event: MouseEvent) {
+      const target = event.target as Node
 
-    async function loadUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      if (accountRef.current && !accountRef.current.contains(target)) {
+        setAccountOpen(false)
+      }
 
-      if (!mounted) return
-
-      setUserId(user?.id ?? null)
-
-      if (user?.id) {
-        await loadUnreadCount(user.id)
-      } else {
-        setUnreadCount(0)
+      if (headerRef.current && !headerRef.current.contains(target)) {
+        setSearchOpen(false)
+        setMobileOpen(false)
       }
     }
 
-    void loadUser()
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") closeMenus()
+    }
+
+    document.addEventListener("mousedown", handleOutside)
+    document.addEventListener("keydown", handleEscape)
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutside)
+      document.removeEventListener("keydown", handleEscape)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus()
+  }, [searchOpen])
+
+  useEffect(() => {
+    let active = true
+
+    void supabase.auth.getUser().then(({ data }) => {
+      if (active) setUserId(data.user?.id ?? null)
+    })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      const id = session?.user?.id ?? null
-
-      setUserId(id)
-
-      if (id) {
-        window.setTimeout(() => {
-          void loadUnreadCount(id)
-        }, 0)
-      } else {
-        setUnreadCount(0)
-        closeMenus()
-      }
+      setUserId(session?.user?.id ?? null)
     })
 
     return () => {
-      mounted = false
+      active = false
       subscription.unsubscribe()
     }
   }, [])
 
   useEffect(() => {
-    if (!userId) return
+    if (!userId) {
+      setUnreadCount(0)
+      return
+    }
+
+    let active = true
+
+    async function refreshCount() {
+      const { count, error } = await supabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("is_read", false)
+
+      if (active && !error) {
+        setUnreadCount(count ?? 0)
+      }
+    }
+
+    void refreshCount()
 
     const channel = supabase
       .channel(`shared-header-notifications-${userId}`)
@@ -339,532 +266,411 @@ export default function Header({
           table: "notifications",
           filter: `user_id=eq.${userId}`,
         },
-        () => {
-          void loadUnreadCount(userId)
-        },
+        () => void refreshCount(),
       )
       .subscribe()
 
     return () => {
+      active = false
       void supabase.removeChannel(channel)
     }
   }, [userId])
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setHeaderScrolled(window.scrollY > 15)
-    }
-
-    handleScroll()
-    window.addEventListener("scroll", handleScroll, { passive: true })
-
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  async function loadUnreadCount(id: string) {
-    const { count, error } = await supabase
-      .from("notifications")
-      .select("id", {
-        count: "exact",
-        head: true,
-      })
-      .eq("user_id", id)
-      .eq("is_read", false)
-
-    if (error) {
-      console.error("Unread notification error:", error)
-      return
-    }
-
-    setUnreadCount(count ?? 0)
+  function updateSearch(value: string) {
+    if (onSearchChange) onSearchChange(value)
+    else setInternalSearch(value)
   }
 
-  async function handleLogout() {
-    try {
-      setLoggingOut(true)
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
 
-      const { error } = await supabase.auth.signOut()
+    const query = search.trim()
+    if (!query) return
 
-      if (error) {
-        console.error("Logout error:", error)
-        alert("Ntibyashobotse gusohoka. Ongera ugerageze.")
-        return
+    closeMenus()
+
+    if (onSearchSubmit) {
+      onSearchSubmit()
+    } else if (onSearchChange) {
+      if (location.pathname !== "/") {
+        navigate(`/?search=${encodeURIComponent(query)}`)
       }
+    } else {
+      navigate(`/listings?search=${encodeURIComponent(query)}`)
+    }
+  }
+
+  async function logout() {
+    setLoggingOut(true)
+
+    try {
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
 
       setUserId(null)
       setUnreadCount(0)
       closeMenus()
       navigate("/", { replace: true })
     } catch (error) {
-      console.error("Logout error:", error)
-      alert("Habaye ikibazo mu gusohoka.")
+      console.error(error)
+      alert("Ntibyashobotse gusohoka. Ongera ugerageze.")
     } finally {
       setLoggingOut(false)
     }
   }
 
-  function handleSearchSubmit(e?: React.FormEvent) {
-    if (e) e.preventDefault()
-    closeMenus()
-    setSearchOpen(false)
-
-    if (onSearchSubmit) {
-      onSearchSubmit()
-      return
-    }
-
-    if (currentSearchValue.trim()) {
-      navigate(`/listings?search=${encodeURIComponent(currentSearchValue.trim())}`)
-    }
-  }
-
-  function handleInputChange(val: string) {
-    if (onSearchChange) {
-      onSearchChange(val)
-    } else {
-      setInternalSearchValue(val)
-    }
-  }
+  const actionClass =
+    "kg-h-action relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]"
 
   return (
-    <div className="kg-header sticky top-0 z-50">
+    <div
+      ref={headerRef}
+      className={`kg-h-root sticky top-0 z-[100] w-full ${
+        scrolled ? "kg-h-scrolled" : ""
+      }`}
+    >
       <header
-        className={`w-full transition-all duration-500 ${
-          headerScrolled ? "py-2 sm:py-3" : "py-3 sm:py-4"
+        className={`transition-[padding] duration-300 ${
+          scrolled ? "py-2.5" : "py-3.5"
         }`}
       >
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div
-            className="group/header relative flex h-[76px] items-center justify-between rounded-full border px-4 sm:px-6 transition-all duration-500"
-            style={{
-              background: isDark
-                ? "rgba(15, 23, 42, 0.82)"
-                : "rgba(255, 255, 255, 0.88)",
-              borderColor: headerScrolled
-                ? isDark
-                  ? "rgba(86, 154, 181, 0.35)"
-                  : "rgba(86, 154, 181, 0.28)"
-                : isDark
-                ? "rgba(255, 255, 255, 0.15)"
-                : "rgba(0, 0, 0, 0.09)",
-              boxShadow: headerScrolled
-                ? isDark
-                  ? "0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 30px rgba(86, 154, 181, 0.2)"
-                  : "0 20px 40px -15px rgba(86, 154, 181, 0.2), 0 0 20px rgba(86, 154, 181, 0.1)"
-                : "0 10px 30px -10px rgba(0, 0, 0, 0.06)",
-              backdropFilter: "blur(28px)",
-              WebkitBackdropFilter: "blur(28px)",
-            }}
-          >
-            <div className="pointer-events-none absolute -inset-0.5 rounded-full bg-gradient-to-r from-slate-500/10 via-[#569ab5]/20 to-[#36677b]/20 opacity-0 blur-xl transition-opacity duration-700 group-hover/header:opacity-100" />
+        <div className="mx-auto max-w-[1520px] px-3 sm:px-6 lg:px-8">
+          <div className="kg-h-panel relative flex min-h-[76px] items-center justify-between gap-3 rounded-full px-4 sm:px-7 shadow-lg backdrop-blur-md">
+            {/* BRAND */}
+            <Link
+              to="/"
+              onClick={closeMenus}
+              className="kg-h-brand flex shrink-0 items-center gap-3"
+              aria-label="KUGURISHA - Ahabanza"
+            >
+              <span className="kg-h-logo flex h-12 w-12 shrink-0 items-center justify-center">
+                <img
+                  src="/favicon.svg"
+                  alt=""
+                  className="h-full w-full object-contain"
+                />
+              </span>
 
-            {/* LEFT: Futuristic Pill Navigation */}
-            <nav className="relative z-10 flex items-center gap-1.5">
-              <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/5 dark:bg-white/5 p-1.5 backdrop-blur-md">
-                {navigation.map((item) => {
-                  const isActive = location.pathname === item.to
-                  return (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      onClick={closeMenus}
-                      className={`relative rounded-full px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-black transition-all duration-300 ${
-                        isActive
-                          ? "text-white"
-                          : isDark
-                          ? "text-slate-300 hover:text-white"
-                          : "text-slate-700 hover:text-slate-900"
-                      }`}
-                    >
-                      {isActive && (
-                        <span className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] shadow-[0_4px_15px_rgba(86,154,181,0.35)]" />
-                      )}
-                      <span className="relative z-10">{item.label}</span>
-                    </NavLink>
-                  )
-                })}
+              <span className="flex min-w-0 flex-col">
+                <span className="kg-h-wordmark text-2xl sm:text-[32px] font-extrabold tracking-tight leading-none" style={{ fontFamily: 'Instagram Sans, sans-serif', letterSpacing: '-0.02em', textTransform: 'none' }}>
+                  kugurisha
+                  <span className="kg-h-brand-dot text-[var(--primary)]">.</span>
+                </span>
+               
+              </span>
+            </Link>
 
-                <Link
-                  to="/ai-search"
-                  onClick={closeMenus}
-                  className={`relative hidden sm:flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs sm:text-sm font-black transition-all duration-300 ${
-                    location.pathname === "/ai-search"
-                      ? "text-white"
-                      : isDark
-                      ? "text-slate-300 hover:text-white"
-                      : "text-slate-700 hover:text-slate-900"
-                  }`}
+            {/* DESKTOP NAVIGATION */}
+            <nav
+              className="kg-h-nav hidden items-center gap-1 xl:flex mx-auto"
+              aria-label="Menu nyamukuru"
+            >
+              {navigation.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === "/"}
+                  className={({ isActive }) =>
+                    `kg-h-navlink px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${isActive ? "is-active font-semibold" : ""}`
+                  }
                 >
-                  {location.pathname === "/ai-search" && (
-                    <span className="absolute inset-0 z-0 rounded-full bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] shadow-[0_4px_15px_rgba(86,154,181,0.35)]" />
-                  )}
-                  <Icon
-                    name="spark"
-                    size={16}
-                    className={`relative z-10 ${
-                      location.pathname === "/ai-search"
-                        ? "text-white"
-                        : "text-[#569ab5]"
-                    }`}
-                  />
-                  <span className="relative z-10">AI Search</span>
-                </Link>
-              </div>
+                  {item.label}
+                </NavLink>
+              ))}
+
+              <NavLink
+                to="/ai-search"
+                className={({ isActive }) =>
+                  `kg-h-navlink kg-h-ai px-3.5 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition-colors whitespace-nowrap ${
+                    isActive ? "is-active font-semibold" : ""
+                  }`
+                }
+              >
+                <Icon name="spark" size={15} />
+                Baza AI
+              </NavLink>
             </nav>
 
-            {/* RIGHT: Quick Action Bar */}
-            <div className="relative z-10 flex items-center gap-2.5">
+            {/* ACTIONS */}
+            <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
+                className={actionClass}
                 onClick={() => {
-                  setSearchOpen((prev) => !prev)
-                  setShowMobileMenu(false)
-                  setShowUserMenu(false)
+                  setSearchOpen((previous) => !previous)
+                  setAccountOpen(false)
+                  setMobileOpen(false)
                 }}
-                className={`group flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 active:scale-95 ${
-                  searchOpen
-                    ? "border-[#569ab5] bg-[#569ab5] text-white shadow-[0_0_15px_rgba(86,154,181,0.35)]"
-                    : isDark
-                    ? "border-slate-800 bg-slate-900/80 text-slate-300 hover:border-[#569ab5]/50 hover:text-white"
-                    : "border-slate-200 bg-white/80 text-slate-700 shadow-sm hover:border-[#569ab5] hover:text-[#427c94]"
-                }`}
-                aria-label={searchOpen ? "Funga search" : "Shakisha"}
+                aria-label={searchOpen ? "Funga ishakisha" : "Shakisha"}
+                aria-expanded={searchOpen}
+                title="Shakisha"
               >
                 <Icon name={searchOpen ? "close" : "search"} size={19} />
               </button>
 
               <button
                 type="button"
+                className={`${actionClass} hidden sm:flex`}
                 onClick={toggleTheme}
-                className={`hidden h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 active:scale-95 sm:flex ${
-                  isDark
-                    ? "border-slate-800 bg-slate-900/80 text-amber-400 hover:border-amber-400/50 hover:bg-slate-800"
-                    : "border-slate-200 bg-white/80 text-[#427c94] shadow-sm hover:border-[#569ab5] hover:bg-[#569ab5]/10"
-                }`}
-                title={isDark ? "Hindura mu Light Mode" : "Hindura mu Dark Mode"}
+                aria-label={
+                  theme === "dark"
+                    ? "Koresha light mode"
+                    : "Koresha dark mode"
+                }
+                title={theme === "dark" ? "Light mode" : "Dark mode"}
               >
-                <Icon name={isDark ? "sun" : "moon"} size={19} />
+                <Icon
+                  name={theme === "dark" ? "sun" : "moon"}
+                  size={19}
+                />
               </button>
 
               {userId && (
                 <Link
                   to="/notifications"
                   onClick={closeMenus}
-                  className={`relative flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 hover:scale-105 active:scale-95 ${
-                    isDark
-                      ? "border-slate-800 bg-slate-900/80 text-slate-300 hover:border-[#569ab5]/50 hover:text-white"
-                      : "border-slate-200 bg-white/80 text-slate-700 shadow-sm hover:border-[#569ab5] hover:text-[#427c94]"
-                  }`}
-                  aria-label="Notifications"
+                  className={actionClass}
+                  aria-label={`Imenyesha: ${unreadCount} utarasoma`}
                 >
                   <Icon name="bell" size={19} />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-rose-600 px-1 text-[10px] font-black text-white ring-2 ring-white dark:ring-slate-900 shadow-md">
+                    <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
                 </Link>
               )}
 
-              {!userId ? (
-                <Link
-                  to="/login"
-                  onClick={closeMenus}
-                  className="hidden items-center gap-2 rounded-full bg-slate-900/10 dark:bg-white/10 px-5 py-2.5 text-xs font-black kg-text transition-all duration-300 hover:bg-[#427c94] hover:text-white sm:flex"
-                >
-                  <Icon name="user" size={16} />
-                  <span>Injira</span>
-                </Link>
-              ) : (
-                <div className="relative hidden sm:block" ref={userMenuRef}>
+              {userId ? (
+                <div ref={accountRef} className="relative hidden sm:block">
                   <button
                     type="button"
-                    onClick={() => setShowUserMenu((prev) => !prev)}
-                    className={`flex h-11 items-center gap-2.5 rounded-full border px-4 transition-all duration-300 hover:scale-[1.02] active:scale-95 ${
-                      showUserMenu
-                        ? "border-[#569ab5] bg-[#569ab5]/10 text-[#427c94]"
-                        : isDark
-                        ? "border-slate-800 bg-slate-900/80 text-slate-200 hover:border-slate-700"
-                        : "border-slate-200 bg-white/80 text-slate-800 shadow-sm hover:border-[#569ab5]"
-                    }`}
+                    className={`${actionClass} gap-1.5 px-3 sm:w-auto rounded-full`}
+                    onClick={() => {
+                      setAccountOpen((previous) => !previous)
+                      setSearchOpen(false)
+                      setMobileOpen(false)
+                    }}
+                    aria-expanded={accountOpen}
+                    aria-label="Fungura konti"
                   >
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#427c94] to-[#36677b] text-white shadow-sm">
-                      <Icon name="user" size={14} />
+                    <Icon name="user" size={18} />
+                    <span className="hidden text-xs font-bold lg:inline">
+                      Konti
                     </span>
-                    <span className="text-xs sm:text-sm font-black">Konti</span>
-                    <Icon
-                      name="chevron-down"
-                      size={14}
-                      className={`text-slate-400 transition-transform duration-300 ${
-                        showUserMenu ? "rotate-180 text-[#569ab5]" : ""
-                      }`}
-                    />
+                    <Icon name="chevron" size={13} />
                   </button>
 
-                  {showUserMenu && (
-                    <div
-                      className={`absolute right-0 top-[calc(100%+14px)] w-72 overflow-hidden rounded-3xl border p-3 shadow-2xl transition-all duration-300 ${
-                        isDark
-                          ? "border-slate-800 bg-slate-950/90 text-slate-100"
-                          : "border-slate-200/90 bg-white/95 text-slate-800"
-                      }`}
-                      style={{
-                        backdropFilter: "blur(28px)",
-                        WebkitBackdropFilter: "blur(28px)",
-                      }}
-                    >
-                      <div className="rounded-2xl bg-gradient-to-r from-slate-500/10 via-[#569ab5]/10 to-[#36677b]/10 p-3.5 border border-[#569ab5]/20">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#427c94] to-[#36677b] text-white shadow-md">
-                            <Icon name="user" size={18} />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-black uppercase tracking-wider text-[#427c94] dark:text-[#73afc9]">
-                              Mwaramutse
-                            </p>
-                            <p className="text-xs font-black truncate max-w-[150px]">
-                              kugurisha User
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                  {accountOpen && (
+                    <div className="kg-h-dropdown absolute right-0 top-[calc(100%+15px)] z-[110] w-64 rounded-3xl p-2.5 shadow-2xl">
+                      <p className="px-3 py-2.5 text-xs font-extrabold">
+                        Konti yanjye
+                      </p>
 
-                      <div className="mt-2 space-y-0.5">
+                      {accountLinks.map((item) => (
                         <Link
-                          to="/profile"
+                          key={item.to}
+                          to={item.to}
                           onClick={closeMenus}
-                          className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
-                            isDark
-                              ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                              : "text-slate-700 hover:bg-[#569ab5]/10 hover:text-[#427c94]"
-                          }`}
+                          className="kg-h-menuitem flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-colors"
                         >
-                          <Icon name="user" size={16} />
-                          Profile yanjye
+                          <Icon name={item.icon} size={17} />
+                          {item.label}
+                          {item.to === "/notifications" &&
+                            unreadCount > 0 && (
+                              <span className="ml-auto text-xs font-bold text-[var(--primary)]">
+                                {unreadCount}
+                              </span>
+                            )}
                         </Link>
-                        <Link
-                          to="/dashboard"
-                          onClick={closeMenus}
-                          className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
-                            isDark
-                              ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                              : "text-slate-700 hover:bg-[#569ab5]/10 hover:text-[#427c94]"
-                          }`}
-                        >
-                          <Icon name="store" size={16} />
-                          Dashboard
-                        </Link>
-                        <Link
-                          to="/favorites"
-                          onClick={closeMenus}
-                          className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
-                            isDark
-                              ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                              : "text-slate-700 hover:bg-[#569ab5]/10 hover:text-[#427c94]"
-                          }`}
-                        >
-                          <Icon name="heart" size={16} />
-                          Ibyakunzwe
-                        </Link>
-                        <Link
-                          to="/messages"
-                          onClick={closeMenus}
-                          className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
-                            isDark
-                              ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                              : "text-slate-700 hover:bg-[#569ab5]/10 hover:text-[#427c94]"
-                          }`}
-                        >
-                          <Icon name="message" size={16} />
-                          Ubutumwa
-                        </Link>
-                        <Link
-                          to="/notifications"
-                          onClick={closeMenus}
-                          className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
-                            isDark
-                              ? "text-slate-300 hover:bg-slate-800 hover:text-white"
-                              : "text-slate-700 hover:bg-[#569ab5]/10 hover:text-[#427c94]"
-                          }`}
-                        >
-                          <span className="flex items-center gap-3">
-                            <Icon name="bell" size={16} />
-                            Notifications
-                          </span>
-                          {unreadCount > 0 && (
-                            <span className="rounded-full bg-red-500 px-2 py-0.5 text-[9px] font-black text-white">
-                              {unreadCount}
-                            </span>
-                          )}
-                        </Link>
-                      </div>
+                      ))}
 
-                      <div className="my-1.5 border-t border-slate-200 dark:border-slate-800" />
+                      <div className="kg-h-divider my-2" />
 
                       <button
                         type="button"
-                        onClick={handleLogout}
+                        onClick={() => void logout()}
                         disabled={loggingOut}
-                        className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-xs font-bold text-red-500 transition-all hover:bg-red-500/10 disabled:opacity-50"
+                        className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-bold text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
                       >
-                        <Icon name="logout" size={16} />
-                        <span>
-                          {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
-                        </span>
+                        <Icon name="logout" size={17} />
+                        {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
                       </button>
                     </div>
                   )}
                 </div>
+              ) : (
+                <Link
+                  to="/login"
+                  onClick={closeMenus}
+                  className="kg-h-login hidden rounded-full px-4.5 py-2.5 text-xs font-bold sm:inline-flex items-center transition-all whitespace-nowrap"
+                >
+                  Injira
+                </Link>
               )}
 
               <Link
                 to="/create-listing"
                 onClick={closeMenus}
-                className="group/btn relative hidden h-11 items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] px-5 text-xs sm:text-sm font-black text-white shadow-lg shadow-[#569ab5]/25 transition-all duration-300 hover:scale-[1.03] hover:shadow-[#569ab5]/40 active:scale-95 sm:flex"
+                className="kg-h-sell hidden h-10 items-center gap-2 rounded-full px-5 text-xs font-extrabold sm:flex shadow-sm transition-all whitespace-nowrap shrink-0"
               >
-                <span className="absolute inset-0 bg-white/20 translate-y-full transition-transform duration-300 group-hover/btn:translate-y-0" />
-                <Icon name="plus" size={16} strokeWidth={2.5} className="relative z-10" />
-                <span className="relative z-10">Gurisha</span>
+                <Icon name="plus" size={17} />
+                Gurisha
               </Link>
 
               <button
                 type="button"
-                onClick={() => setShowMobileMenu((prev) => !prev)}
-                className={`flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 lg:hidden ${
-                  showMobileMenu
-                    ? "border-[#569ab5] bg-[#569ab5] text-white"
-                    : isDark
-                    ? "border-slate-800 bg-slate-900/80 text-slate-300"
-                    : "border-slate-200 bg-white/80 text-slate-700 shadow-sm"
-                }`}
-                aria-label="Toggle Menu"
+                onClick={() => {
+                  setMobileOpen((previous) => !previous)
+                  setSearchOpen(false)
+                  setAccountOpen(false)
+                }}
+                className={`${actionClass} xl:hidden`}
+                aria-label={mobileOpen ? "Funga menu" : "Fungura menu"}
+                aria-expanded={mobileOpen}
               >
-                <Icon name={showMobileMenu ? "close" : "menu"} size={20} />
+                <Icon
+                  name={mobileOpen ? "close" : "menu"}
+                  size={21}
+                />
               </button>
             </div>
           </div>
 
+          {/* SEARCH PANEL */}
           {searchOpen && (
-            <div className="mt-2 max-w-md mx-auto">
-              <form
-                onSubmit={handleSearchSubmit}
-                className={`relative flex items-center rounded-full border px-3 py-1.5 shadow-xl backdrop-blur-2xl transition-all ${
-                  isDark
-                    ? "border-[#569ab5]/30 bg-slate-950/90"
-                    : "border-[#569ab5]/30 bg-white/95"
-                }`}
-              >
-                <div className="flex flex-1 items-center gap-2.5 px-2">
-                  <Icon name="search" size={16} className="text-[#569ab5] shrink-0" />
-                  <input
-                    type="text"
-                    value={currentSearchValue}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    placeholder="Shakisha ibicuruzwa..."
-                    className="w-full bg-transparent py-1 text-xs font-bold kg-text outline-none placeholder:kg-text-muted"
-                    autoFocus
-                  />
-                  {currentSearchValue && (
-                    <button
-                      type="button"
-                      onClick={() => handleInputChange("")}
-                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    >
-                      <Icon name="close" size={14} />
-                    </button>
-                  )}
-                </div>
+            <form
+              onSubmit={submitSearch}
+              role="search"
+              className="kg-h-dropdown mx-auto mt-3 flex max-w-xl items-center gap-3 rounded-full p-2.5 shadow-2xl"
+            >
+              <span className="pl-3 text-[var(--primary)]">
+                <Icon name="search" size={19} />
+              </span>
 
-                <button
-                  type="submit"
-                  className="rounded-full bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] px-4 py-1.5 text-xs font-black text-white shadow-md transition-all hover:scale-105 active:scale-95"
-                >
-                  Shakisha
-                </button>
-              </form>
-            </div>
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={search}
+                onChange={(event) => updateSearch(event.target.value)}
+                placeholder="Urashaka iki? iPhone, inzu, laptop..."
+                className="kg-h-input min-w-0 flex-1 bg-transparent px-2 py-2 text-sm outline-none"
+              />
+
+              <button
+                type="submit"
+                className="kg-h-sell rounded-full px-4.5 py-2 text-xs font-bold shadow-sm"
+              >
+                Shakisha
+              </button>
+            </form>
           )}
 
-          {showMobileMenu && (
-            <div className="mt-2.5 lg:hidden">
-              <div
-                className={`overflow-hidden rounded-3xl border p-4 shadow-2xl backdrop-blur-3xl transition-all ${
-                  isDark
-                    ? "border-slate-800 bg-slate-950/95 text-slate-100"
-                    : "border-slate-200 bg-white/95 text-slate-800"
-                }`}
+          {/* MOBILE / TABLET MENU */}
+          {mobileOpen && (
+            <div className="kg-h-dropdown mt-3 rounded-[32px] p-4 xl:hidden shadow-2xl">
+              <nav
+                className="grid gap-1.5"
+                aria-label="Menu ya telefoni"
               >
-                <nav className="space-y-1">
-                  {navigation.map((item) => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      onClick={closeMenus}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-2xl px-4 py-3 text-xs font-black transition-all ${
-                          isActive
-                            ? "bg-gradient-to-r from-[#427c94] to-[#36677b] text-white shadow-md"
-                            : isDark
-                            ? "text-slate-300 hover:bg-slate-900"
-                            : "text-slate-700 hover:bg-slate-100"
-                        }`
-                      }
-                    >
-                      <span>{item.label}</span>
-                    </NavLink>
-                  ))}
-
-                  <Link
-                    to="/ai-search"
+                {navigation.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === "/"}
                     onClick={closeMenus}
-                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-xs font-black transition-all ${
-                      location.pathname === "/ai-search"
-                        ? "bg-gradient-to-r from-[#427c94] to-[#36677b] text-white shadow-md"
-                        : isDark
-                        ? "text-slate-300 hover:bg-slate-900"
-                        : "text-slate-700 hover:bg-slate-100"
-                    }`}
+                    className={({ isActive }) =>
+                      `kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm transition-colors ${
+                        isActive ? "is-active font-semibold" : ""
+                      }`
+                    }
                   >
-                    <Icon name="spark" size={16} className="text-[#569ab5]" />
-                    <span>AI Search</span>
-                  </Link>
+                    <span>{item.label}</span>
+                    <Icon name="arrow" size={16} />
+                  </NavLink>
+                ))}
 
-                  <div className="my-2 border-t border-slate-200 dark:border-slate-800" />
+                <NavLink
+                  to="/ai-search"
+                  onClick={closeMenus}
+                  className={({ isActive }) =>
+                    `kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm transition-colors ${
+                      isActive ? "is-active font-semibold" : ""
+                    }`
+                  }
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Icon name="spark" size={17} />
+                    Baza AI
+                  </span>
+                  <Icon name="arrow" size={16} />
+                </NavLink>
 
-                  <Link
-                    to="/create-listing"
-                    onClick={closeMenus}
-                    className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#427c94] via-[#569ab5] to-[#36677b] px-4 py-3 text-xs font-black text-white shadow-lg active:scale-95"
-                  >
-                    <Icon name="plus" size={16} strokeWidth={2.5} />
-                    <span>Gurisha ikintu</span>
-                  </Link>
-
-                  {!userId ? (
-                    <Link
-                      to="/login"
-                      onClick={closeMenus}
-                      className="mt-2 flex items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-800 px-4 py-3 text-xs font-black active:scale-95"
-                    >
-                      <Icon name="user" size={16} />
-                      <span>Injira mu konti</span>
-                    </Link>
-                  ) : (
-                    <div className="mt-3 space-y-1">
-                      <div className="my-2 border-t border-slate-200 dark:border-slate-800" />
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        disabled={loggingOut}
-                        className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-xs font-black text-red-500 hover:bg-red-500/10"
+                {userId && (
+                  <>
+                    <div className="kg-h-divider my-2" />
+                    {accountLinks.map((item) => (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        onClick={closeMenus}
+                        className="kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm transition-colors"
                       >
-                        <Icon name="logout" size={16} />
-                        <span>Sohoka</span>
-                      </button>
-                    </div>
-                  )}
-                </nav>
-              </div>
+                        <span className="flex items-center gap-3">
+                          <Icon name={item.icon} size={17} />
+                          {item.label}
+                        </span>
+                        <Icon name="arrow" size={16} />
+                      </Link>
+                    ))}
+                  </>
+                )}
+
+                <div className="kg-h-divider my-2" />
+
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="kg-h-mobilelink text-left sm:hidden rounded-2xl px-4 py-3 flex items-center text-sm transition-colors"
+                >
+                  <span className="flex items-center gap-3">
+                    <Icon
+                      name={theme === "dark" ? "sun" : "moon"}
+                      size={18}
+                    />
+                    {theme === "dark" ? "Light mode" : "Dark mode"}
+                  </span>
+                </button>
+
+                <Link
+                  to="/create-listing"
+                  onClick={closeMenus}
+                  className="kg-h-sell mt-2 flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold shadow-sm"
+                >
+                  <Icon name="plus" size={18} />
+                  Gurisha ikintu
+                </Link>
+
+                {!userId ? (
+                  <Link
+                    to="/login"
+                    onClick={closeMenus}
+                    className="kg-h-mobilelink justify-center sm:hidden rounded-2xl py-3 text-center text-sm font-bold"
+                  >
+                    Injira mu konti
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void logout()}
+                    disabled={loggingOut}
+                    className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-red-500 disabled:opacity-50 transition-colors hover:bg-red-500/10"
+                  >
+                    <Icon name="logout" size={18} />
+                    {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
+                  </button>
+                )}
+              </nav>
             </div>
           )}
         </div>

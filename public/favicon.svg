@@ -1,71 +1,98 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <!-- Definitions for gradients, filters, and shadows -->
   <defs>
-    <!-- Elite Geometric Modernist Gradients -->
-    <linearGradient id="kg-cyan-blue" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#73afc9" />
-      <stop offset="50%" stop-color="#569ab5" />
-      <stop offset="100%" stop-color="#36677b" />
+    <!-- Background Glow Effect (Optional subtle depth behind shapes) -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <!-- Main Gradient: Vibrant Pinkish-Red to Orange/Yellow -->
+    <linearGradient id="g-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF1A68" />
+      <stop offset="45%" stop-color="#FF334B" />
+      <stop offset="75%" stop-color="#FF6B00" />
+      <stop offset="100%" stop-color="#FFBA00" />
     </linearGradient>
 
-    <linearGradient id="kg-purple-indigo" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#36677b" />
-      <stop offset="50%" stop-color="#5b78c4" />
-      <stop offset="100%" stop-color="#9d73c9" />
+    <!-- Overlay Gradient for Depth / Dimensionality on Key Notch -->
+    <linearGradient id="notch-overlay" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D6004C" />
+      <stop offset="100%" stop-color="#FF4D00" />
     </linearGradient>
 
-    <linearGradient id="kg-vibrant-glow" x1="100%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
-      <stop offset="40%" stop-color="#73afc9" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#36677b" stop-opacity="0.95" />
-    </linearGradient>
-
-    <filter id="kg-shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#36677b" flood-opacity="0.4" />
+    <!-- Soft Drop Shadow for Overlapping Layers -->
+    <filter id="drop-shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="2" dy="5" stdDeviation="4" flood-color="#000000" flood-opacity="0.3" />
     </filter>
   </defs>
 
-  <!-- Background container for preview contrast -->
-  <rect width="512" height="512" rx="112" fill="#0b131a" />
+  <g transform="translate(250, 250)">
+    <!-- Main Stylized 'G' Loop with Key/Cross Bar -->
+    <!-- Formed by a continuous thick smooth stroke/path representing the outer curve, inner loop, and crossbar -->
+    <path fill="url(#g-gradient)" fill-rule="evenodd" d="
+      M -15,-130 
+      C 60,-130 125,-75 125,10 
+      C 125,95 60,150 -25,150 
+      C -95,150 -140,105 -140,30 
+      C -140,-35 -95,-85 -35,-85 
+      C -10,-85 10,-75 25,-60 
+      L -5,-30 
+      C -15,-42 -28,-48 -42,-48 
+      C -75,-48 -98,-15 -98,30 
+      C -98,75 -68,108 -20,108 
+      C 35,108 82,68 82,10 
+      C 82,-45 40,-88 -15,-88 
+      L -15,-130 Z
+    " />
 
-  <!-- Outer Geometric Interlocking Ring (Symbolizing Marketplace Exchange & Unity) -->
-  <g filter="url(#kg-shadow)">
-    <!-- Left Dynamic Fold (Representing Buying / Incoming) -->
-    <path d="M 220 110 
-             C 140 110, 100 150, 100 230 
-             L 100 290 
-             C 100 370, 140 410, 220 410 
-             L 260 410 
-             L 260 340 
-             L 220 340 
-             C 180 340, 160 320, 160 280 
-             L 160 240 
-             C 160 200, 180 180, 220 180 
-             L 280 180 
-             L 280 110 Z" fill="url(#kg-cyan-blue)" />
+    <!-- Upper Loop / Arc Accent (Top curve of the 'G') -->
+    <path fill="url(#g-gradient)" filter="url(#drop-shadow)" d="
+      M -20,-130
+      C -85,-130 -145,-75 -145,0
+      C -145,15 -138,30 -130,42
+      C -125,20 -115,0 -98,-15
+      C -75,-40 -40,-50 -10,-50
+      L 15,-85
+      C -25,-115 -10,-130 -20,-130 Z
+    " opacity="0.15" />
 
-    <!-- Right Dynamic Fold (Representing Selling / Outgoing & Expansion) -->
-    <path d="M 292 102 
-             L 252 102 
-             L 252 172 
-             L 292 172 
-             C 332 172, 352 192, 352 232 
-             L 352 272 
-             C 352 312, 332 332, 292 332 
-             L 232 332 
-             L 232 402 
-             L 292 402 
-             C 372 402, 412 362, 412 282 
-             L 412 222 
-             C 412 142, 372 102, 292 102 Z" fill="url(#kg-purple-indigo)" opacity="0.95" />
+    <!-- Integrated Key/Crossbar Feature -->
+    <!-- Horizontal Crossbar extending to the right with key notches -->
+    <g filter="url(#drop-shadow)">
+      <!-- Central Horizontal Bar extending out of the G -->
+      <path fill="url(#g-gradient)" d="
+        M -20,-12 
+        L 135,-12 
+        C 146,-12 155,-3 155,8 
+        C 155,19 146,28 135,28 
+        L -20,28 
+        Z
+      " />
 
-    <!-- Central Core Nexus Spark (Representing Rwanda's Heart & Fast Matching) -->
-    <path d="M 256 196 
-             L 282 244 
-             L 330 270 
-             L 282 296 
-             L 256 344 
-             L 230 296 
-             L 182 270 
-             L 230 244 Z" fill="url(#kg-vibrant-glow)" />
+      <!-- Key Teeth / Vertical Cross Teeth (The 'Key' elements) -->
+      <!-- First Vertical Notch (Downward) -->
+      <path fill="url(#g-gradient)" d="
+        M 65,28 
+        L 65,75 
+        C 65,83 72,90 80,90 
+        C 88,90 95,83 95,75 
+        L 95,28 
+        Z
+      " />
+
+      <!-- Second Vertical Notch (Upward Accent) -->
+      <path fill="url(#notch-overlay)" d="
+        M 105,-12 
+        L 105,-50 
+        C 105,-58 112,-65 120,-65 
+        C 128,-65 135,-58 135,-50 
+        L 135,-12 
+        Z
+      " />
+    </g>
+
+    <!-- Inner Keyhole Accent (Negative space accent inside the G's center) -->
+    <circle cx="-35" cy="10" r="14" fill="url(#g-gradient)" />
   </g>
 </svg>

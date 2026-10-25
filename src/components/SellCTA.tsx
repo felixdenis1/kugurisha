@@ -1,55 +1,58 @@
+
 import { Link } from "react-router-dom"
 
-function SellCTA() {
+export default function SellCTA() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
-      <div
-        className="relative overflow-hidden rounded-[2rem] border px-7 py-12 shadow-[0_30px_80px_-35px_rgba(37,99,235,0.35)] sm:px-12 lg:px-16"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(239,246,255,0.98), rgba(224,242,254,0.90), rgba(239,246,255,0.98))",
-          borderColor: "rgba(96,165,250,0.20)",
-        }}
-      >
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-500/[0.12] blur-3xl" />
+    <section
+      aria-labelledby="sell-cta-title"
+      className="mx-auto max-w-7xl px-4 py-9 sm:px-6 lg:py-12"
+    >
+      <div className="relative overflow-hidden rounded-[22px] border border-[var(--glass-border)] bg-[var(--surface)] shadow-[var(--card-shadow)]">
+        {/* Small brand accent */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-blue-600 to-cyan-400"
+        />
 
-        <div className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-cyan-400/[0.10] blur-3xl" />
-
-        <div className="pointer-events-none absolute left-1/4 top-1/2 h-40 w-40 rounded-full bg-white/80 blur-3xl" />
-
-        <div className="relative flex flex-col justify-between gap-9 md:flex-row md:items-center">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-blue-600">
+        <div className="flex flex-col gap-6 px-6 py-7 sm:px-9 sm:py-8 lg:flex-row lg:items-center lg:justify-between lg:gap-12 lg:px-11">
+          {/* Text */}
+          <div className="min-w-0 max-w-2xl">
+            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-blue-600 dark:text-cyan-400">
               Ufite icyo ushaka kugurisha?
             </p>
 
-            <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">
-              Shyira ikintu cyawe ku isoko.
+            <h2
+              id="sell-cta-title"
+              className="text-[clamp(1.45rem,2.7vw,2.15rem)] font-extrabold leading-tight tracking-[-0.04em] text-[var(--text)]"
+            >
+              Icyo ufite, hari ugikeneye.
             </h2>
 
-            <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
-              Shyiraho amafoto, igiciro n&apos;aho
-              giherereye. Abaguzi bashobore kukibona
-              kuri KUGURISHA.COM.
+            <p className="mt-2.5 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
+              Shyiraho amafoto n&apos;ibisobanuro by&apos;icyo
+              ushaka kugurisha. Abaguzi bakibone,
+              mubashe kuvugana no kumvikana.
             </p>
           </div>
 
+          {/* Action */}
           <Link
             to="/create-listing"
-            className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-4 text-sm font-black text-white shadow-[0_16px_35px_-16px_rgba(37,99,235,0.9)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-15px_rgba(37,99,235,0.9)]"
+            className="group inline-flex w-full shrink-0 items-center justify-center gap-3 self-start rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-500 sm:w-auto lg:self-center"
           >
             Tangira kugurisha
 
             <svg
-              width={16}
-              height={16}
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth={1.8}
+              strokeWidth="1.8"
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden="true"
+              className="transition-transform duration-200 group-hover:translate-x-1"
             >
               <path d="M5 12h14" />
               <path d="m13 6 6 6-6 6" />
@@ -60,5 +63,3 @@ function SellCTA() {
     </section>
   )
 }
-
-export default SellCTA
