@@ -7,6 +7,7 @@ function Register() {
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [role, setRole] = useState<"buyer" | "seller">("buyer")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
@@ -43,7 +44,7 @@ function Register() {
     if (data.session) {
       setMessage("Konti yakozwe neza! Turimo kukujyana ahatangirira...")
       setTimeout(() => {
-        navigate("/home") // Change "/home" if your home route uses a different path (e.g. "/")
+        navigate("/") // Hano wahinduye cyangwa wateganyije '/' cyangwa '/home'
       }, 1000)
     } else {
       // If email confirmation is still ON in Supabase dashboard
@@ -282,7 +283,7 @@ function Register() {
                   </div>
                 </div>
 
-                {/* Password */}
+                {/* Password with Show/Hide toggle */}
                 <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
                   <label
                     htmlFor="password"
@@ -317,15 +318,38 @@ function Register() {
 
                     <input
                       id="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       minLength={6}
                       placeholder="Nibura inyuguti 6"
                       autoComplete="new-password"
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-12 pr-12 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50"
                     />
+
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((previous) => !previous)}
+                      aria-label={showPassword ? "Hisha ijambo ry'ibanga" : "Erekana ijambo ry'ibanga"}
+                      aria-pressed={showPassword}
+                      title={showPassword ? "Hisha password" : "Erekana password"}
+                      className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-400 transition hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+                    >
+                      {showPassword ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+                          <path d="M3 3l18 18" />
+                          <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                          <path d="M9.9 5.2A10.9 10.9 0 0 1 12 5c5 0 9 4.5 10 7a14 14 0 0 1-3.1 4.5" />
+                          <path d="M6.6 6.6C4.3 8 2.8 10.2 2 12c1 2.5 5 7 10 7 1.7 0 3.3-.5 4.7-1.3" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
+                          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
 
                   <p className="mt-2 text-xs leading-5 text-slate-400">
