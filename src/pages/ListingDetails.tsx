@@ -13,6 +13,7 @@ type Listing = {
   status: string
   listing_type: string
   contact_phone: boolean
+  contact_phone_number: string | null
   contact_chat: boolean
   created_at: string
   categories: {
@@ -46,16 +47,32 @@ export default function ListingDetails() {
   const [favoriteLoading, setFavoriteLoading] = useState(false)
   const [contactLoading, setContactLoading] = useState(false)
   const [reportLoading, setReportLoading] = useState(false)
+  const [showDesktopPhone, setShowDesktopPhone] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  // Current logged in user state & Seller Phone Editing
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [editingPhone, setEditingPhone] = useState(false)
+  const [newPhoneNumber, setNewPhoneNumber] = useState("")
+  const [savingPhone, setSavingPhone] = useState(false)
 
   useEffect(() => {
     if (!id) return
     void loadListing()
+    void checkUser()
   }, [id])
 
   useEffect(() => {
     if (!id) return
     void checkFavorite()
   }, [id])
+
+  async function checkUser() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      setCurrentUserId(user.id)
+    }
+  }
 
   async function loadListing() {
     try {
@@ -78,6 +95,7 @@ export default function ListingDetails() {
           status,
           listing_type,
           contact_phone,
+          contact_phone_number,
           contact_chat,
           created_at,
           categories (
@@ -101,8 +119,39 @@ export default function ListingDetails() {
         return
       }
 
+      let activePhoneNumber = data.contact_phone_number?.trim() || null
+
+      // 1. Fallback: Check profile table for seller phone
+      if (!activePhoneNumber && data.seller_id) {
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("phone")
+          .eq("id", data.seller_id)
+          .maybeSingle()
+
+        if (profileData?.phone && profileData.phone.trim().length > 0) {
+          activePhoneNumber = profileData.phone.trim()
+        }
+      }
+
+      // 2. Fallback: Check previous listings from seller
+      if (!activePhoneNumber && data.seller_id) {
+        const { data: userPrevListings } = await supabase
+          .from("listings")
+          .select("contact_phone_number")
+          .eq("seller_id", data.seller_id)
+          .not("contact_phone_number", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+
+        if (userPrevListings && userPrevListings.length > 0 && userPrevListings[0].contact_phone_number) {
+          activePhoneNumber = userPrevListings[0].contact_phone_number.trim()
+        }
+      }
+
       const normalizedListing: Listing = {
         ...data,
+        contact_phone_number: activePhoneNumber,
         categories: Array.isArray(data.categories)
           ? data.categories[0] ?? null
           : data.categories,
@@ -112,6 +161,9 @@ export default function ListingDetails() {
       }
 
       setListing(normalizedListing)
+      if (activePhoneNumber) {
+        setNewPhoneNumber(activePhoneNumber)
+      }
 
       const {
         data: imageData,
@@ -125,7 +177,6 @@ export default function ListingDetails() {
       if (imageError) throw imageError
 
       const loadedImages = (imageData || []) as ListingImage[]
-
       setImages(loadedImages)
 
       if (loadedImages.length > 0) {
@@ -277,6 +328,62 @@ export default function ListingDetails() {
       alert("Ntibyakunze gutangiza conversation. Ongera ugerageze.")
     } finally {
       setContactLoading(false)
+    }
+  }
+
+  function handleCallClick() {
+    if (!listing?.contact_phone_number) return
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+
+    if (isMobile) {
+      window.location.href = `tel:${listing.contact_phone_number.replace(/\s+/g, "")}`
+    } else {
+      setShowDesktopPhone((prev) => !prev)
+    }
+  }
+
+  function copyPhoneNumber() {
+    if (listing?.contact_phone_number) {
+      navigator.clipboard.writeText(listing.contact_phone_number)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  async function handleSavePhoneNumber() {
+    if (!listing) return
+    if (!newPhoneNumber.trim()) {
+      alert("Nyamuneka andika nimero ya telefoni.")
+      return
+    }
+
+    setSavingPhone(true)
+    try {
+      const { error } = await supabase
+        .from("listings")
+        .update({
+          contact_phone: true,
+          contact_phone_number: newPhoneNumber.trim(),
+        })
+        .eq("id", listing.id)
+        .eq("seller_id", currentUserId)
+
+      if (error) throw error
+
+      setListing((prev) => prev ? {
+        ...prev,
+        contact_phone: true,
+        contact_phone_number: newPhoneNumber.trim(),
+      } : null)
+
+      setEditingPhone(false)
+      alert("Nimero ya telefoni yabitswe neza!")
+    } catch (err) {
+      console.error(err)
+      alert("Habaye ikibazo mu kubika nimero. Ongera ugerageze.")
+    } finally {
+      setSavingPhone(false)
     }
   }
 
@@ -473,6 +580,9 @@ export default function ListingDetails() {
       </div>
     )
   }
+
+  const hasValidPhone = Boolean(listing.contact_phone_number && listing.contact_phone_number.trim().length > 0)
+  const isOwner = currentUserId && currentUserId === listing.seller_id
 
   return (
     <div className="min-h-screen overflow-hidden kg-bg kg-text antialiased transition-colors duration-300">
@@ -705,14 +815,78 @@ export default function ListingDetails() {
                   </button>
                 )}
 
-                {listing.contact_phone && (
-                  <button
-                    onClick={() => alert("Contact ya seller izashyirwa hano nyuma.")}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl border kg-border kg-surface px-5 py-3.5 text-xs font-bold kg-text shadow-sm transition hover:border-emerald-500 active:scale-95"
-                  >
-                    <span>📞</span>
-                    Hamagara ugurisha
-                  </button>
+                {hasValidPhone && (
+                  <>
+                    <button
+                      onClick={handleCallClick}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl border kg-border kg-surface px-5 py-3.5 text-xs font-bold kg-text shadow-sm transition hover:border-emerald-500 active:scale-95"
+                    >
+                      <span>📞</span>
+                      Hamagara ugurisha
+                    </button>
+
+                    {showDesktopPhone && (
+                      <div className="mt-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 flex items-center justify-between backdrop-blur-xl">
+                        <div className="flex items-center gap-2">
+                          <span>📞</span>
+                          <a
+                            href={`tel:${listing.contact_phone_number?.replace(/\s+/g, "")}`}
+                            className="font-bold text-sm text-emerald-800 dark:text-emerald-300 hover:underline"
+                          >
+                            {listing.contact_phone_number}
+                          </a>
+                        </div>
+                        <button
+                          onClick={copyPhoneNumber}
+                          className="rounded-xl px-3 py-1.5 text-xs font-bold kg-surface border kg-border transition hover:border-emerald-500"
+                        >
+                          {copied ? "Byakopewe! ✓" : "Kopi"}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* SELLER EDIT PHONE OPTION */}
+                {isOwner && (
+                  <div className="mt-4 pt-4 border-t kg-border">
+                    <p className="text-xs font-black uppercase tracking-wider kg-text mb-2">
+                      Uburyo bw'umucuruzi (Phone Management)
+                    </p>
+                    {!editingPhone ? (
+                      <button
+                        onClick={() => setEditingPhone(true)}
+                        className="w-full py-2.5 px-4 bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs rounded-xl hover:bg-emerald-600/20 transition"
+                      >
+                        {listing.contact_phone_number ? "✏️ Hindura nimero ya telefoni" : "➕ Ongeramo nimero ya telefoni"}
+                      </button>
+                    ) : (
+                      <div className="space-y-3 bg-emerald-500/5 p-3 rounded-xl border kg-border">
+                        <input
+                          type="tel"
+                          value={newPhoneNumber}
+                          onChange={(e) => setNewPhoneNumber(e.target.value)}
+                          placeholder="Urugero: +250 788 000 000"
+                          className="w-full rounded-xl border kg-border kg-input px-3 py-2 text-xs font-bold outline-none"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleSavePhoneNumber}
+                            disabled={savingPhone}
+                            className="flex-1 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-md disabled:opacity-50"
+                          >
+                            {savingPhone ? "Bikwa..." : "Bika Nimero"}
+                          </button>
+                          <button
+                            onClick={() => setEditingPhone(false)}
+                            className="px-3 py-2 border kg-border text-xs font-bold rounded-xl"
+                          >
+                            Hagarika
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

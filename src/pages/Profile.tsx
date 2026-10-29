@@ -35,7 +35,7 @@ export default function Profile() {
   const [error, setError] = useState("")
 
   useEffect(() => {
-    loadProfile()
+    void loadProfile()
   }, [])
 
   async function loadProfile() {
@@ -86,6 +86,12 @@ export default function Profile() {
     }
   }
 
+  function validateRwandanPhone(rawPhone: string): boolean {
+    const cleaned = rawPhone.replace(/[\s\-\(\)]/g, "")
+    const rwandaRegex = /^(?:\+?250|0)?7[2389]\d{7}$/
+    return rwandaRegex.test(cleaned)
+  }
+
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault()
     setSavingProfile(true)
@@ -98,11 +104,18 @@ export default function Profile() {
         return
       }
 
+      // Client-side phone validation before submitting to DB trigger
+      const trimmedPhone = phone.trim()
+      if (trimmedPhone && !validateRwandanPhone(trimmedPhone)) {
+        setError("Nimero ya telefoni ntabwo yubahirije imiterere yo mu Rwanda (+250 cyangwa 07...).")
+        return
+      }
+
       const { data, error: updateError } = await supabase
         .from("profiles")
         .update({
           full_name: fullName.trim() || null,
-          phone: phone.trim() || null,
+          phone: trimmedPhone || null,
           avatar_url: avatarUrl.trim() || null,
           updated_at: new Date().toISOString(),
         })
@@ -111,7 +124,12 @@ export default function Profile() {
         .single()
 
       if (updateError) {
-        setError(`Ntibyashobotse kubika profile. ${updateError.message}`)
+        // Catch database trigger exceptions cleanly
+        if (updateError.message.includes("Nimero ya telefoni")) {
+          setError(updateError.message)
+        } else {
+          setError(`Ntibyashobotse kubika profile. ${updateError.message}`)
+        }
         return
       }
 
@@ -119,10 +137,11 @@ export default function Profile() {
       setFullName(data.full_name ?? "")
       setPhone(data.phone ?? "")
       setAvatarUrl(data.avatar_url ?? "")
-      setMessage("Amakuru ya profile yawe yabitswe neza.")
-    } catch (err) {
+      setMessage("Amakuru ya profile yawe hamwe na nimero ya telefoni byabitswe neza.")
+    } catch (err: unknown) {
       console.error("PROFILE UPDATE ERROR:", err)
-      setError("Habaye ikibazo mu kubika amakuru yawe.")
+      const errorMsg = err instanceof Error ? err.message : "Habaye ikibazo mu kubika amakuru yawe."
+      setError(errorMsg)
     } finally {
       setSavingProfile(false)
     }
@@ -400,7 +419,7 @@ export default function Profile() {
 
                 <div>
                   <label className="mb-2 block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Telefoni
+                    Telefoni (Izagufasha no mu matangazo yawe yose)
                   </label>
                   <div className="relative">
                     <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base">📱</span>
@@ -408,7 +427,7 @@ export default function Profile() {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="07XXXXXXXX"
+                      placeholder="07XXXXXXXX cyangwa +2507XXXXXXXX"
                       className="min-h-12 w-full rounded-2xl border border-slate-200 dark:border-white/15 bg-white dark:bg-slate-950/60 px-4 pl-11 text-sm font-medium text-slate-900 dark:text-white outline-none transition placeholder:text-slate-400 hover:border-[#569ab5]/60 focus:border-[#569ab5] focus:ring-4 focus:ring-[#569ab5]/20"
                     />
                   </div>
