@@ -300,8 +300,8 @@ export default function AISearch() {
 
         setAiIntent(searchIntent)
 
-        setError(
-          "AI ntiyabonetse, ariko twakoresheje search isanzwe."
+        setError(""
+          
         )
       }
 

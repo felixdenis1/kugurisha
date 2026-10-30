@@ -260,7 +260,7 @@ export default function CreateListing() {
       if (locationError) throw locationError
 
       const finalNormalizedPhone = contactPhone && phoneNumber.trim() ? normalizePhoneNumber(phoneNumber.trim()) : null
-      const parsedPrice: number | null = listingType === "free" ? null : price.trim() !== "" ? Number(price) : null
+      const parsedPrice: number | null = price.trim() !== "" ? Number(price) : null
 
       // Insert new listing
       const { data: newListing, error: listingError } = await supabase
@@ -273,7 +273,7 @@ export default function CreateListing() {
           description: description.trim() || null,
           price: parsedPrice,
           listing_type: listingType,
-          condition: listingType === "free" ? "not_applicable" : condition,
+          condition: condition,
           contact_phone: contactPhone,
           contact_phone_number: finalNormalizedPhone,
           contact_chat: true,
@@ -342,7 +342,7 @@ export default function CreateListing() {
             </h1>
 
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-              Uzuza amakuru y'ikintu wifuza kugurisha cyangwa gukodesha. Ni ubuntu kandi byihuta.
+              Uzuza amakuru y'ikintu wifuza kugurisha cyangwa gukodesha. Ni byiza kandi byihuta.
             </p>
           </div>
         </div>
@@ -356,8 +356,10 @@ export default function CreateListing() {
             <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-lg">
-                    📝
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
                   </div>
                   <div>
                     <h2 className="text-xl font-black text-slate-950">Amakuru y'ikintu</h2>
@@ -422,13 +424,15 @@ export default function CreateListing() {
             <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-lg">
-                    💰
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
                   <div>
                     <h2 className="text-xl font-black text-slate-950">Uburyo n'igiciro</h2>
                     <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Hitamo niba ari uko kugurisha, gukodesha cyangwa gutanga ubuntu.
+                      Hitamo niba ari ukugurisha cyangwa gukodesha.
                     </p>
                   </div>
                 </div>
@@ -437,11 +441,28 @@ export default function CreateListing() {
               <div className="space-y-6 p-6 sm:p-8">
                 <div>
                   <label className="text-sm font-bold text-slate-800">Uburyo bwo gutanga</label>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     {[
-                      { value: "sale", icon: "🏷️", title: "Kugurisha", description: "Shaka umuguzi" },
-                      { value: "rent", icon: "🔑", title: "Gukodesha", description: "Kodesha icyo ufite" },
-                      { value: "free", icon: "🎁", title: "Ubuntu", description: "Gutanga ubuntu" },
+                      { 
+                        value: "sale", 
+                        icon: (
+                          <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                          </svg>
+                        ), 
+                        title: "Kugurisha", 
+                        description: "Shaka umuguzi" 
+                      },
+                      { 
+                        value: "rent", 
+                        icon: (
+                          <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                          </svg>
+                        ), 
+                        title: "Gukodesha", 
+                        description: "Kodesha icyo ufite" 
+                      },
                     ].map((item) => {
                       const selected = listingType === item.value
                       return (
@@ -456,7 +477,7 @@ export default function CreateListing() {
                           }`}
                         >
                           <div className="flex items-start justify-between">
-                            <span className="text-2xl">{item.icon}</span>
+                            <div className="p-2 bg-white rounded-xl shadow-sm">{item.icon}</div>
                             {selected && (
                               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-black text-white">
                                 ✓
@@ -471,39 +492,37 @@ export default function CreateListing() {
                   </div>
                 </div>
 
-                {listingType !== "free" && (
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <div>
-                      <label className="text-sm font-bold text-slate-800">Igiciro (Frw)</label>
-                      <div className="relative mt-2">
-                        <input
-                          type="number"
-                          value={price}
-                          onChange={(e) => setPrice(e.target.value)}
-                          min="0"
-                          placeholder="650000"
-                          className="w-full rounded-2xl border border-slate-200 px-4 py-3.5 pr-16 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                        />
-                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
-                          FRW
-                        </span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-bold text-slate-800">Imimerere</label>
-                      <select
-                        value={condition}
-                        onChange={(e) => setCondition(e.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
-                      >
-                        <option value="new">Bishya</option>
-                        <option value="used">Byakoreshejwe</option>
-                        <option value="refurbished">Byavuguruwe</option>
-                      </select>
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-bold text-slate-800">Igiciro (Frw)</label>
+                    <div className="relative mt-2">
+                      <input
+                        type="number"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        min="0"
+                        placeholder="650000"
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3.5 pr-16 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      />
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
+                        FRW
+                      </span>
                     </div>
                   </div>
-                )}
+
+                  <div>
+                    <label className="text-sm font-bold text-slate-800">Imimerere</label>
+                    <select
+                      value={condition}
+                      onChange={(e) => setCondition(e.target.value)}
+                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    >
+                      <option value="new">Bishya</option>
+                      <option value="used">Byakoreshejwe</option>
+                      <option value="refurbished">Byavuguruwe</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -511,8 +530,11 @@ export default function CreateListing() {
             <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-lg">
-                    📍
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                   </div>
                   <div>
                     <h2 className="text-xl font-black text-slate-950">Aho giherereye</h2>
@@ -560,9 +582,11 @@ export default function CreateListing() {
                 </div>
 
                 {formatLocation() && (
-                  <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                    <span className="mr-2">📍</span>
-                    {formatLocation()}
+                  <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                    <span>{formatLocation()}</span>
                   </div>
                 )}
               </div>
@@ -572,8 +596,10 @@ export default function CreateListing() {
             <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
               <div className="border-b border-slate-100 px-6 py-6 sm:px-8 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-lg">
-                    📞
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
                   </div>
                   <div>
                     <h2 className="text-xl font-black text-slate-950">Nimero ya Telefoni</h2>
@@ -677,8 +703,11 @@ export default function CreateListing() {
               <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-lg">
-                      📸
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-600">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
                     </div>
                     <div>
                       <h2 className="text-xl font-black text-slate-950">Amafoto</h2>
@@ -698,8 +727,10 @@ export default function CreateListing() {
                   htmlFor="listing-images"
                   className="group flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center transition hover:border-blue-400 hover:bg-blue-50/40"
                 >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm transition group-hover:scale-105">
-                    +
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-600 shadow-sm transition group-hover:scale-105">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
                   </div>
                   <h3 className="mt-4 text-sm font-black text-slate-950">Ongeraho amafoto</h3>
                   <p className="mt-1 text-xs text-slate-500">Ushobora gushyiraho amafoto agera kuri 5.</p>
@@ -747,81 +778,22 @@ export default function CreateListing() {
               </div>
             </section>
 
-            {/* MESSAGE ALERT */}
             {message && (
-              <div
-                className={`rounded-2xl border p-4 text-xs ${
-                  success
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                    : "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
-                }`}
-              >
-                <div className="flex items-start gap-2.5">
-                  <span className="text-sm font-black">{success ? "✓" : "!"}</span>
-                  <div>
-                    <p className="font-bold uppercase tracking-wider">
-                      {success ? "Byagenze neza" : "Hari ikibazo"}
-                    </p>
-                    <p className="mt-0.5 font-medium leading-relaxed">{message}</p>
-                  </div>
-                </div>
+              <div className={`p-4 rounded-2xl text-sm font-bold ${success ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                {message}
               </div>
             )}
 
-            {/* SUBMIT BUTTON */}
-            <button
-              type="submit"
-              disabled={saving}
-              className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-800 px-6 py-4 text-sm font-black text-white shadow-xl shadow-blue-600/25 transition-all hover:scale-[1.01] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {saving ? (
-                <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                  <span>Turimo kubika...</span>
-                </>
-              ) : (
-                <>
-                  <span>Ohereza Kwamamaza</span>
-                  <span>→</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* SIDEBAR PREVIEW */}
-          <aside className="space-y-6">
-            <div className="sticky top-24 overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
-                Inshamake ya Listing
-              </h3>
-
-              <div className="mt-5 space-y-4 text-xs">
-                <div>
-                  <span className="font-bold text-slate-400">IZINA:</span>
-                  <p className="mt-1 font-bold text-slate-800">{title || "Ntazina ryashyizweho"}</p>
-                </div>
-
-                <div>
-                  <span className="font-bold text-slate-400">IGICIRO:</span>
-                  <p className="mt-1 font-bold text-emerald-600 text-sm">
-                    {listingType === "free" ? "Ubuntu" : price ? `${Number(price).toLocaleString()} Frw` : "Nta giciro"}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="font-bold text-slate-400">AHOHEREREYE:</span>
-                  <p className="mt-1 font-bold text-slate-800">{formatLocation() || "Ntihavuzwe"}</p>
-                </div>
-
-                <div>
-                  <span className="font-bold text-slate-400">TELEFONI YO GUHAMAGARWA:</span>
-                  <p className="mt-1 font-bold text-slate-800">
-                    {contactPhone && phoneNumber ? phoneNumber : "Ntihariho / Ntibyemewe"}
-                  </p>
-                </div>
-              </div>
+            <div className="flex justify-end gap-4">
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700 disabled:opacity-50"
+              >
+                {saving ? "Birimo koherezwa..." : "Shyiraho Kwamamaza"}
+              </button>
             </div>
-          </aside>
+          </form>
         </div>
       </div>
     </main>
