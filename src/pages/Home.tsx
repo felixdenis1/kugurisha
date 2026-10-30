@@ -1204,13 +1204,13 @@ export default function Home() {
 
                   <h1 className="mt-6 text-4xl font-black leading-[1.06] tracking-[-0.05em] text-slate-900 dark:text-white sm:text-5xl lg:text-[52px]">
 
-                    Gura icyo ushaka.
+                    Gurisha icyo ufite gishya,cyakoze.
 
                     <br />
 
                     <span className="bg-gradient-to-r from-blue-600 via-[#569ab5] to-[#36677b] dark:from-slate-200 dark:via-[#73afc9] dark:to-white bg-clip-text text-transparent">
 
-                      Gurisha icyo ufite.
+                      Gura icyo ushaka .
 
                     </span>
 
@@ -1219,8 +1219,9 @@ export default function Home() {
 
 
                   <p className="mt-5 text-sm leading-relaxed text-slate-700 dark:text-slate-200 sm:text-base font-semibold">
-
-                    kugurisha.com ni urubuga ruhuza abaguzi n'abagurisha mu Rwanda, ahantu hamwe kandi mu buryo bworoshye.
+                    sezera kwiruka ushaka umuguzi igihe ukeneye amafaranga byihutirwa!!
+                    kugurisha.com ni urubuga rugufasha kwerekana icyo ufite ariko wifuza kugurisha yaba igishya cyangwa icyakoreshejwe,inzu,ubutaka
+                    ,ibikoresho byo mu rugo,ni bindi byose. niba uri numucurizi turagufasha kubona abaguzi bifuza ibyo ucuruza.
 
                   </p>
 
@@ -1318,7 +1319,7 @@ export default function Home() {
 
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#427c94] dark:text-[#73afc9]">
 
-                      Kugezweho
+                      Ibyashyizweho
 
                     </p>
 

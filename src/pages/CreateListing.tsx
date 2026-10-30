@@ -70,14 +70,12 @@ export default function CreateListing() {
 
       setFetchingPhones(true)
 
-      // 1. First attempt to check the profiles table for a saved default phone
       const { data: profileData } = await supabase
         .from("profiles")
         .select("phone_number")
         .eq("id", user.id)
         .single()
 
-      // 2. Fetch any previous phone numbers from past listings
       const { data: listingPhones, error } = await supabase
         .from("listings")
         .select("contact_phone_number, created_at")
@@ -111,7 +109,6 @@ export default function CreateListing() {
 
       setPreviousNumbers(uniqueList)
 
-      // Automatic pre-filling: If previous numbers exist, pre-select the most recent one
       if (uniqueList.length > 0) {
         setPhoneNumber(uniqueList[0].number)
         setSelectedPhoneOption("previous")
@@ -246,7 +243,6 @@ export default function CreateListing() {
         return
       }
 
-      // Create location record
       const { data: location, error: locationError } = await supabase
         .from("locations")
         .insert({
@@ -262,7 +258,6 @@ export default function CreateListing() {
       const finalNormalizedPhone = contactPhone && phoneNumber.trim() ? normalizePhoneNumber(phoneNumber.trim()) : null
       const parsedPrice: number | null = price.trim() !== "" ? Number(price) : null
 
-      // Insert new listing
       const { data: newListing, error: listingError } = await supabase
         .from("listings")
         .insert({
@@ -284,7 +279,6 @@ export default function CreateListing() {
 
       if (listingError) throw listingError
 
-      // Upload selected images
       await uploadImages(newListing.id, user.id)
 
       setSuccess(true)
@@ -304,18 +298,16 @@ export default function CreateListing() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen kg-bg kg-text">
       {/* NAVBAR */}
-      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 kg-header">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link to="/" className="text-xl font-black tracking-tight text-slate-950">
-            KUGURISHA
-            <span className="text-blue-600">.COM</span>
-          </Link>
+          
 
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+            className="kg-h-action inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition"
+            style={{ border: "1px solid var(--border)", background: "var(--surface)" }}
           >
             ← Dashboard
           </Link>
@@ -323,25 +315,29 @@ export default function CreateListing() {
       </header>
 
       {/* HERO */}
-      <section className="relative overflow-hidden bg-slate-950">
-        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-600/20 blur-3xl" />
-        <div className="absolute -bottom-32 right-0 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
+      <section className="relative overflow-hidden py-12 lg:py-14" style={{ background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
+        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full opacity-20 blur-3xl" style={{ background: "var(--primary)" }} />
+        <div className="absolute -bottom-32 right-0 h-96 w-96 rounded-full opacity-10 blur-3xl" style={{ background: "var(--primary)" }} />
 
-        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-14">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-widest text-blue-300">
-              <span className="h-2 w-2 rounded-full bg-blue-400" />
+            <div
+              className="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest"
+              style={{ background: "var(--soft-bg-hover)", color: "var(--primary)", border: "1px solid var(--border)" }}
+            >
+              <span className="h-2 w-2 rounded-full" style={{ background: "var(--primary)" }} />
               Gurisha icyo ufite
             </div>
 
-            <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">
-              Shyiraho Kwamamaza Gushya.
-              <span className="mt-1 block text-blue-400">
-                Ugere ku baguzi benshi mu Rwanda.
+            <h1 className="text-3xl font-black tracking-tight sm:text-5xl kg-text">
+              Shyiraho icyo ushaka kugurisha.
+              uzuza ibisabwa byose hano
+              <span className="mt-1 block kg-gradient-text">
+               Abagishaka bakwandikire,Baguhamagare .
               </span>
             </h1>
 
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed sm:text-lg kg-text-secondary">
               Uzuza amakuru y'ikintu wifuza kugurisha cyangwa gukodesha. Ni byiza kandi byihuta.
             </p>
           </div>
@@ -352,18 +348,22 @@ export default function CreateListing() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           <form onSubmit={handleSubmit} className="space-y-6">
+            
             {/* BASIC INFORMATION */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
+            <section className="overflow-hidden rounded-3xl border shadow-sm transition-colors" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+              <div className="border-b px-6 py-6 sm:px-8" style={{ borderColor: "var(--border)" }}>
                 <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                    style={{ background: "var(--soft-bg-hover)", color: "var(--primary)" }}
+                  >
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-slate-950">Amakuru y'ikintu</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                    <h2 className="text-xl font-black kg-text">Amakuru y'ikintu</h2>
+                    <p className="mt-1 text-sm leading-6 kg-text-muted">
                       Shyiramo amakuru y'ingenzi agaragaza icyo ugurisha.
                     </p>
                   </div>
@@ -372,7 +372,7 @@ export default function CreateListing() {
 
               <div className="space-y-6 p-6 sm:p-8">
                 <div>
-                  <label className="text-sm font-bold text-slate-800">
+                  <label className="text-sm font-bold kg-text">
                     Izina ry'ikintu <span className="ml-1 text-red-500">*</span>
                   </label>
                   <input
@@ -381,23 +381,23 @@ export default function CreateListing() {
                     onChange={(e) => setTitle(e.target.value)}
                     required
                     placeholder="Urugero: iPhone 15 Pro Max 256GB"
-                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    className="kg-input mt-2 w-full rounded-2xl px-4 py-3.5 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-bold text-slate-800">
+                  <label className="text-sm font-bold kg-text">
                     Category <span className="ml-1 text-red-500">*</span>
                   </label>
                   <select
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
                     required
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    className="kg-input mt-2 w-full rounded-2xl px-4 py-3.5 outline-none cursor-pointer"
                   >
-                    <option value="">Hitamo category</option>
+                    <option value="" style={{ background: "var(--surface)", color: "var(--text)" }}>Hitamo category</option>
                     {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
+                      <option key={category.id} value={category.id} style={{ background: "var(--surface)", color: "var(--text)" }}>
                         {category.name}
                       </option>
                     ))}
@@ -406,32 +406,35 @@ export default function CreateListing() {
 
                 <div>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-bold text-slate-800">Ibisobanuro</label>
-                    <span className="text-xs text-slate-400">{description.length} characters</span>
+                    <label className="text-sm font-bold kg-text">Ibisobanuro</label>
+                    <span className="text-xs kg-text-muted">{description.length} characters</span>
                   </div>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={6}
                     placeholder="Sobanura neza icyo ugurisha, imimerere yacyo n'ibindi..."
-                    className="mt-2 w-full resize-none rounded-2xl border border-slate-200 px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    className="kg-input mt-2 w-full resize-none rounded-2xl px-4 py-3.5 outline-none"
                   />
                 </div>
               </div>
             </section>
 
             {/* TYPE & PRICE */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
+            <section className="overflow-hidden rounded-3xl border shadow-sm transition-colors" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+              <div className="border-b px-6 py-6 sm:px-8" style={{ borderColor: "var(--border)" }}>
                 <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                    style={{ background: "var(--soft-bg-hover)", color: "var(--primary)" }}
+                  >
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-slate-950">Uburyo n'igiciro</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                    <h2 className="text-xl font-black kg-text">Uburyo n'igiciro</h2>
+                    <p className="mt-1 text-sm leading-6 kg-text-muted">
                       Hitamo niba ari ukugurisha cyangwa gukodesha.
                     </p>
                   </div>
@@ -440,13 +443,13 @@ export default function CreateListing() {
 
               <div className="space-y-6 p-6 sm:p-8">
                 <div>
-                  <label className="text-sm font-bold text-slate-800">Uburyo bwo gutanga</label>
+                  <label className="text-sm font-bold kg-text">Uburyo bwo gutanga</label>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     {[
                       { 
                         value: "sale", 
                         icon: (
-                          <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: "var(--primary)" }}>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                           </svg>
                         ), 
@@ -456,7 +459,7 @@ export default function CreateListing() {
                       { 
                         value: "rent", 
                         icon: (
-                          <svg className="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: "var(--primary)" }}>
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                           </svg>
                         ), 
@@ -470,22 +473,23 @@ export default function CreateListing() {
                           key={item.value}
                           type="button"
                           onClick={() => setListingType(item.value)}
-                          className={`rounded-2xl border p-4 text-left transition ${
-                            selected
-                              ? "border-blue-500 bg-blue-50 ring-4 ring-blue-500/10"
-                              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                          }`}
+                          className="rounded-2xl border p-4 text-left transition"
+                          style={{
+                            background: selected ? "var(--soft-bg-hover)" : "var(--surface)",
+                            borderColor: selected ? "var(--primary)" : "var(--border)",
+                            boxShadow: selected ? "0 0 0 3px var(--glow-color)" : "none",
+                          }}
                         >
                           <div className="flex items-start justify-between">
-                            <div className="p-2 bg-white rounded-xl shadow-sm">{item.icon}</div>
+                            <div className="p-2 rounded-xl shadow-sm" style={{ background: "var(--bg)" }}>{item.icon}</div>
                             {selected && (
-                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-black text-white">
+                              <span className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-black text-white" style={{ background: "var(--primary)" }}>
                                 ✓
                               </span>
                             )}
                           </div>
-                          <p className="mt-4 text-sm font-black text-slate-900">{item.title}</p>
-                          <p className="mt-1 text-xs text-slate-500">{item.description}</p>
+                          <p className="mt-4 text-sm font-black kg-text">{item.title}</p>
+                          <p className="mt-1 text-xs kg-text-muted">{item.description}</p>
                         </button>
                       )
                     })}
@@ -494,7 +498,7 @@ export default function CreateListing() {
 
                 <div className="grid gap-5 md:grid-cols-2">
                   <div>
-                    <label className="text-sm font-bold text-slate-800">Igiciro (Frw)</label>
+                    <label className="text-sm font-bold kg-text">Igiciro (Frw)</label>
                     <div className="relative mt-2">
                       <input
                         type="number"
@@ -502,24 +506,24 @@ export default function CreateListing() {
                         onChange={(e) => setPrice(e.target.value)}
                         min="0"
                         placeholder="650000"
-                        className="w-full rounded-2xl border border-slate-200 px-4 py-3.5 pr-16 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                        className="kg-input w-full rounded-2xl px-4 py-3.5 pr-16 outline-none"
                       />
-                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black kg-text-muted">
                         FRW
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-sm font-bold text-slate-800">Imimerere</label>
+                    <label className="text-sm font-bold kg-text">Imimerere</label>
                     <select
                       value={condition}
                       onChange={(e) => setCondition(e.target.value)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className="kg-input mt-2 w-full rounded-2xl px-4 py-3.5 outline-none cursor-pointer"
                     >
-                      <option value="new">Bishya</option>
-                      <option value="used">Byakoreshejwe</option>
-                      <option value="refurbished">Byavuguruwe</option>
+                      <option value="new" style={{ background: "var(--surface)", color: "var(--text)" }}>Bishya</option>
+                      <option value="used" style={{ background: "var(--surface)", color: "var(--text)" }}>Byakoreshejwe</option>
+                      <option value="refurbished" style={{ background: "var(--surface)", color: "var(--text)" }}>Byavuguruwe</option>
                     </select>
                   </div>
                 </div>
@@ -527,18 +531,21 @@ export default function CreateListing() {
             </section>
 
             {/* LOCATION */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
+            <section className="overflow-hidden rounded-3xl border shadow-sm transition-colors" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+              <div className="border-b px-6 py-6 sm:px-8" style={{ borderColor: "var(--border)" }}>
                 <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                    style={{ background: "var(--soft-bg-hover)", color: "var(--primary)" }}
+                  >
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-slate-950">Aho giherereye</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                    <h2 className="text-xl font-black kg-text">Aho giherereye</h2>
+                    <p className="mt-1 text-sm leading-6 kg-text-muted">
                       Shyiramo aho ikintu giherereye kugira ngo abaguzi bo hafi babibone.
                     </p>
                   </div>
@@ -548,7 +555,7 @@ export default function CreateListing() {
               <div className="p-6 sm:p-8">
                 <div className="grid gap-4 md:grid-cols-3">
                   <div>
-                    <label className="text-sm font-bold text-slate-800">
+                    <label className="text-sm font-bold kg-text">
                       Province <span className="ml-1 text-red-500">*</span>
                     </label>
                     <input
@@ -556,34 +563,34 @@ export default function CreateListing() {
                       onChange={(e) => setProvince(e.target.value)}
                       required
                       placeholder="Kigali"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className="kg-input mt-2 w-full rounded-2xl px-4 py-3.5 outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="text-sm font-bold text-slate-800">District</label>
+                    <label className="text-sm font-bold kg-text">District</label>
                     <input
                       value={district}
                       onChange={(e) => setDistrict(e.target.value)}
                       placeholder="Gasabo"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className="kg-input mt-2 w-full rounded-2xl px-4 py-3.5 outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="text-sm font-bold text-slate-800">Sector</label>
+                    <label className="text-sm font-bold kg-text">Sector</label>
                     <input
                       value={sector}
                       onChange={(e) => setSector(e.target.value)}
                       placeholder="Remera"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className="kg-input mt-2 w-full rounded-2xl px-4 py-3.5 outline-none"
                     />
                   </div>
                 </div>
 
                 {formatLocation() && (
-                  <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="mt-5 rounded-2xl px-4 py-3 text-sm flex items-center gap-2 kg-text-secondary" style={{ background: "var(--bg-secondary)" }}>
+                    <svg className="w-4 h-4 shrink-0 kg-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     </svg>
                     <span>{formatLocation()}</span>
@@ -592,18 +599,21 @@ export default function CreateListing() {
               </div>
             </section>
 
-            {/* CONTACT PHONE SECTION WITH AUTOMATIC PRE-FILLING */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-6 py-6 sm:px-8 flex items-center justify-between">
+            {/* CONTACT PHONE SECTION */}
+            <section className="overflow-hidden rounded-3xl border shadow-sm transition-colors" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+              <div className="border-b px-6 py-6 sm:px-8 flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
                 <div className="flex items-center gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                    style={{ background: "var(--soft-bg-hover)", color: "var(--primary)" }}
+                  >
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-slate-950">Nimero ya Telefoni</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
+                    <h2 className="text-xl font-black kg-text">Nimero ya Telefoni</h2>
+                    <p className="mt-1 text-sm leading-6 kg-text-muted">
                       Emerera abaguzi kukuvugisha kuri telefoni.
                     </p>
                   </div>
@@ -615,21 +625,21 @@ export default function CreateListing() {
                     onChange={(e) => setContactPhone(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                  <div className="w-11 h-6 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all" style={{ background: contactPhone ? "var(--primary)" : "var(--border-strong)" }}></div>
                 </label>
               </div>
 
               {contactPhone && (
                 <div className="p-6 sm:p-8 space-y-4">
                   {fetchingPhones ? (
-                    <p className="text-xs text-slate-400">Turimo gushaka nimero zawe zahise...</p>
+                    <p className="text-xs kg-text-muted">Turimo gushaka nimero zawe zahise...</p>
                   ) : previousNumbers.length > 0 ? (
                     <div className="space-y-3">
-                      <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
+                      <label className="text-xs font-black uppercase tracking-wider kg-text-secondary block">
                         Hitamo uburyo bwo gutanga nimero:
                       </label>
                       <div className="space-y-2">
-                        <label className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
+                        <label className="flex items-center gap-2 text-xs font-bold kg-text cursor-pointer">
                           <input
                             type="radio"
                             name="phoneOption"
@@ -641,7 +651,7 @@ export default function CreateListing() {
                                 setPhoneNumber(previousNumbers[0].number)
                               }
                             }}
-                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                            className="w-4 h-4 accent-[var(--primary)]"
                           />
                           <span>Gukoresha nimero yawe wari warakoresheje mbere (Pre-filled)</span>
                         </label>
@@ -651,10 +661,10 @@ export default function CreateListing() {
                             <select
                               value={phoneNumber}
                               onChange={(e) => setPhoneNumber(e.target.value)}
-                              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-900 outline-none"
+                              className="kg-input w-full rounded-2xl px-4 py-3 text-sm font-bold outline-none cursor-pointer"
                             >
                               {previousNumbers.map((item, index) => (
-                                <option key={index} value={item.number}>
+                                <option key={index} value={item.number} style={{ background: "var(--surface)", color: "var(--text)" }}>
                                   {item.number} {index === 0 ? "(Iyaherukaga gukoreshwa)" : ""}
                                 </option>
                               ))}
@@ -662,7 +672,7 @@ export default function CreateListing() {
                           </div>
                         )}
 
-                        <label className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
+                        <label className="flex items-center gap-2 text-xs font-bold kg-text cursor-pointer">
                           <input
                             type="radio"
                             name="phoneOption"
@@ -672,7 +682,7 @@ export default function CreateListing() {
                               setSelectedPhoneOption("new")
                               setPhoneNumber("")
                             }}
-                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                            className="w-4 h-4 accent-[var(--primary)]"
                           />
                           <span>Andika nimero nshya</span>
                         </label>
@@ -682,7 +692,7 @@ export default function CreateListing() {
 
                   {(selectedPhoneOption === "new" || previousNumbers.length === 0) && (
                     <div>
-                      <label className="text-sm font-bold text-slate-800">
+                      <label className="text-sm font-bold kg-text">
                         Nimero ya telefoni <span className="ml-1 text-red-500">*</span>
                       </label>
                       <input
@@ -690,7 +700,7 @@ export default function CreateListing() {
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         placeholder="Urugero: +250788000000 cyangwa 0788000000"
-                        className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                        className="kg-input mt-2 w-full rounded-2xl px-4 py-3.5 outline-none"
                       />
                     </div>
                   )}
@@ -699,101 +709,117 @@ export default function CreateListing() {
             </section>
 
             {/* PHOTOS */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
+            <section className="overflow-hidden rounded-3xl border shadow-sm transition-colors" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+              <div className="border-b px-6 py-6 sm:px-8" style={{ borderColor: "var(--border)" }}>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-purple-600">
+                    <div
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                      style={{ background: "var(--soft-bg-hover)", color: "var(--primary)" }}
+                    >
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     </div>
                     <div>
-                      <h2 className="text-xl font-black text-slate-950">Amafoto</h2>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        Ongeraho amafoto asobanutse meza.
+                      <h2 className="text-xl font-black kg-text">Amafoto</h2>
+                      <p className="mt-1 text-sm leading-6 kg-text-muted">
+                        Ongeraho amafoto asobanutse kugira ngo abaguzi babone neza icyo ugurisha (Ushobora gushyiramo kugeza kuri 5).
                       </p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-500">
-                    {images.length}/5
-                  </span>
                 </div>
               </div>
 
-              <div className="p-6 sm:p-8">
-                <label
-                  htmlFor="listing-images"
-                  className="group flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center transition hover:border-blue-400 hover:bg-blue-50/40"
-                >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-600 shadow-sm transition group-hover:scale-105">
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                  </div>
-                  <h3 className="mt-4 text-sm font-black text-slate-950">Ongeraho amafoto</h3>
-                  <p className="mt-1 text-xs text-slate-500">Ushobora gushyiraho amafoto agera kuri 5.</p>
-                  <span className="mt-4 rounded-xl bg-slate-950 px-4 py-2 text-xs font-bold text-white group-hover:bg-blue-600">
-                    Hitamo amafoto
-                  </span>
-                  <input
-                    id="listing-images"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageSelect}
-                    className="hidden"
-                  />
-                </label>
-
-                {images.length > 0 && (
-                  <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-                    {images.map((image, index) => (
-                      <div
-                        key={`${image.name}-${index}`}
-                        className="group relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+              <div className="p-6 sm:p-8 space-y-6">
+                <div className="flex flex-wrap gap-4">
+                  {images.map((file, index) => (
+                    <div key={index} className="relative h-24 w-24 overflow-hidden rounded-2xl border" style={{ borderColor: "var(--border)", background: "var(--bg-secondary)" }}>
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`Preview ${index}`}
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full text-xs text-white transition"
+                        style={{ background: "rgba(0,0,0,0.7)" }}
                       >
-                        <img
-                          src={URL.createObjectURL(image)}
-                          alt={`Preview ${index + 1}`}
-                          className="h-full w-full object-cover"
-                        />
-                        {index === 0 && (
-                          <div className="absolute left-2 top-2 rounded-lg bg-slate-950/80 px-2 py-1 text-[10px] font-black text-white backdrop-blur">
-                            MAIN
-                          </div>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-xs font-black text-white shadow-lg transition hover:bg-red-700"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+
+                  {images.length < 5 && (
+                    <label
+                      className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition"
+                      style={{ borderColor: "var(--border-strong)", background: "var(--soft-bg)" }}
+                    >
+                      <svg className="w-6 h-6 kg-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      <span className="mt-1 text-[10px] font-bold kg-text-muted">Ongeraho</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
             </section>
 
+            {/* STATUS MESSAGE */}
             {message && (
-              <div className={`p-4 rounded-2xl text-sm font-bold ${success ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+              <div
+                className="rounded-2xl px-4 py-3 text-sm font-bold border transition-colors"
+                style={{
+                  background: success ? "var(--success-bg)" : "var(--danger-bg)",
+                  borderColor: success ? "var(--success-border)" : "var(--danger-border)",
+                  color: success ? "var(--success-text)" : "var(--danger-text)",
+                }}
+              >
                 {message}
               </div>
             )}
 
+            {/* SUBMIT BUTTON */}
             <div className="flex justify-end gap-4">
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700 disabled:opacity-50"
+                className="kg-h-sell inline-flex items-center justify-center rounded-2xl px-8 py-4 text-base font-bold transition disabled:opacity-50 cursor-pointer"
               >
-                {saving ? "Birimo koherezwa..." : "Shyiraho Kwamamaza"}
+                {saving ? "Birimo koherezwa..." : "Emeza Kwamamaza"}
               </button>
             </div>
           </form>
+
+          {/* SIDEBAR TIPS */}
+          <aside className="space-y-6">
+            <div className="rounded-3xl border p-6 shadow-sm transition-colors" style={{ background: "var(--surface)", borderColor: "var(--border)" }}>
+              <h3 className="text-base font-black kg-text">💡 Inama zo kwamamaza neza</h3>
+              <ul className="mt-4 space-y-3 text-sm kg-text-secondary">
+                <li className="flex items-start gap-2">
+                  <span className="font-bold" style={{ color: "var(--primary)" }}>•</span>
+                  <span>Andika izina ry'ikintu risobanutse neza n'ibara cyangwa ubwoko bwacyo.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold" style={{ color: "var(--primary)" }}>•</span>
+                  <span>Shyiraho amafoto meza afashwe ku mucyo kugira ngo abaguzi babyishimire.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-bold" style={{ color: "var(--primary)" }}>•</span>
+                  <span>Emeza neza ko nimero yawe ya telefoni ikora neza kugira ngo bagushake byoroshye.</span>
+                </li>
+              </ul>
+            </div>
+          </aside>
         </div>
       </div>
     </main>
