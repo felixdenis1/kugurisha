@@ -1218,7 +1218,7 @@ export default function Home() {
 
 
 
-                  <p className="mt-5 text-sm leading-relaxed text-slate-700 dark:text-slate-200 sm:text-base font-semibold">
+                  <p className="mt-5 text-sm leading-relaxed text-slate-00 dark:text-slate-200 sm:text-base font-semibold">
                     sezera kwiruka ushaka umuguzi igihe ukeneye amafaranga byihutirwa!!
                     kugurisha.com ni urubuga rugufasha kwerekana icyo ufite ariko wifuza kugurisha yaba igishya cyangwa icyakoreshejwe,inzu,ubutaka
                     ,ibikoresho byo mu rugo,ni bindi byose. niba uri numucurizi turagufasha kubona abaguzi bifuza ibyo ucuruza.
