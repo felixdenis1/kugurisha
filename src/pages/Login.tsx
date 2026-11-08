@@ -427,7 +427,7 @@ function Login() {
 
                 <div className="mb-4 inline-flex items-center rounded-xl border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
 
-                  👋 Murakaza neza
+                 
 
                 </div>
 
@@ -441,13 +441,6 @@ function Login() {
 
 
 
-                <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-base">
-
-                  Komeza ukoreshe KUGURISHA.COM ukoresheje amakuru ya
-
-                  konti yawe.
-
-                </p>
 
               </div>
 
@@ -818,18 +811,7 @@ function Login() {
 
 
 
-              {/* Footer */}
-
-              <p className="mt-8 text-center text-xs leading-5 text-slate-400">
-
-                © {new Date().getFullYear()} KUGURISHA.COM
-
-                <br />
-
-                Isoko ryawe ryo mu Rwanda 🇷🇼
-
-              </p>
-
+              
             </div>
 
           </section>
