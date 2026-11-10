@@ -282,16 +282,16 @@ export default function CreateListing() {
       await uploadImages(newListing.id, user.id)
 
       setSuccess(true)
-      setMessage("Kwamamaza ryawe gushyizweho neza!")
+      setMessage("Byageze ku Isoko!")
 
       setTimeout(() => {
-        navigate(`/listings/${newListing.id}`)
+        navigate(`/home`)
       }, 1200)
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : "Habaye ikibazo mu gushyiraho kwamamaza."
       console.error(errorMsg)
       setSuccess(false)
-      setMessage("Habaye ikibazo mu gushyiraho kwamamaza. Ongera ugerageze.")
+      setMessage("Habaye ikibazo mu gushyiraho icyugurisha. Ongera ugerageze.")
     } finally {
       setSaving(false)
     }

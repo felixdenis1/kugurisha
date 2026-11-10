@@ -1,5 +1,24 @@
 import { useEffect, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
+import {
+  AlertCircle,
+  ArrowLeft,
+  Check,
+  CheckCircle2,
+  FileText,
+  Gift,
+  Image as ImageIcon,
+  KeyRound,
+  Loader2,
+  MapPin,
+  Phone,
+  Plus,
+  Camera,
+  Banknote,
+  Tag,
+  X,
+  Save,
+} from "lucide-react"
 
 import { supabase } from "../services/supabase"
 
@@ -23,6 +42,41 @@ type LocationData = {
 type PreviousPhoneOption = {
   number: string
   lastUsedAt: string
+}
+
+/* ------------------------------------------------------------------
+   Shared style tokens — all colours come from the CSS variables
+   defined in your stylesheet, so light/dark themes work automatically.
+------------------------------------------------------------------- */
+const cardCls =
+  "kg-card overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--card-shadow)]"
+const cardHeaderCls = "border-b border-[var(--border)] px-6 py-6 sm:px-8"
+const iconBoxCls =
+  "kg-icon-tile flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--soft-bg)] text-[var(--primary)]"
+const labelCls = "text-sm font-bold text-[var(--text)]"
+const inputCls =
+  "kg-input mt-2 w-full rounded-2xl border px-4 py-3.5 outline-none"
+const selectCls =
+  "kg-input mt-2 w-full rounded-2xl border px-4 py-3.5 outline-none"
+
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode
+  title: string
+  subtitle: string
+}) {
+  return (
+    <div className="flex items-start gap-4">
+      <div className={iconBoxCls}>{icon}</div>
+      <div>
+        <h2 className="text-xl font-extrabold text-[var(--text)]">{title}</h2>
+        <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">{subtitle}</p>
+      </div>
+    </div>
+  )
 }
 
 export default function EditListing() {
@@ -435,18 +489,24 @@ export default function EditListing() {
     }
   }
 
+  const listingTypeOptions = [
+    { value: "sale", icon: <Tag className="h-6 w-6" strokeWidth={1.75} />, title: "Kugurisha", description: "Shaka umuguzi" },
+    { value: "rent", icon: <KeyRound className="h-6 w-6" strokeWidth={1.75} />, title: "Gukodesha", description: "Kodesha icyo ufite" },
+    { value: "free", icon: <Gift className="h-6 w-6" strokeWidth={1.75} />, title: "Ubuntu", description: "Gutanga ubuntu" },
+  ]
+
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50">
+      <main className="kg-bg min-h-screen">
         <div className="flex min-h-screen items-center justify-center px-6">
           <div className="text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-3xl shadow-sm">
-              ⏳
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface)] text-[var(--primary)] shadow-[var(--card-shadow)]">
+              <Loader2 className="h-7 w-7 animate-spin" strokeWidth={1.75} />
             </div>
-            <h2 className="mt-5 text-lg font-black text-slate-900">
+            <h2 className="mt-5 text-lg font-extrabold text-[var(--text)]">
               Turimo kuzana listing...
             </h2>
-            <p className="mt-2 text-sm text-slate-500">Tegereza akanya gato.</p>
+            <p className="mt-2 text-sm text-[var(--text-muted)]">Tegereza akanya gato.</p>
           </div>
         </div>
       </main>
@@ -454,44 +514,52 @@ export default function EditListing() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="kg-bg min-h-screen">
       {/* NAVBAR */}
-      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link to="/" className="text-xl font-black tracking-tight text-slate-950">
-            KUGURISHA
-            <span className="text-blue-600">.COM</span>
+      <header className="kg-h-root sticky top-0 z-30 px-3 pt-3 sm:px-6">
+        <div className="kg-h-panel mx-auto flex max-w-7xl items-center justify-between rounded-full px-4 py-2.5 sm:px-6">
+          <Link to="/" className="kg-h-brand">
+            <span className="kg-h-wordmark">
+              KUGURISHA<span className="kg-h-brand-dot">.COM</span>
+            </span>
           </Link>
 
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+            className="kg-h-navlink border border-[var(--border)]"
           >
-            ← Dashboard
+            <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+            Dashboard
           </Link>
         </div>
       </header>
 
       {/* HERO */}
-      <section className="relative overflow-hidden bg-slate-950">
-        <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-blue-600/20 blur-3xl" />
-        <div className="absolute -bottom-32 right-0 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
+      <section className="relative overflow-hidden">
+        <div
+          className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full blur-3xl"
+          style={{ background: "var(--glow-color)" }}
+        />
+        <div
+          className="pointer-events-none absolute -bottom-32 right-0 h-96 w-96 rounded-full blur-3xl"
+          style={{ background: "var(--glow-color)" }}
+        />
 
         <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-14">
           <div className="max-w-3xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-widest text-blue-300">
-              <span className="h-2 w-2 rounded-full bg-blue-400" />
+            <div className="glass-soft mb-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-widest text-[var(--primary-hover)]">
+              <span className="h-2 w-2 rounded-full bg-[var(--primary)]" />
               Seller dashboard
             </div>
 
-            <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl">
+            <h1 className="text-4xl font-extrabold tracking-tight text-[var(--text)] sm:text-5xl">
               Hindura listing yawe.
-              <span className="mt-1 block text-blue-400">
+              <span className="kg-gradient-text mt-1 block">
                 Gumana amakuru agezweho.
               </span>
             </h1>
 
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+            <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--text-secondary)] sm:text-lg">
               Vugurura amakuru, igiciro, amafoto cyangwa aho ikintu giherereye kugira ngo listing yawe ikomeze kuba nziza ku baguzi.
             </p>
           </div>
@@ -503,25 +571,19 @@ export default function EditListing() {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           <form onSubmit={handleSave} className="space-y-6">
             {/* BASIC INFORMATION */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-lg">
-                    📝
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-slate-950">Amakuru y'ikintu</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Hindura amakuru y'ingenzi ya listing yawe.
-                    </p>
-                  </div>
-                </div>
+            <section className={cardCls}>
+              <div className={cardHeaderCls}>
+                <SectionHeader
+                  icon={<FileText className="h-5 w-5" strokeWidth={1.75} />}
+                  title="Amakuru y'ikintu"
+                  subtitle="Hindura amakuru y'ingenzi ya listing yawe."
+                />
               </div>
 
               <div className="space-y-6 p-6 sm:p-8">
                 <div>
-                  <label className="text-sm font-bold text-slate-800">
-                    Izina ry'ikintu <span className="ml-1 text-red-500">*</span>
+                  <label className={labelCls}>
+                    Izina ry'ikintu <span className="ml-1 text-[var(--danger-text)]">*</span>
                   </label>
                   <input
                     type="text"
@@ -529,19 +591,19 @@ export default function EditListing() {
                     onChange={(e) => setTitle(e.target.value)}
                     required
                     placeholder="Urugero: iPhone 15 Pro"
-                    className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    className={inputCls}
                   />
                 </div>
 
                 <div>
-                  <label className="text-sm font-bold text-slate-800">
-                    Category <span className="ml-1 text-red-500">*</span>
+                  <label className={labelCls}>
+                    Category <span className="ml-1 text-[var(--danger-text)]">*</span>
                   </label>
                   <select
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
                     required
-                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-slate-900 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    className={selectCls}
                   >
                     <option value="">Hitamo category</option>
                     {categories.map((category) => (
@@ -554,45 +616,35 @@ export default function EditListing() {
 
                 <div>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-bold text-slate-800">Ibisobanuro</label>
-                    <span className="text-xs text-slate-400">{description.length} characters</span>
+                    <label className={labelCls}>Ibisobanuro</label>
+                    <span className="text-xs text-[var(--text-muted)]">{description.length} characters</span>
                   </div>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={6}
                     placeholder="Sobanura neza icyo ugurisha..."
-                    className="mt-2 w-full resize-none rounded-2xl border border-slate-200 px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                    className={`${inputCls} resize-none`}
                   />
                 </div>
               </div>
             </section>
 
             {/* TYPE & PRICE */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-lg">
-                    💰
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-slate-950">Uburyo n'igiciro</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Hindura uburyo listing itangwa n'igiciro.
-                    </p>
-                  </div>
-                </div>
+            <section className={cardCls}>
+              <div className={cardHeaderCls}>
+                <SectionHeader
+                  icon={<Banknote className="h-5 w-5" strokeWidth={1.75} />}
+                  title="Uburyo n'igiciro"
+                  subtitle="Hindura uburyo listing itangwa n'igiciro."
+                />
               </div>
 
               <div className="space-y-6 p-6 sm:p-8">
                 <div>
-                  <label className="text-sm font-bold text-slate-800">Uburyo bwo gutanga</label>
+                  <label className={labelCls}>Uburyo bwo gutanga</label>
                   <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                    {[
-                      { value: "sale", icon: "🏷️", title: "Kugurisha", description: "Shaka umuguzi" },
-                      { value: "rent", icon: "🔑", title: "Gukodesha", description: "Kodesha icyo ufite" },
-                      { value: "free", icon: "🎁", title: "Ubuntu", description: "Gutanga ubuntu" },
-                    ].map((item) => {
+                    {listingTypeOptions.map((item) => {
                       const selected = listingType === item.value
                       return (
                         <button
@@ -601,20 +653,22 @@ export default function EditListing() {
                           onClick={() => setListingType(item.value)}
                           className={`rounded-2xl border p-4 text-left transition ${
                             selected
-                              ? "border-blue-500 bg-blue-50 ring-4 ring-blue-500/10"
-                              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                              ? "border-[var(--primary)] bg-[var(--soft-bg)] ring-4 ring-[var(--glow-color)]"
+                              : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-hover)]"
                           }`}
                         >
                           <div className="flex items-start justify-between">
-                            <span className="text-2xl">{item.icon}</span>
+                            <span className={selected ? "text-[var(--primary)]" : "text-[var(--text-muted)]"}>
+                              {item.icon}
+                            </span>
                             {selected && (
-                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-black text-white">
-                                ✓
+                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--primary)] text-white">
+                                <Check className="h-3.5 w-3.5" strokeWidth={3} />
                               </span>
                             )}
                           </div>
-                          <p className="mt-4 text-sm font-black text-slate-900">{item.title}</p>
-                          <p className="mt-1 text-xs text-slate-500">{item.description}</p>
+                          <p className="mt-4 text-sm font-extrabold text-[var(--text)]">{item.title}</p>
+                          <p className="mt-1 text-xs text-[var(--text-muted)]">{item.description}</p>
                         </button>
                       )
                     })}
@@ -624,28 +678,28 @@ export default function EditListing() {
                 {listingType !== "free" && (
                   <div className="grid gap-5 md:grid-cols-2">
                     <div>
-                      <label className="text-sm font-bold text-slate-800">Igiciro (Frw)</label>
-                      <div className="relative mt-2">
+                      <label className={labelCls}>Igiciro (Frw)</label>
+                      <div className="relative">
                         <input
                           type="number"
                           value={price}
                           onChange={(e) => setPrice(e.target.value)}
                           min="0"
                           placeholder="650000"
-                          className="w-full rounded-2xl border border-slate-200 px-4 py-3.5 pr-16 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                          className={`${inputCls} pr-16`}
                         />
-                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
+                        <span className="pointer-events-none absolute right-4 top-1/2 mt-1 -translate-y-1/2 text-xs font-extrabold text-[var(--text-muted)]">
                           FRW
                         </span>
                       </div>
                     </div>
 
                     <div>
-                      <label className="text-sm font-bold text-slate-800">Imimerere</label>
+                      <label className={labelCls}>Imimerere</label>
                       <select
                         value={condition}
                         onChange={(e) => setCondition(e.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                        className={selectCls}
                       >
                         <option value="new">Bishya</option>
                         <option value="used">Byakoreshejwe</option>
@@ -658,60 +712,54 @@ export default function EditListing() {
             </section>
 
             {/* LOCATION */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-lg">
-                    📍
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-slate-950">Aho giherereye</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Hindura aho ikintu giherereye.
-                    </p>
-                  </div>
-                </div>
+            <section className={cardCls}>
+              <div className={cardHeaderCls}>
+                <SectionHeader
+                  icon={<MapPin className="h-5 w-5" strokeWidth={1.75} />}
+                  title="Aho giherereye"
+                  subtitle="Hindura aho ikintu giherereye."
+                />
               </div>
 
               <div className="p-6 sm:p-8">
                 <div className="grid gap-4 md:grid-cols-3">
                   <div>
-                    <label className="text-sm font-bold text-slate-800">
-                      Province <span className="ml-1 text-red-500">*</span>
+                    <label className={labelCls}>
+                      Province <span className="ml-1 text-[var(--danger-text)]">*</span>
                     </label>
                     <input
                       value={province}
                       onChange={(e) => setProvince(e.target.value)}
                       required
                       placeholder="Kigali"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className={inputCls}
                     />
                   </div>
 
                   <div>
-                    <label className="text-sm font-bold text-slate-800">District</label>
+                    <label className={labelCls}>District</label>
                     <input
                       value={district}
                       onChange={(e) => setDistrict(e.target.value)}
                       placeholder="Gasabo"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className={inputCls}
                     />
                   </div>
 
                   <div>
-                    <label className="text-sm font-bold text-slate-800">Sector</label>
+                    <label className={labelCls}>Sector</label>
                     <input
                       value={sector}
                       onChange={(e) => setSector(e.target.value)}
                       placeholder="Remera"
-                      className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3.5 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                      className={inputCls}
                     />
                   </div>
                 </div>
 
                 {formatLocation() && (
-                  <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                    <span className="mr-2">📍</span>
+                  <div className="mt-5 flex items-center gap-2 rounded-2xl bg-[var(--soft-bg)] px-4 py-3 text-sm text-[var(--text-secondary)]">
+                    <MapPin className="h-4 w-4 shrink-0 text-[var(--primary)]" strokeWidth={2} />
                     {formatLocation()}
                   </div>
                 )}
@@ -719,41 +767,35 @@ export default function EditListing() {
             </section>
 
             {/* CONTACT PHONE SECTION */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-6 py-6 sm:px-8 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-lg">
-                    📞
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-black text-slate-950">Nimero ya Telefoni</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-500">
-                      Emerera abaguzi kukuvugisha kuri telefoni kuri iyi listing.
-                    </p>
-                  </div>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+            <section className={cardCls}>
+              <div className={`${cardHeaderCls} flex items-center justify-between gap-4`}>
+                <SectionHeader
+                  icon={<Phone className="h-5 w-5" strokeWidth={1.75} />}
+                  title="Nimero ya Telefoni"
+                  subtitle="Emerera abaguzi kukuvugisha kuri telefoni kuri iyi listing."
+                />
+                <label className="relative inline-flex shrink-0 cursor-pointer items-center">
                   <input
                     type="checkbox"
                     checked={contactPhone}
                     onChange={(e) => setContactPhone(e.target.checked)}
-                    className="sr-only peer"
+                    className="peer sr-only"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                  <div className="h-6 w-11 rounded-full bg-[var(--border-strong)] transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--primary)] peer-checked:after:translate-x-full peer-focus-visible:ring-4 peer-focus-visible:ring-[var(--glow-color)]"></div>
                 </label>
               </div>
 
               {contactPhone && (
-                <div className="p-6 sm:p-8 space-y-4">
+                <div className="space-y-4 p-6 sm:p-8">
                   {fetchingPhones ? (
-                    <p className="text-xs text-slate-400">Turimo gushaka nimero zawe zahise...</p>
+                    <p className="text-xs text-[var(--text-muted)]">Turimo gushaka nimero zawe zahise...</p>
                   ) : previousNumbers.length > 0 ? (
                     <div className="space-y-3">
-                      <label className="text-xs font-black uppercase tracking-wider text-slate-700 block">
+                      <label className="block text-xs font-extrabold uppercase tracking-wider text-[var(--text)]">
                         Hitamo uburyo bwo gutanga nimero:
                       </label>
                       <div className="space-y-2">
-                        <label className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
+                        <label className="flex cursor-pointer items-center gap-2 text-xs font-bold text-[var(--text)]">
                           <input
                             type="radio"
                             name="phoneOption"
@@ -765,7 +807,7 @@ export default function EditListing() {
                                 setPhoneNumber(previousNumbers[0].number)
                               }
                             }}
-                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                            className="h-4 w-4 accent-[var(--primary)]"
                           />
                           <span>Gukoresha nimero yawe wari warakoresheje mbere</span>
                         </label>
@@ -775,7 +817,7 @@ export default function EditListing() {
                             <select
                               value={phoneNumber}
                               onChange={(e) => setPhoneNumber(e.target.value)}
-                              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-900 outline-none"
+                              className="kg-input w-full rounded-2xl border px-4 py-3 text-sm font-bold outline-none"
                             >
                               {previousNumbers.map((item, index) => (
                                 <option key={index} value={item.number}>
@@ -786,7 +828,7 @@ export default function EditListing() {
                           </div>
                         )}
 
-                        <label className="flex items-center gap-2 text-xs font-bold text-slate-800 cursor-pointer">
+                        <label className="flex cursor-pointer items-center gap-2 text-xs font-bold text-[var(--text)]">
                           <input
                             type="radio"
                             name="phoneOption"
@@ -796,7 +838,7 @@ export default function EditListing() {
                               setSelectedPhoneOption("new")
                               setPhoneNumber("")
                             }}
-                            className="w-4 h-4 text-emerald-600 focus:ring-emerald-500"
+                            className="h-4 w-4 accent-[var(--primary)]"
                           />
                           <span>Andika nimero nshya</span>
                         </label>
@@ -806,15 +848,15 @@ export default function EditListing() {
 
                   {(selectedPhoneOption === "new" || previousNumbers.length === 0) && (
                     <div>
-                      <label className="text-sm font-bold text-slate-800">
-                        Nimero ya telefoni <span className="ml-1 text-red-500">*</span>
+                      <label className={labelCls}>
+                        Nimero ya telefoni <span className="ml-1 text-[var(--danger-text)]">*</span>
                       </label>
                       <input
                         type="tel"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         placeholder="Urugero: +250788000000 cyangwa 0788000000"
-                        className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                        className={inputCls}
                       />
                     </div>
                   )}
@@ -823,21 +865,15 @@ export default function EditListing() {
             </section>
 
             {/* EXISTING PHOTOS */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-6 py-6 sm:px-8">
+            <section className={cardCls}>
+              <div className={cardHeaderCls}>
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-purple-50 text-lg">
-                      📸
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-black text-slate-950">Amafoto</h2>
-                      <p className="mt-1 text-sm leading-6 text-slate-500">
-                        Gucunga amafoto ari kuri listing yawe.
-                      </p>
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-500">
+                  <SectionHeader
+                    icon={<Camera className="h-5 w-5" strokeWidth={1.75} />}
+                    title="Amafoto"
+                    subtitle="Gucunga amafoto ari kuri listing yawe."
+                  />
+                  <span className="rounded-full bg-[var(--soft-bg)] px-3 py-1.5 text-xs font-extrabold text-[var(--text-muted)]">
                     {existingImages.length + newImages.length}/5
                   </span>
                 </div>
@@ -845,17 +881,17 @@ export default function EditListing() {
 
               <div className="p-6 sm:p-8">
                 {existingImages.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-8 text-center">
-                    <div className="text-3xl">🖼️</div>
-                    <p className="mt-3 text-sm font-bold text-slate-700">Nta foto iri kuri listing.</p>
-                    <p className="mt-1 text-xs text-slate-400">Ongeraho amafoto hepfo.</p>
+                  <div className="rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--soft-bg)] px-6 py-8 text-center">
+                    <ImageIcon className="mx-auto h-8 w-8 text-[var(--text-muted)]" strokeWidth={1.5} />
+                    <p className="mt-3 text-sm font-bold text-[var(--text)]">Nta foto iri kuri listing.</p>
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">Ongeraho amafoto hepfo.</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                     {existingImages.map((image, index) => (
                       <div
                         key={image.id}
-                        className="group relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+                        className="group relative aspect-square overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]"
                       >
                         <img
                           src={image.image_url}
@@ -863,16 +899,17 @@ export default function EditListing() {
                           className="h-full w-full object-cover"
                         />
                         {index === 0 && (
-                          <div className="absolute left-2 top-2 rounded-lg bg-slate-950/80 px-2 py-1 text-[10px] font-black text-white backdrop-blur">
+                          <div className="absolute left-2 top-2 rounded-lg bg-black/75 px-2 py-1 text-[10px] font-extrabold text-white backdrop-blur">
                             MAIN
                           </div>
                         )}
                         <button
                           type="button"
                           onClick={() => deleteExistingImage(image)}
-                          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-sm font-black text-white opacity-100 shadow-lg transition hover:bg-red-700 sm:opacity-0 sm:group-hover:opacity-100"
+                          aria-label="Siba ifoto"
+                          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-white opacity-100 shadow-lg transition hover:bg-red-700 sm:opacity-0 sm:group-hover:opacity-100"
                         >
-                          ×
+                          <X className="h-4 w-4" strokeWidth={2.5} />
                         </button>
                       </div>
                     ))}
@@ -883,14 +920,14 @@ export default function EditListing() {
                 <div className="mt-8">
                   <label
                     htmlFor="new-listing-images"
-                    className="group flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center transition hover:border-blue-400 hover:bg-blue-50/40"
+                    className="group flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[var(--border-strong)] bg-[var(--soft-bg)] px-6 py-10 text-center transition hover:border-[var(--primary)] hover:bg-[var(--soft-bg-hover)]"
                   >
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm transition group-hover:scale-105">
-                      +
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface)] text-[var(--primary)] shadow-sm transition group-hover:scale-105">
+                      <Plus className="h-6 w-6" strokeWidth={2} />
                     </div>
-                    <h3 className="mt-4 text-sm font-black text-slate-900">Ongeraho andi mafoto</h3>
-                    <p className="mt-1 text-xs text-slate-500">Amafoto yose hamwe ntarenze 5.</p>
-                    <span className="mt-4 rounded-xl bg-slate-950 px-4 py-2 text-xs font-bold text-white group-hover:bg-blue-600">
+                    <h3 className="mt-4 text-sm font-extrabold text-[var(--text)]">Ongeraho andi mafoto</h3>
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">Amafoto yose hamwe ntarenze 5.</p>
+                    <span className="mt-4 rounded-xl bg-[var(--inverse-bg)] px-4 py-2 text-xs font-bold text-[var(--inverse-text)] transition group-hover:bg-[var(--primary)] group-hover:text-white">
                       Hitamo amafoto
                     </span>
                     <input
@@ -906,14 +943,14 @@ export default function EditListing() {
                   {newImages.length > 0 && (
                     <div className="mt-5">
                       <div className="mb-3 flex items-center justify-between">
-                        <p className="text-sm font-bold text-slate-800">Amafoto mashya</p>
-                        <span className="text-xs text-slate-400">{newImages.length} mashya</span>
+                        <p className="text-sm font-bold text-[var(--text)]">Amafoto mashya</p>
+                        <span className="text-xs text-[var(--text-muted)]">{newImages.length} mashya</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                         {newImages.map((image, index) => (
                           <div
                             key={`${image.name}-${index}`}
-                            className="group relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+                            className="group relative aspect-square overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-secondary)]"
                           >
                             <img
                               src={URL.createObjectURL(image)}
@@ -923,9 +960,10 @@ export default function EditListing() {
                             <button
                               type="button"
                               onClick={() => removeNewImage(index)}
-                              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-xs font-black text-white shadow-lg transition hover:bg-red-700"
+                              aria-label="Kuraho ifoto"
+                              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition hover:bg-red-700"
                             >
-                              ×
+                              <X className="h-3.5 w-3.5" strokeWidth={2.5} />
                             </button>
                           </div>
                         ))}
@@ -939,14 +977,27 @@ export default function EditListing() {
             {/* MESSAGE ALERT */}
             {message && (
               <div
-                className={`rounded-2xl border p-4 text-xs ${
+                className="rounded-2xl border p-4 text-xs"
+                style={
                   success
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                    : "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
-                }`}
+                    ? {
+                        background: "var(--success-bg)",
+                        borderColor: "var(--success-border)",
+                        color: "var(--success-text)",
+                      }
+                    : {
+                        background: "var(--danger-bg)",
+                        borderColor: "var(--danger-border)",
+                        color: "var(--danger-text)",
+                      }
+                }
               >
                 <div className="flex items-start gap-2.5">
-                  <span className="text-sm font-black">{success ? "✓" : "!"}</span>
+                  {success ? (
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+                  ) : (
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+                  )}
                   <div>
                     <p className="font-bold uppercase tracking-wider">
                       {success ? "Byagenze neza" : "Hari ikibazo"}
@@ -961,17 +1012,17 @@ export default function EditListing() {
             <button
               type="submit"
               disabled={saving}
-              className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-800 px-6 py-4 text-sm font-black text-white shadow-xl shadow-blue-600/25 transition-all hover:scale-[1.01] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+              className="kg-btn-shine kg-glow-pill group flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary-hover)] px-6 py-4 text-sm font-extrabold text-white transition-all hover:brightness-110 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? (
                 <>
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
                   <span>Turimo kubika...</span>
                 </>
               ) : (
                 <>
+                  <Save className="h-4 w-4" strokeWidth={2.25} />
                   <span>Bika Impinduka</span>
-                  <span>→</span>
                 </>
               )}
             </button>
@@ -979,32 +1030,32 @@ export default function EditListing() {
 
           {/* SIDEBAR PREVIEW */}
           <aside className="space-y-6">
-            <div className="sticky top-24 overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
+            <div className="glass sticky top-24 overflow-hidden rounded-3xl p-6">
+              <h3 className="text-sm font-extrabold uppercase tracking-wider text-[var(--text)]">
                 Inshamake ya Listing
               </h3>
 
               <div className="mt-5 space-y-4 text-xs">
                 <div>
-                  <span className="font-bold text-slate-400">IZINA:</span>
-                  <p className="mt-1 font-bold text-slate-800">{title || "Ntazina ryashyizweho"}</p>
+                  <span className="font-bold text-[var(--text-muted)]">IZINA:</span>
+                  <p className="mt-1 font-bold text-[var(--text)]">{title || "Ntazina ryashyizweho"}</p>
                 </div>
 
                 <div>
-                  <span className="font-bold text-slate-400">IGICIRO:</span>
-                  <p className="mt-1 font-bold text-emerald-600 text-sm">
+                  <span className="font-bold text-[var(--text-muted)]">IGICIRO:</span>
+                  <p className="mt-1 text-sm font-bold text-[var(--primary-hover)]">
                     {listingType === "free" ? "Ubuntu" : price ? `${Number(price).toLocaleString()} Frw` : "Nta giciro"}
                   </p>
                 </div>
 
                 <div>
-                  <span className="font-bold text-slate-400">AHOHEREREYE:</span>
-                  <p className="mt-1 font-bold text-slate-800">{formatLocation() || "Ntihavuzwe"}</p>
+                  <span className="font-bold text-[var(--text-muted)]">AHOHEREREYE:</span>
+                  <p className="mt-1 font-bold text-[var(--text)]">{formatLocation() || "Ntihavuzwe"}</p>
                 </div>
 
                 <div>
-                  <span className="font-bold text-slate-400">TELEFONI YO GUHAMAGARWA:</span>
-                  <p className="mt-1 font-bold text-slate-800">
+                  <span className="font-bold text-[var(--text-muted)]">TELEFONI YO GUHAMAGARWA:</span>
+                  <p className="mt-1 font-bold text-[var(--text)]">
                     {contactPhone && phoneNumber ? phoneNumber : "Ntihariho / Ntibyemewe"}
                   </p>
                 </div>
