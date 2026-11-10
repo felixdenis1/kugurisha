@@ -795,7 +795,7 @@ export default function CreateListing() {
                 disabled={saving}
                 className="kg-h-sell inline-flex items-center justify-center rounded-2xl px-8 py-4 text-base font-bold transition disabled:opacity-50 cursor-pointer"
               >
-                {saving ? "Birimo koherezwa..." : "Emeza Kwamamaza"}
+                {saving ? "Birimo koherezwa..." : "Emeza "}
               </button>
             </div>
           </form>

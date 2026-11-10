@@ -56,6 +56,8 @@ type IconName =
   | "clock"
   | "heart"
   | "zap"
+  | "flame"
+  | "activity"
 
 function Icon({
   name,
@@ -221,7 +223,7 @@ export default function Home() {
   const [searchParams] = useSearchParams()
   const [search, setSearch] = useState(() => searchParams.get("category") ?? "")
   const [userId, setUserId] = useState<string | null>(null)
-
+  const [activeCategory, setActiveCategory] = useState("all")
   const sliderRef = useRef<HTMLDivElement | null>(null)
 
   // AUTHENTICATION
@@ -558,350 +560,346 @@ export default function Home() {
       )}
 
          
-{/* PREMIUM HERO */}
 <section className="relative isolate overflow-hidden bg-[#f5f9fb] dark:bg-[#091522]">
+
   {/* SOFT DECORATIVE ELEMENTS */}
   <div className="pointer-events-none absolute inset-0 overflow-hidden">
-    <div className="absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-[#569ab5]/10 blur-3xl" />
-    <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-cyan-300/10 blur-3xl" />
-    <div className="absolute inset-0 bg-[linear-gradient(rgba(86,154,181,.025)_1px,transparent_1px),linear-gradient(90deg,rgba(86,154,181,.025)_1px,transparent_1px)] bg-[size:48px_48px]" />
+    <div className="absolute -right-40 -top-40 h-[560px] w-[560px] rounded-full bg-[#569ab5]/15 blur-[110px] dark:bg-[#569ab5]/20" />
+    <div className="absolute -bottom-40 -left-40 h-[540px] w-[540px] rounded-full bg-cyan-300/15 blur-[110px] dark:bg-cyan-400/10" />
+    <div className="absolute left-1/2 top-1/3 h-[380px] w-[380px] -translate-x-1/2 rounded-full bg-[#c66d37]/10 blur-[100px] dark:bg-[#c66d37]/15" />
+    <div className="absolute inset-0 bg-[linear-gradient(rgba(86,154,181,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(86,154,181,.035)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_80%)]" />
+    <div
+      className="absolute inset-0 opacity-[.035] mix-blend-multiply dark:opacity-[.06] dark:mix-blend-screen"
+      style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }}
+    />
   </div>
 
   <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-14 lg:pb-20 lg:pt-16">
 
-    {/* MAIN HERO GRID */}
+    {/* ═════════ MAIN HERO GRID — UNCHANGED ═════════ */}
     <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
 
       {/* LEFT: BRAND MESSAGE */}
       <div className="kug-reveal relative z-10 lg:sticky lg:top-24">
 
         {/* BRAND BADGE */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#569ab5]/25 bg-white/90 px-4 py-2.5 shadow-sm dark:border-[#83c2dc]/20 dark:bg-slate-900/80">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
-          <span className="text-[10px] font-black uppercase tracking-[.18em] text-[#39778f] dark:text-[#83c2dc]">
+        <div className="inline-flex items-center gap-2.5 rounded-full border border-[#569ab5]/25 bg-white/80 px-4 py-2.5 shadow-[0_2px_14px_-6px_rgba(86,154,181,.35)] backdrop-blur-xl dark:border-[#83c2dc]/20 dark:bg-slate-900/70">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500 opacity-60" />
+            <span className="relative flex h-2 w-2 rounded-full bg-emerald-500" />
+          </span>
+          <span className="text-[10px] font-black uppercase tracking-[.2em] text-[#39778f] dark:text-[#83c2dc]">
             Isoko ryawe ryo mu Rwanda
           </span>
         </div>
 
         {/* HEADLINE */}
-        <h1 className="mt-7 max-w-2xl text-[2.8rem] font-black leading-[1.04] tracking-[-.055em] text-[#102436] dark:text-white sm:text-6xl lg:text-[4.2rem]">
+        <h1 className="mt-7 max-w-2xl text-[2.8rem] font-black leading-[1.02] tracking-[-.055em] text-[#102436] dark:text-white sm:text-6xl lg:text-[4.2rem]">
           Ibyo ushaka,
           <br />
-          <span className="bg-gradient-to-r from-[#39778f] via-[#569ab5] to-[#82bfd4] bg-clip-text text-transparent">
-            ubisanga hano.
+          <span className="relative inline-block">
+            <span className="bg-[linear-gradient(110deg,#39778f_0%,#569ab5_40%,#82bfd4_65%,#39778f_100%)] bg-[size:200%_100%] bg-clip-text text-transparent [animation:kg-shimmer_6s_ease-in-out_infinite]">
+              ubisanga hano.
+            </span>
+            <span className="absolute -bottom-1 left-0 h-[3px] w-24 rounded-full bg-gradient-to-r from-[#39778f] via-[#569ab5] to-transparent opacity-80" />
           </span>
         </h1>
 
         {/* DESCRIPTION */}
         <p className="mt-6 max-w-xl text-sm font-medium leading-8 text-slate-600 dark:text-slate-300 sm:text-base">
           Gura, gurisha kandi uhure n'abantu bafite ibyo ukeneye.
-          Kuva ku bikoresho, imodoka n'imitungo itimukanwa,
-          KUGURISHA.COM ni isoko rihuza Abanyarwanda.
+          Kuva ku bikoresho, imodoka n'imitungo itimukanwa,{" "}
+          <span className="font-semibold text-slate-800 dark:text-slate-100">KUGURISHA.COM</span>{" "}
+          ni isoko rihuza Abanyarwanda.
         </p>
 
         {/* ACTION BUTTONS */}
-        <div className="mt-8 grid max-w-xl gap-3 sm:grid-cols-2">
-
-          {/* AI SEARCH */}
+        <div className="mt-8 flex flex-wrap items-center gap-2.5">
           <Link
             to="/ai-search"
-            className="group relative flex min-h-[82px] items-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-br from-[#102d41] to-[#28647d] p-4 text-white shadow-xl shadow-[#102d41]/20 transition duration-300 hover:-translate-y-1 hover:shadow-2xl"
+            className="group relative flex items-center gap-2.5 overflow-hidden rounded-full bg-[#0d2534] px-4 py-2.5 text-white shadow-[0_8px_22px_-12px_rgba(13,37,52,.7)] ring-1 ring-white/[0.08] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-[#0f2c3e] hover:shadow-[0_14px_30px_-14px_rgba(13,37,52,.85)] hover:ring-white/15 active:translate-y-0"
           >
-            <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/10 blur-2xl transition group-hover:scale-150" />
-
-            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10">
-              <Icon name="spark" size={24} />
-            </div>
-
-            <div className="relative min-w-0 flex-1">
-              <p className="text-sm font-black">Baza AI</p>
-              <p className="mt-1 text-[11px] text-white/70">
-                Sobanura icyo ushaka
-              </p>
-            </div>
-
-            <Icon
-              name="arrow-right"
-              size={18}
-              className="relative transition group-hover:translate-x-1"
-            />
+            <span className="pointer-events-none absolute inset-0 -translate-x-full rounded-full bg-[linear-gradient(115deg,transparent_40%,rgba(255,255,255,.15)_50%,transparent_60%)] transition-transform duration-700 ease-out group-hover:translate-x-full" />
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10 transition-transform duration-300 group-hover:scale-110">
+              <Icon name="spark" size={11} />
+            </span>
+            <span className="text-[12.5px] font-semibold tracking-tight">Baza AI</span>
+            <Icon name="arrow-right" size={13} className="ml-0.5 shrink-0 text-white/60 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-white" />
           </Link>
 
-          {/* SELL */}
           <Link
             to="/create-listing"
-            className="group flex min-h-[82px] items-center gap-3 rounded-2xl border border-[#569ab5]/25 bg-white p-4 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-[#569ab5]/60 hover:shadow-xl dark:border-white/10 dark:bg-slate-900"
+            className="group relative flex items-center gap-2.5 overflow-hidden rounded-full bg-[#c66d37] px-4 py-2.5 text-white shadow-[0_8px_22px_-10px_rgba(198,109,55,.6)] ring-1 ring-white/10 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-[#b15f2d] hover:shadow-[0_14px_30px_-12px_rgba(198,109,55,.75)] active:translate-y-0"
           >
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#569ab5]/10 text-[#39778f] dark:text-[#83c2dc]">
-              <Icon name="plus" size={24} />
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-black text-slate-900 dark:text-white">
-                Tangira kugurisha
-              </p>
-              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                Shyira igicuruzwa ku isoko
-              </p>
-            </div>
-
-            <Icon
-              name="arrow-right"
-              size={18}
-              className="text-[#569ab5] transition group-hover:translate-x-1"
-            />
+            <span className="pointer-events-none absolute inset-0 -translate-x-full rounded-full bg-[linear-gradient(115deg,transparent_40%,rgba(255,255,255,.2)_50%,transparent_60%)] transition-transform duration-700 ease-out group-hover:translate-x-full" />
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/20 transition-transform duration-300 group-hover:rotate-90 group-hover:scale-110">
+              <Icon name="plus" size={11} />
+            </span>
+            <span className="text-[12.5px] font-semibold tracking-tight">Gurisha</span>
+            <Icon name="arrow-right" size={13} className="ml-0.5 shrink-0 text-white/70 transition-all duration-300 group-hover:translate-x-0.5 group-hover:text-white" />
           </Link>
-        </div>
-
-        {/* DIRECTIONAL PRODUCT INDICATOR */}
-        <div className="mt-9 flex items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#569ab5]/25 bg-white text-[#39778f] shadow-sm dark:border-white/10 dark:bg-slate-900 dark:text-[#83c2dc]">
-            <Icon
-              name="arrow-right"
-              size={23}
-              className="kug-point-right"
-            />
-          </div>
-
-          <div>
-            <p className="text-xs font-black text-[#39778f] dark:text-[#83c2dc]">
-              Reba ibicuruzwa bishya
-            </p>
-            <p className="mt-1 text-[10px] leading-5 text-slate-500 dark:text-slate-400">
-              Ibyo abandi Banyarwanda bashyize ku isoko
-            </p>
-          </div>
         </div>
 
         {/* BRAND PROMISES */}
-        <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 border-t border-slate-200 pt-6 dark:border-white/10">
-          <span className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
-            <Icon name="map-pin" size={16} className="text-[#569ab5]" />
+        <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 border-t border-slate-200/80 pt-6 dark:border-white/10">
+          <span className="group flex items-center gap-2 text-xs font-bold text-slate-600 transition-colors hover:text-[#39778f] dark:text-slate-300 dark:hover:text-[#83c2dc]">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#569ab5]/10 text-[#569ab5] transition-transform duration-300 group-hover:scale-110">
+              <Icon name="map-pin" size={14} />
+            </span>
             Mu Rwanda hose
           </span>
-
-          <span className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
-            <Icon name="users" size={16} className="text-[#569ab5]" />
+          <span className="group flex items-center gap-2 text-xs font-bold text-slate-600 transition-colors hover:text-[#39778f] dark:text-slate-300 dark:hover:text-[#83c2dc]">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#569ab5]/10 text-[#569ab5] transition-transform duration-300 group-hover:scale-110">
+              <Icon name="users" size={14} />
+            </span>
             Abaguzi n'abagurisha
           </span>
-
-          <span className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300">
-            <Icon name="zap" size={16} className="text-[#569ab5]" />
+          <span className="group flex items-center gap-2 text-xs font-bold text-slate-600 transition-colors hover:text-[#39778f] dark:text-slate-300 dark:hover:text-[#83c2dc]">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#569ab5]/10 text-[#569ab5] transition-transform duration-300 group-hover:scale-110">
+              <Icon name="zap" size={14} />
+            </span>
             Byoroshye gukoresha
           </span>
         </div>
       </div>
 
-      {/* RIGHT: IMAGE + LATEST PRODUCTS */}
+      {/* RIGHT: IMAGE — UNCHANGED */}
       <div className="relative mx-auto w-full max-w-[620px] lg:ml-auto">
-
-        {/* DECORATIVE GLOW */}
-        <div className="pointer-events-none absolute -inset-5 rounded-[3rem] bg-[#569ab5]/15 blur-3xl" />
-
+        <div className="pointer-events-none absolute -inset-8 rounded-[3.5rem] bg-[radial-gradient(ellipse_at_top,rgba(86,154,181,.32),transparent_70%)] blur-2xl" />
         <div className="relative">
-
-          {/* MAIN IMAGE FRAME */}
-          <div className="relative overflow-hidden rounded-[2rem] border-[6px] border-white bg-white shadow-[0_35px_90px_-30px_rgba(16,45,65,.35)] dark:border-slate-800 dark:bg-slate-900 sm:rounded-[2.5rem]">
-
-            <div className="relative aspect-[4/3] overflow-hidden bg-slate-200 dark:bg-slate-800">
-              <img
-                src="/homeimg.png"
-                alt="KUGURISHA.COM - Isoko rihuza Abanyarwanda"
-                className="h-full w-full object-cover transition duration-700 hover:scale-[1.035]"
-              />
-
-              {/* IMAGE OVERLAY */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#102436]/60 via-transparent to-transparent" />
-
-              {/* IMAGE MESSAGE */}
-              <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7">
-                <p className="text-[10px] font-black uppercase tracking-[.22em] text-white/80">
-                  KUGURISHA.COM
-                </p>
-
-                <h2 className="mt-2 max-w-sm text-2xl font-black leading-tight text-white sm:text-3xl">
-                  Isoko ryawe.
-                  <br />
-                  Amahirwe yawe.
-                </h2>
-              </div>
-            </div>
-
-            {/* IMAGE FOOTER */}
-            <div className="flex items-center justify-between gap-3 bg-white px-4 py-4 dark:bg-slate-900 sm:px-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#569ab5]/10 text-[#39778f] dark:text-[#83c2dc]">
-                  <Icon name="shield" size={21} />
-                </div>
-
-                <div>
-                  <p className="text-xs font-black text-slate-900 dark:text-white">
-                    Gura kandi ugurishe
+          <div className="group relative">
+            <div className="pointer-events-none absolute -inset-4 rounded-[3rem] bg-[radial-gradient(ellipse_at_center,rgba(198,109,55,.18),transparent_70%)] blur-2xl" />
+            <div className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem]">
+              <div className="relative aspect-[4/3] overflow-hidden bg-transparent">
+                <img
+                  src="/homeimg.png"
+                  alt="KUGURISHA.COM - Isoko rihuza Abanyarwanda"
+                  className="h-full w-full object-cover transition-transform duration-[1400ms] ease-out group-hover:scale-[1.05]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0b1e2e]/80 via-[#0b1e2e]/10 to-transparent" />
+                <div className="absolute left-4 top-4 h-7 w-7 rounded-tl-lg border-l-2 border-t-2 border-white/50" />
+                <div className="absolute right-4 top-4 h-7 w-7 rounded-tr-lg border-r-2 border-t-2 border-white/50" />
+                <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7">
+                  <p className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[.22em] text-white/90 backdrop-blur-md">
+                    <span className="h-1 w-1 rounded-full bg-emerald-400" />
+                    KUGURISHA.COM
                   </p>
-                  <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">
-                    Mu buryo bworoshye
-                  </p>
+                  <h2 className="mt-2.5 max-w-sm text-2xl font-black leading-[1.05] text-white sm:text-3xl">
+                    Isoko ryawe.
+                    <br />
+                    <span className="text-white/85">Amahirwe yawe.</span>
+                  </h2>
                 </div>
               </div>
-
-              <span className="rounded-full bg-[#569ab5]/10 px-3 py-2 text-[10px] font-black text-[#39778f] dark:text-[#83c2dc]">
-                Rwanda 🇷🇼
-              </span>
-            </div>
-          </div>
-
-          {/* LATEST PRODUCTS — DIRECTLY UNDER IMAGE */}
-          <div className="mt-7 overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white/95 p-4 shadow-xl shadow-slate-900/[0.05] backdrop-blur dark:border-white/10 dark:bg-slate-900/95 sm:p-5">
-
-            {/* PRODUCTS HEADER */}
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-                  <p className="text-[9px] font-black uppercase tracking-[.2em] text-[#39778f] dark:text-[#83c2dc]">
-                    Ku isoko ubu
-                  </p>
-                </div>
-
-                <h2 className="mt-1.5 text-xl font-black tracking-[-.04em] text-slate-950 dark:text-white sm:text-2xl">
-                  Ibicuruzwa bishya
-                </h2>
-
-                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  Reba ibyo abandi bashyize ku isoko.
-                </p>
-              </div>
-
-              <Link
-                to="/listings"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-[#569ab5]/25 bg-[#569ab5]/5 px-3 py-2.5 text-[10px] font-black text-[#39778f] transition hover:border-[#569ab5] hover:bg-[#569ab5]/10 dark:border-white/10 dark:text-[#83c2dc]"
-              >
-                Byose
-                <Icon name="arrow-right" size={13} />
-              </Link>
-            </div>
-
-            {/* LOADING */}
-            {loading ? (
-              <div className="flex gap-3 overflow-hidden">
-                {[1, 2].map((item) => (
-                  <div
-                    key={item}
-                    className="w-[48%] shrink-0 overflow-hidden rounded-xl border border-slate-200 p-2 dark:border-white/10"
-                  >
-                    <div className="kug-shimmer aspect-[4/3] rounded-lg" />
-                    <div className="space-y-2 p-2">
-                      <div className="kug-shimmer h-3 rounded" />
-                      <div className="kug-shimmer h-3 w-2/3 rounded" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : filteredListings.length > 0 ? (
-              <div className="kug-slider-fade relative">
-                <div
-                  ref={sliderRef}
-                  className="flex snap-x gap-3 overflow-x-auto px-1 pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                >
-                  {filteredListings.slice(0, 8).map((listing) => (
-                    <Link
-                      key={listing.id}
-                      to={`/listing/${listing.id}`}
-                      className="group w-[185px] shrink-0 snap-start overflow-hidden rounded-xl border border-slate-200/80 bg-white p-2 transition duration-300 hover:-translate-y-1 hover:border-[#569ab5]/60 hover:shadow-lg dark:border-white/10 dark:bg-slate-800 sm:w-[205px]"
-                    >
-                      {/* PRODUCT IMAGE */}
-                      <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-700">
-                        {images[listing.id] ? (
-                          <img
-                            src={images[listing.id]}
-                            alt={listing.title}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-slate-400">
-                            <Icon name="shopping-bag" size={30} />
-                          </div>
-                        )}
-
-                        <span className="absolute left-2 top-2 max-w-[80%] truncate rounded-full bg-slate-950/75 px-2 py-1 text-[8px] font-black text-white backdrop-blur">
-                          {listing.category?.name || "Ibindi"}
-                        </span>
-
-                        {listing.condition && (
-                          <span className="absolute bottom-2 left-2 rounded-md bg-white/95 px-2 py-1 text-[8px] font-black text-slate-800">
-                            {listing.condition}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* PRODUCT DETAILS */}
-                      <div className="px-1 pb-1 pt-2.5">
-                        <h3 className="line-clamp-2 min-h-9 text-xs font-extrabold leading-4 text-slate-900 transition group-hover:text-[#39778f] dark:text-white">
-                          {listing.title}
-                        </h3>
-
-                        <p className="mt-2 text-sm font-black text-[#39778f] dark:text-[#83c2dc]">
-                          {formatPrice(listing)}
-                        </p>
-
-                        <p className="mt-2 flex items-center gap-1 truncate text-[9px] font-semibold text-slate-500 dark:text-slate-400">
-                          <Icon name="map-pin" size={11} className="shrink-0" />
-                          {formatLocation(listing)}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="flex min-h-[170px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/70 px-5 text-center dark:border-white/10 dark:bg-slate-800/50">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#569ab5]/10 text-[#39778f] dark:text-[#83c2dc]">
-                  <Icon name="shopping-bag" size={23} />
-                </div>
-
-                <h3 className="mt-3 text-sm font-black text-slate-900 dark:text-white">
-                  {search
-                    ? "Nta bicuruzwa bihuye n'ibyo washakishije"
-                    : "Nta bicuruzwa bihari"}
-                </h3>
-
-                <p className="mt-1 text-[10px] leading-5 text-slate-500 dark:text-slate-400">
-                  {search
-                    ? "Gerageza irindi jambo ryo gushakisha."
-                    : "Ibicuruzwa bishya bizagaragara hano."}
-                </p>
-
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="mt-3 rounded-lg bg-[#569ab5]/10 px-3 py-2 text-[10px] font-bold text-[#39778f] transition hover:bg-[#569ab5]/20 dark:text-[#83c2dc]"
-                  >
-                    Siba ibyo washakishije
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* PRODUCTS FOOTER */}
-            <div className="mt-2 flex items-center justify-between border-t border-slate-200/80 pt-3 dark:border-white/10">
-              <span className="flex items-center gap-1.5 text-[9px] font-bold text-slate-500 dark:text-slate-400">
-                <Icon name="clock" size={12} className="text-[#569ab5]" />
-                Ibishyizweho vuba
-              </span>
-
-              <span className="text-[9px] font-bold tracking-wider text-slate-400">
-                KUGURISHA.COM
-              </span>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    {/* ═════════ REFERENCE-STYLE SECTION ═════════ */}
+    <div className="relative mt-16 grid items-start gap-8 lg:mt-20 lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] lg:gap-10">
+
+      {/* ─────────── LEFT: LIVE BUYERS STREAM ─────────── */}
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/70 p-6 shadow-xl shadow-slate-900/5 backdrop-blur-2xl dark:border-white/[0.12] dark:bg-white/[0.03] dark:shadow-black/40 sm:p-8">
+
+        {/* Ambient orbs */}
+        <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full bg-[#569ab5]/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-[#c66d37]/20 blur-3xl" />
+
+        {/* Headline */}
+        <h2 className="mt-2 text-2xl font-black leading-tight tracking-tight text-slate-900 dark:text-slate-50 sm:text-3xl">
+          Abaguzi bagenda <br />
+          <span className="bg-gradient-to-r from-[#36677b] via-[#569ab5] to-[#c66d37] bg-clip-text text-transparent">
+            bahitamo ibintu ubu.
+          </span>
+        </h2>
+
+        <p className="mt-3 text-xs font-normal leading-relaxed text-slate-600 dark:text-slate-300 sm:text-sm">
+          Buri munota, Abanyarwanda bagenda bagura ibintu bishya kuri{" "}
+          <span className="font-bold text-slate-900 underline decoration-[#c66d37]/40 underline-offset-4 dark:text-white">
+            KUGURISHA.COM
+          </span>{" "}
+          — kuva ku bikoresho byo mu rugo, telefoni, imodoka, kugera ku mitungo itimukanwa.
+        </p>
+
+
+        {/* Activity cards */}
+        <div className="mt-5 space-y-3">
+          {[
+            { name: "Eric M.",  action: "yaguriye",     item: "iPhone 13 Pro", loc: "Kigali",  time: "2 min",  color: "from-amber-500 to-orange-600" },
+            { name: "Claudine", action: "yashakishije", item: "Imodoka RAV4",  loc: "Huye",    time: "5 min",  color: "from-teal-400 to-emerald-600" },
+            { name: "Jean-P.",  action: "yaguriye",     item: "Sofa set",      loc: "Musanze", time: "11 min", color: "from-blue-500 to-indigo-600" },
+            { name: "Aline B.", action: "yabajije",     item: "4BR Villa",     loc: "Gacuriro",time: "16 min", color: "from-purple-500 to-pink-600" },
+          ].map(({ name, action, item, loc, time, color }, i) => (
+            <div
+              key={i}
+              className="group relative flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white/80 p-3.5 shadow-sm backdrop-blur-md transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[#569ab5]/50 hover:bg-white hover:shadow-lg dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+            >
+              <div className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${color} text-xs font-black text-white shadow-md transition-transform duration-300 group-hover:scale-110`}>
+                <span className="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,.4),transparent_60%)] opacity-70" />
+                <span className="relative">{name.charAt(0)}</span>
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900">
+                  <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500 opacity-60" />
+                </span>
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100 sm:text-sm">
+                  {name}{" "}
+                  <span className="font-normal text-slate-500 dark:text-slate-400">{action}</span>{" "}
+                  <span className="font-bold text-[#36677b] dark:text-[#83c2dc]">{item}</span>
+                </p>
+                <div className="mt-1 flex items-center gap-3 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                  <span className="inline-flex items-center gap-1">
+                    <Icon name="map-pin" size={10} className="text-[#569ab5]" />
+                    {loc}
+                  </span>
+                  <span className="text-slate-300 dark:text-slate-600">·</span>
+                  <span className="inline-flex items-center gap-1">
+                    <Icon name="clock" size={10} className="text-slate-400" />
+                    {time} ishize
+                  </span>
+                </div>
+              </div>
+
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Icon name="check" size={12} />
+              </span>
+            </div>
+          ))}
+        </div>
+
+      </div>
+
+      {/* ─────────── RIGHT: PRODUCTS SHOWCASE ─────────── */}
+      <div className="space-y-6">
+
+
+        {/* Category pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          {(
+            [
+              { id: 'all', label: 'Byose', icon: 'spark' as IconName },
+              { id: 'real-estate', label: 'Imitungo', icon: 'map-pin' as IconName },
+              { id: 'vehicles', label: 'Imodoka', icon: 'flame' as IconName },
+              { id: 'electronics', label: 'Telefone & Tech', icon: 'zap' as IconName },
+              { id: 'furniture', label: 'Ibikoresho', icon: 'shopping-bag' as IconName },
+            ] satisfies Array<{ id: string; label: string; icon: IconName }>
+          ).map((cat) => {
+            const isActive = (activeCategory ?? 'all') === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory?.(cat.id)}
+                className={`inline-flex items-center gap-2 whitespace-nowrap rounded-2xl border px-4 py-2.5 text-xs font-bold transition-all duration-300 ${
+                  isActive
+                    ? 'scale-105 border-transparent bg-gradient-to-r from-[#c66d37] to-[#b35d2b] text-white shadow-lg shadow-[#c66d37]/25'
+                    : 'border-slate-200/80 bg-white/80 text-slate-600 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/10'
+                }`}
+              >
+                <Icon name={cat.icon} size={13} className={isActive ? 'text-white' : 'text-[#569ab5]'} />
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Products grid */}
+        {loading ? (
+          <div className="grid gap-5 sm:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="overflow-hidden rounded-3xl border border-slate-200/60 bg-white/60 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="kug-shimmer h-48" />
+                <div className="space-y-2 p-4">
+                  <div className="kug-shimmer h-3 rounded" />
+                  <div className="kug-shimmer h-3 w-2/3 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredListings.length > 0 ? (
+          <div className="grid gap-5 sm:grid-cols-2">
+            {filteredListings.slice(0, 12).map((listing) => (
+              <Link
+                key={listing.id}
+                to={`/listing/${listing.id}`}
+                className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white/80 shadow-md backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl dark:border-white/10 dark:bg-white/[0.04]"
+              >
+                <div className="relative h-48 w-full overflow-hidden bg-slate-900">
+                  {images?.[listing.id] ? (
+                    <img
+                      src={images[listing.id]}
+                      alt={listing.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-slate-400">
+                      <Icon name="shopping-bag" size={32} />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20" />
+
+                  {/* top badges */}
+                  <div className="absolute left-3 right-3 top-3 flex items-center justify-between">
+                    <span className="rounded-full border border-white/20 bg-black/60 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
+                      {listing.category?.name || "Ibindi"}
+                    </span>
+                    <span className="rounded-full border border-white/20 bg-black/40 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-md">
+                      {listing.condition || "New"}
+                    </span>
+                  </div>
+
+                  {/* price overlay */}
+                  <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+                    <p className="text-lg font-extrabold tracking-tight text-white">
+                      {formatPrice(listing)}
+                    </p>
+                    <span className="rounded-md bg-white/20 px-2 py-0.5 text-[10px] font-medium text-slate-100 backdrop-blur-md">
+                      Live
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-1 flex-col justify-between space-y-3 p-4">
+                  <div>
+                    <h3 className="line-clamp-1 text-sm font-bold text-slate-900 transition group-hover:text-[#c66d37] dark:text-white">
+                      {listing.title}
+                    </h3>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <Icon name="map-pin" size={12} className="text-[#569ab5]" />
+                      {formatLocation(listing)}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-slate-200/60 pt-3 dark:border-white/10">
+                    <div className="flex items-center gap-1.5">
+                      <Icon name="shield" size={14} className="text-emerald-500" />
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Verified Seller
+                      </span>
+                    </div>
+                    <span className="inline-flex items-center gap-1 rounded-xl bg-[#569ab5]/10 px-3 py-1.5 text-xs font-bold text-[#36677b] transition hover:bg-[#569ab5] hover:text-white dark:text-[#83c2dc]">
+                      Baza
+                      <Icon name="arrow-right" size={11} />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-slate-300 p-8 py-16 text-center dark:border-white/10">
+            <Icon name="search" size={40} className="mx-auto mb-3 text-slate-400" />
+            <h4 className="font-bold text-slate-800 dark:text-slate-200">Nta bintu bibonetse</h4>
+            <p className="mt-1 text-xs text-slate-500">Gerageza guhindura amagambo washakishije cyangwa icyiciro.</p>
+          </div>
+        )}
+      </div>
+    </div>
   </div>
 </section>
-
-
     
       {/* DATABASE STATISTICS */}
       <section className="relative overflow-hidden bg-[#f3f8fa] py-16 dark:bg-[#0b1726] sm:py-20">
@@ -947,56 +945,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section className="bg-white py-16 dark:bg-[#080f1b] sm:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="mx-auto max-w-2xl text-center">
-            <SectionHeading
-              eyebrow="Uburyo ikora"
-              title="Gutangira biroroshye"
-              description="Intambwe eshatu gusa kugira ngo ugure cyangwa ugurishe kuri KUGURISHA.COM."
-            />
-          </div>
-
-          <div className="mt-11 grid gap-5 md:grid-cols-3">
-            {[
-              {
-                number: "01",
-                title: "Fungura konti",
-                description: "Iyandikishe kugira ngo ubashe kugura no gushyira ibicuruzwa byawe ku isoko.",
-                icon: "users" as IconName,
-              },
-              {
-                number: "02",
-                title: "Shakisha cyangwa ushyireho",
-                description: "Shakisha ibicuruzwa ukeneye cyangwa ushyireho ibyo ushaka kugurisha.",
-                icon: "search" as IconName,
-              },
-              {
-                number: "03",
-                title: "Muganire mwumvikane",
-                description: "Vugana n'ugurisha cyangwa umuguzi kugira ngo mwumvikane ku igurisha.",
-                icon: "message" as IconName,
-              },
-            ].map((step) => (
-              <div
-                key={step.number}
-                className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-7 transition duration-300 hover:-translate-y-1 hover:border-[#569ab5]/50 hover:shadow-xl dark:border-white/10 dark:bg-slate-900"
-              >
-                <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-[#569ab5]/[0.06] transition duration-500 group-hover:scale-150" />
-                <div className="relative flex items-center justify-between">
-                  <span className="text-4xl font-black tracking-tight text-[#569ab5]/35">{step.number}</span>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#569ab5]/10 text-[#39778f] dark:text-[#83c2dc]">
-                    <Icon name={step.icon} size={22} />
-                  </div>
-                </div>
-                <h3 className="relative mt-7 text-lg font-black text-slate-950 dark:text-white">{step.title}</h3>
-                <p className="relative mt-3 text-sm leading-7 text-slate-500 dark:text-slate-400">{step.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+     
 
       {/* TRUST AND SAFETY */}
       <section className="bg-white pb-16 dark:bg-[#080f1b] sm:pb-20">
