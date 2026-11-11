@@ -128,10 +128,7 @@ const initialStats: HomeStats = {
   sold: 0,
 }
 
-function formatCount(value: number, threshold: number) {
-  if (value >= threshold) return `${value.toLocaleString("en-US")}+`
-  return value.toLocaleString("en-US")
-}
+
 
 function formatPrice(listing: Listing) {
   if (listing.listing_type === "free") return "Ubuntu"
@@ -151,79 +148,23 @@ function formatLocation(listing: Listing) {
   ].filter(Boolean).join(", ")
 }
 
-function SectionHeading({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string
-  title: string
-  description?: string
-}) {
-  return (
-    <div>
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-[#43849e] dark:text-[#83c2dc]">
-        {eyebrow}
-      </p>
-      <h2 className="mt-2 text-2xl font-black tracking-[-0.04em] text-slate-950 dark:text-white sm:text-3xl lg:text-[2.15rem]">
-        {title}
-      </h2>
-      {description && (
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500 dark:text-slate-400">
-          {description}
-        </p>
-      )}
-    </div>
-  )
-}
 
-function StatCard({
-  label,
-  value,
-  description,
-  icon,
-}: {
-  label: string
-  value: string
-  description: string
-  icon: IconName
-}) {
-  return (
-    <div className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 transition duration-300 hover:-translate-y-1 hover:border-[#569ab5]/50 hover:shadow-xl hover:shadow-slate-900/[0.06] dark:border-white/10 dark:bg-slate-900">
-      <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-[#569ab5]/[0.07] transition duration-500 group-hover:scale-150" />
-      <div className="relative flex items-center justify-between">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#569ab5]/10 text-[#39778f] dark:text-[#83c2dc]">
-          <Icon name={icon} size={21} />
-        </div>
-        <Icon name="arrow-right" size={16} className="text-slate-300 transition group-hover:translate-x-1 group-hover:text-[#569ab5]" />
-      </div>
-      <p className="relative mt-5 text-3xl font-black tracking-tight text-slate-950 dark:text-white">
-        {value}
-      </p>
-      <p className="relative mt-1 text-sm font-extrabold text-slate-800 dark:text-slate-200">
-        {label}
-      </p>
-      <p className="relative mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-        {description}
-      </p>
-    </div>
-  )
-}
+
+
 
 export default function Home() {
   const [listings, setListings] = useState<Listing[]>([])
   const [images, setImages] = useState<Record<string, string>>({})
  
-  const [stats, setStats] = useState<HomeStats>(initialStats)
+  const [, setStats] = useState<HomeStats>(initialStats)
 
-  const [statsLoading, setStatsLoading] = useState(true)
+  const [, setStatsLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [showSplash, setShowSplash] = useState(true)
 
   const [searchParams] = useSearchParams()
   const [search, setSearch] = useState(() => searchParams.get("category") ?? "")
   const [userId, setUserId] = useState<string | null>(null)
-  const [activeCategory, setActiveCategory] = useState("all")
   const sliderRef = useRef<HTMLDivElement | null>(null)
 
   // AUTHENTICATION
@@ -724,226 +665,121 @@ export default function Home() {
         </p>
 
 
-        {/* Activity cards */}
-        <div className="mt-5 space-y-3">
-          {[
-            { name: "Eric M.",  action: "yaguriye",     item: "iPhone 13 Pro", loc: "Kigali",  time: "2 min",  color: "from-amber-500 to-orange-600" },
-            { name: "Claudine", action: "yashakishije", item: "Imodoka RAV4",  loc: "Huye",    time: "5 min",  color: "from-teal-400 to-emerald-600" },
-            { name: "Jean-P.",  action: "yaguriye",     item: "Sofa set",      loc: "Musanze", time: "11 min", color: "from-blue-500 to-indigo-600" },
-            { name: "Aline B.", action: "yabajije",     item: "4BR Villa",     loc: "Gacuriro",time: "16 min", color: "from-purple-500 to-pink-600" },
-          ].map(({ name, action, item, loc, time, color }, i) => (
-            <div
-              key={i}
-              className="group relative flex items-center gap-3.5 rounded-2xl border border-slate-200/80 bg-white/80 p-3.5 shadow-sm backdrop-blur-md transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[#569ab5]/50 hover:bg-white hover:shadow-lg dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
-            >
-              <div className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${color} text-xs font-black text-white shadow-md transition-transform duration-300 group-hover:scale-110`}>
-                <span className="absolute inset-0 rounded-xl bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,.4),transparent_60%)] opacity-70" />
-                <span className="relative">{name.charAt(0)}</span>
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900">
-                  <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500 opacity-60" />
+        
+
+      </div>
+
+  {/* ─────────── RIGHT: AUTO-SLIDING PRODUCTS SHOWCASE ─────────── */}
+<div className="space-y-4">
+
+  {/* SECTION HEADER */}
+  <div className="flex items-center justify-between px-1">
+    <div className="flex items-center gap-2">
+      <span className="relative flex h-2.5 w-2.5">
+        <span className="absolute inset-0 animate-ping rounded-full bg-[#c66d37] opacity-75" />
+        <span className="relative flex h-2.5 w-2.5 rounded-full bg-[#c66d37]" />
+      </span>
+      <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
+        Ibyashyizweho vuba
+      </h3>
+    </div>
+    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+      Buri munota
+    </span>
+  </div>
+
+  {loading ? (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white/60 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="kug-shimmer h-36" />
+          <div className="space-y-2 p-3">
+            <div className="kug-shimmer h-3 rounded w-3/4" />
+            <div className="kug-shimmer h-3 w-1/2 rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : filteredListings.length > 0 ? (
+    /* Interactive Scroll Container (Allows touch/mouse drag & scroll back) */
+    <div className="no-scrollbar relative w-full overflow-x-auto py-2 touch-pan-x scroll-smooth">
+      {/* Auto-sliding Track */}
+      <div className="flex w-max animate-infinite-scroll gap-4 hover:[animation-play-state:paused] focus-within:[animation-play-state:paused]">
+        {[...filteredListings.slice(0, 12), ...filteredListings.slice(0, 12)].map((listing, index) => (
+          <Link
+            key={`${listing.id}-${index}`}
+            to={`/listing/${listing.id}`}
+            className="group relative flex w-44 sm:w-52 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-slate-900/80 shrink-0"
+          >
+            {/* Reduced Compact Image Container */}
+            <div className="relative aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+              {images?.[listing.id] ? (
+                <img
+                  src={images[listing.id]}
+                  alt={listing.title}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover object-center transform-gpu image-rendering-crisp transition-transform duration-700 ease-out group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-slate-400">
+                  <Icon name="shopping-bag" size={26} />
+                </div>
+              )}
+
+              {/* Floating Badges */}
+              <div className="absolute left-2 right-2 top-2 flex items-center justify-between pointer-events-none">
+                <span className="rounded-full bg-black/60 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                  {listing.category?.name || "Ibindi"}
+                </span>
+                <span className="rounded-full bg-black/50 px-1.5 py-0.5 text-[9px] font-bold text-white">
+                  {listing.condition || "New"}
                 </span>
               </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100 sm:text-sm">
-                  {name}{" "}
-                  <span className="font-normal text-slate-500 dark:text-slate-400">{action}</span>{" "}
-                  <span className="font-bold text-[#36677b] dark:text-[#83c2dc]">{item}</span>
-                </p>
-                <div className="mt-1 flex items-center gap-3 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                  <span className="inline-flex items-center gap-1">
-                    <Icon name="map-pin" size={10} className="text-[#569ab5]" />
-                    {loc}
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="inline-flex items-center gap-1">
-                    <Icon name="clock" size={10} className="text-slate-400" />
-                    {time} ishize
-                  </span>
-                </div>
-              </div>
-
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Icon name="check" size={12} />
-              </span>
             </div>
-          ))}
-        </div>
 
-      </div>
-
-      {/* ─────────── RIGHT: PRODUCTS SHOWCASE ─────────── */}
-      <div className="space-y-6">
-
-
-        {/* Category pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {(
-            [
-              { id: 'all', label: 'Byose', icon: 'spark' as IconName },
-              { id: 'real-estate', label: 'Imitungo', icon: 'map-pin' as IconName },
-              { id: 'vehicles', label: 'Imodoka', icon: 'flame' as IconName },
-              { id: 'electronics', label: 'Telefone & Tech', icon: 'zap' as IconName },
-              { id: 'furniture', label: 'Ibikoresho', icon: 'shopping-bag' as IconName },
-            ] satisfies Array<{ id: string; label: string; icon: IconName }>
-          ).map((cat) => {
-            const isActive = (activeCategory ?? 'all') === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory?.(cat.id)}
-                className={`inline-flex items-center gap-2 whitespace-nowrap rounded-2xl border px-4 py-2.5 text-xs font-bold transition-all duration-300 ${
-                  isActive
-                    ? 'scale-105 border-transparent bg-gradient-to-r from-[#c66d37] to-[#b35d2b] text-white shadow-lg shadow-[#c66d37]/25'
-                    : 'border-slate-200/80 bg-white/80 text-slate-600 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:bg-white/10'
-                }`}
-              >
-                <Icon name={cat.icon} size={13} className={isActive ? 'text-white' : 'text-[#569ab5]'} />
-                <span>{cat.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Products grid */}
-        {loading ? (
-          <div className="grid gap-5 sm:grid-cols-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="overflow-hidden rounded-3xl border border-slate-200/60 bg-white/60 dark:border-white/10 dark:bg-white/[0.03]">
-                <div className="kug-shimmer h-48" />
-                <div className="space-y-2 p-4">
-                  <div className="kug-shimmer h-3 rounded" />
-                  <div className="kug-shimmer h-3 w-2/3 rounded" />
+            {/* Compact Details & Pricing */}
+            <div className="flex flex-1 flex-col justify-between p-3 space-y-1.5">
+              <div>
+                <div className="mb-1 flex items-center gap-1 text-[9px] font-bold text-slate-500 dark:text-slate-400">
+                  <span className="rounded bg-slate-100 px-1 py-0.5 dark:bg-slate-800">DOC</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">✓ Verified</span>
                 </div>
+
+                <h3 className="line-clamp-1 text-xs font-bold text-slate-900 leading-tight transition group-hover:text-[#c66d37] dark:text-white">
+                  {listing.title}
+                </h3>
+
+                <p className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+                  <Icon name="map-pin" size={10} className="text-[#569ab5]" />
+                  {formatLocation(listing)}
+                </p>
               </div>
-            ))}
-          </div>
-        ) : filteredListings.length > 0 ? (
-          <div className="grid gap-5 sm:grid-cols-2">
-            {filteredListings.slice(0, 12).map((listing) => (
-              <Link
-                key={listing.id}
-                to={`/listing/${listing.id}`}
-                className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white/80 shadow-md backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl dark:border-white/10 dark:bg-white/[0.04]"
-              >
-                <div className="relative h-48 w-full overflow-hidden bg-slate-900">
-                  {images?.[listing.id] ? (
-                    <img
-                      src={images[listing.id]}
-                      alt={listing.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-slate-400">
-                      <Icon name="shopping-bag" size={32} />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20" />
 
-                  {/* top badges */}
-                  <div className="absolute left-3 right-3 top-3 flex items-center justify-between">
-                    <span className="rounded-full border border-white/20 bg-black/60 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
-                      {listing.category?.name || "Ibindi"}
-                    </span>
-                    <span className="rounded-full border border-white/20 bg-black/40 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-md">
-                      {listing.condition || "New"}
-                    </span>
-                  </div>
-
-                  {/* price overlay */}
-                  <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-                    <p className="text-lg font-extrabold tracking-tight text-white">
-                      {formatPrice(listing)}
-                    </p>
-                    <span className="rounded-md bg-white/20 px-2 py-0.5 text-[10px] font-medium text-slate-100 backdrop-blur-md">
-                      Live
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-1 flex-col justify-between space-y-3 p-4">
-                  <div>
-                    <h3 className="line-clamp-1 text-sm font-bold text-slate-900 transition group-hover:text-[#c66d37] dark:text-white">
-                      {listing.title}
-                    </h3>
-                    <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      <Icon name="map-pin" size={12} className="text-[#569ab5]" />
-                      {formatLocation(listing)}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between border-t border-slate-200/60 pt-3 dark:border-white/10">
-                    <div className="flex items-center gap-1.5">
-                      <Icon name="shield" size={14} className="text-emerald-500" />
-                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        Verified Seller
-                      </span>
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-xl bg-[#569ab5]/10 px-3 py-1.5 text-xs font-bold text-[#36677b] transition hover:bg-[#569ab5] hover:text-white dark:text-[#83c2dc]">
-                      Baza
-                      <Icon name="arrow-right" size={11} />
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-3xl border border-dashed border-slate-300 p-8 py-16 text-center dark:border-white/10">
-            <Icon name="search" size={40} className="mx-auto mb-3 text-slate-400" />
-            <h4 className="font-bold text-slate-800 dark:text-slate-200">Nta bintu bibonetse</h4>
-            <p className="mt-1 text-xs text-slate-500">Gerageza guhindura amagambo washakishije cyangwa icyiciro.</p>
-          </div>
-        )}
+              {/* Price Row */}
+              <div className="pt-1.5 border-t border-slate-100 dark:border-white/10">
+                <span className="text-xs sm:text-sm font-black tracking-tight text-slate-900 dark:text-white">
+                  RF {formatPrice(listing)}
+                </span>
+              </div>
+            </div>
+          </Link>
+        ))}
       </div>
+    </div>
+  ) : (
+    <div className="rounded-3xl border border-dashed border-slate-300 p-8 py-16 text-center dark:border-white/10">
+      <Icon name="search" size={40} className="mx-auto mb-3 text-slate-400" />
+      <h4 className="font-bold text-slate-800 dark:text-slate-200">Nta bintu bibonetse</h4>
+      <p className="mt-1 text-xs text-slate-500">Gerageza guhindura amagambo washakishije cyangwa icyiciro.</p>
+    </div>
+  )}
+</div>
     </div>
   </div>
 </section>
     
-      {/* DATABASE STATISTICS */}
-      <section className="relative overflow-hidden bg-[#f3f8fa] py-16 dark:bg-[#0b1726] sm:py-20">
-        <div className="pointer-events-none absolute -right-24 top-0 h-72 w-72 rounded-full bg-[#569ab5]/10 blur-3xl" />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-            <SectionHeading
-              eyebrow="KUGURISHA.COM mu mibare"
-              title="Isoko rihuriza Abanyarwanda hamwe"
-              description="Imibare ishingiye ku makuru ari muri system yacu."
-            />
-            <button
-              onClick={() => void loadStats()}
-              disabled={statsLoading}
-              className="inline-flex w-fit items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 transition hover:border-[#569ab5] hover:text-[#39778f] disabled:opacity-50 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300"
-            >
-              <Icon name="refresh" size={15} className={statsLoading ? "animate-spin" : ""} />
-              Ongera uvugurure
-            </button>
-          </div>
-
-          <div className="mt-9 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              icon="users"
-              label="Abakoresha"
-              value={statsLoading ? "..." : formatCount(stats.users, 100)}
-              description="Abakoresha bafite konti zikora"
-            />
-            <StatCard
-              icon="shop"
-              label="Abagurisha"
-              value={statsLoading ? "..." : stats.sellers.toLocaleString("en-US")}
-              description="Abafite ibicuruzwa ku isoko"
-            />
-            <StatCard
-              icon="shopping-bag"
-              label="Ibicuruzwa"
-              value={statsLoading ? "..." : formatCount(stats.listings, 20)}
-              description="Ibicuruzwa byose byashyizweho"
-            />
-           
-          </div>
-        </div>
-      </section>
+      
 
      
 
