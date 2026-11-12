@@ -255,14 +255,16 @@ a {
   color: var(--selection-text);
 }
 
-/* 06. TYPOGRAPHY SYSTEM */
+/* 06. TYPOGRAPHY SYSTEM
+   NOTE: headings use `color: inherit` so they follow their parent's
+   contrast. Base text color is set on body/#root above. */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-  color: var(--text);
+  color: inherit;
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.028em;
@@ -418,6 +420,93 @@ h4 {
   outline-offset: 3px;
 }
 
+/* =========================================================
+   11b. DARK SURFACE CONTEXT
+   Add .kg-on-dark to any element with a DARK background.
+   Forces readable light text + inputs + borders inside it,
+   in BOTH themes (mostly matters in light mode).
+   ========================================================= */
+.kg-on-dark {
+  color: #f1f5f9;
+}
+
+.kg-on-dark :is(h1, h2, h3, h4, h5, h6),
+.kg-on-dark .kg-text,
+.kg-on-dark .kg-text-secondary {
+  color: #f1f5f9;
+}
+
+.kg-on-dark .kg-text-muted,
+.kg-on-dark .kg-h-tagline {
+  color: #c0cad8;
+}
+
+.kg-on-dark a:not(.kg-h-sell):not([class*="bg-"]) {
+  color: #e6a16e;
+}
+
+.kg-on-dark .kg-border,
+.kg-on-dark .kg-h-divider,
+.kg-on-dark hr {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.kg-on-dark .kg-input {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f1f5f9;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.kg-on-dark .kg-input::placeholder {
+  color: #8997aa;
+}
+
+.kg-on-dark .glass,
+.kg-on-dark .glass-soft,
+.kg-on-dark .glass-strong {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Auto-readability for common dark Tailwind bg utilities in LIGHT mode.
+   (In dark mode the theme variables already handle this.) */
+:root:not(.dark):not([data-theme="dark"])
+  :is(
+    .bg-slate-900, .bg-slate-800, .bg-slate-950,
+    .bg-gray-900, .bg-gray-800, .bg-gray-950,
+    .bg-zinc-900, .bg-zinc-800,
+    .bg-neutral-900, .bg-neutral-800,
+    .bg-emerald-900, .bg-emerald-950,
+    .bg-brand-dark, .bg-\[#182337\], .bg-\[#111827\]
+  ) {
+  color: #f1f5f9;
+}
+
+:root:not(.dark):not([data-theme="dark"])
+  :is(
+    .bg-slate-900, .bg-slate-800, .bg-slate-950,
+    .bg-gray-900, .bg-gray-800, .bg-gray-950,
+    .bg-zinc-900, .bg-zinc-800,
+    .bg-neutral-900, .bg-neutral-800,
+    .bg-emerald-900, .bg-emerald-950,
+    .bg-brand-dark
+  )
+  :is(h1, h2, h3, h4, h5, h6, p, span, li, a, label, small, strong) {
+  color: inherit;
+}
+
+:root:not(.dark):not([data-theme="dark"])
+  :is(
+    .bg-slate-900, .bg-slate-800, .bg-slate-950,
+    .bg-gray-900, .bg-gray-800, .bg-gray-950,
+    .bg-zinc-900, .bg-zinc-800,
+    .bg-neutral-900, .bg-neutral-800,
+    .bg-emerald-900, .bg-emerald-950,
+    .bg-brand-dark
+  )
+  :is(a, .kg-text-muted) {
+  color: #c0cad8;
+}
+
 /* 12. HEADER — FLOATING CAPSULE */
 .kg-header,
 .kg-h-root {
@@ -494,7 +583,7 @@ h4 {
 
 .kg-h-wordmark {
   display: block;
-  color: var(--text);
+  color: inherit;
   font-family: var(--font-display);
   font-size: clamp(17px, 1.5vw, 21px);
   font-weight: 700;
@@ -1015,183 +1104,32 @@ h4 {
   }
 }
 
-/* 23. MOBILE RESPONSIVENESS */
+/* =========================================================
+   23. MOBILE (≤700px)
+   ========================================================= */
 @media (max-width: 700px) {
   html {
-    scroll-padding-top: 82px;
-  }
-
-  body {
-    font-size: 14px;
-  }
-
-  .kg-story-step {
-    top: 82px !important;
-  }
-
-  .kg-story-step-inner {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
-  }
-
-  .kg-story-copy {
-    padding: 23px;
-  }
-
-  .kg-story-title {
-    margin-top: 12px;
-  }
-
-  .kg-story-description {
-    margin-top: 12px;
-  }
-
-  .kg-story-visual {
-    min-height: 155px;
-    max-height: 180px;
-    padding: 2px;
-  }
-
-  .kg-story-scene-svg {
-    max-height: 172px;
-  }
-
-  .kg-story-card {
-    top: calc(82px + var(--stack-index, 0) * 10px);
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0.88fr);
-    gap: 10px;
-    min-height: 235px;
-    margin-bottom: 18vh;
-    padding: 18px;
-    border-radius: 22px;
-  }
-
-  .kg-story-heading {
-    font-size: clamp(23px, 6vw, 34px);
-    margin-top: 12px;
-  }
-
-  .kg-story-description {
-    font-size: clamp(14px, 3.6vw, 17px);
-    margin-top: 11px;
-  }
-
-  .kg-story-eyebrow {
-    font-size: 9px;
-  }
-
-  .kg-story-line {
-    margin-top: 15px;
-  }
-
-  .kg-story-scene {
-    min-height: 160px;
-    border-radius: 17px;
-  }
-
-  .kg-story-scene__caption {
-    font-size: 7px;
-    right: 6px;
-    bottom: 6px;
-  }
-
-  .kg-h-panel {
-    padding-inline: 12px;
+    scroll-padding-top: 80px;
+    -webkit-text-size-adjust: 100%;
   }
 }
 
-/* 24. SMALL MOBILE */
-@media (max-width: 400px) {
-  .kg-h-panel {
-    padding-inline: 10px;
-    gap: 5px;
-  }
-
-  .kg-h-wordmark {
-    font-size: 16px;
-  }
-
-  .kg-h-tagline {
-    font-size: 7px;
-    letter-spacing: 0.08em;
-  }
-
-  .kg-h-logo {
-    width: 32px;
-    height: 32px;
-  }
-
-  .kg-story-card {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-    padding: 13px;
-  }
-
-  .kg-story-heading {
-    font-size: 22px;
-  }
-
-  .kg-story-description {
-    font-size: 13px;
-  }
-}
-
-/* 25. TOUCH DEVICES */
-@media (hover: none) {
-  .kg-card-interactive:hover {
-    transform: none;
-  }
-
-  .kg-h-action:hover,
-  .kg-h-sell:hover {
-    transform: none;
-  }
-}
-
-/* 26. REDUCED MOTION */
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
-
-  .kg-story-card,
-  .kg-story-step {
-    position: relative;
-    top: auto !important;
-    transform: none !important;
-    margin-bottom: 16px;
-  }
-
-  .kg-story-float,
-  .kg-story-focus,
-  .kg-story-chat-one,
-  .kg-story-chat-two,
-  .kg-story-tick,
-  .kg-scene-float,
-  .kg-scene-pulse,
-  .kg-scene-arrow,
-  .kg-scene-chat-reply {
-    animation: none !important;
-  }
-}
+/* =========================================================
+   27. INFINITE SCROLL (marquee for products)
+   ========================================================= */
 @keyframes infinite-scroll {
   from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  to   { transform: translateX(-50%); }
 }
 
 .animate-infinite-scroll {
   display: flex;
+  width: max-content;
   animation: infinite-scroll 35s linear infinite;
+  will-change: transform;
 }
 
-.animate-infinite-scroll:hover {
+.animate-infinite-scroll:hover,
+.animate-infinite-scroll:focus-within {
   animation-play-state: paused;
 }
