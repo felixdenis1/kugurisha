@@ -1,104 +1,302 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type MouseEvent } from "react"
 import { Link } from "react-router-dom"
 
 type Step = {
   number: string
+  badge: string
   title: string
   description: string
+  accent: string
   scene: "camera" | "listing" | "chat"
 }
 
 const steps: Step[] = [
   {
     number: "01",
+    badge: "Intambwe ya 1",
     title: "Fata amafoto",
-    description: "Fata amafoto agaragaza neza icyo ushaka kugurisha, wandike amakuru yacyo n'igiciro.",
+    description:
+      "Fata amafoto agaragaza neza icyo ushaka kugurisha, wandike amakuru yacyo n'igiciro.",
+    accent: "#FF5D00",
     scene: "camera",
   },
   {
     number: "02",
+    badge: "Intambwe ya 2",
     title: "Gishyire ku isoko",
-    description: "Shyira igicuruzwa cyawe kuri KUGURISHA.COM kugira ngo abaguzi babashe kukibona.",
+    description:
+      "Shyira igicuruzwa cyawe kuri KUGURISHA.COM kugira ngo abaguzi babashe kukibona.",
+    accent: "#427c94",
     scene: "listing",
   },
   {
     number: "03",
+    badge: "Intambwe ya 3",
     title: "Vugana n'umuguzi",
-    description: "Ushaka kukigura ashobora kugukorera ubutumwa, mukaganira mukumvikana.",
+    description:
+      "Ushaka kukigura ashobora kugukorera ubutumwa, mukaganira mukumvikana.",
+    accent: "#569ab5",
     scene: "chat",
   },
 ]
 
-function Scene({ type }: { type: Step["scene"] }) {
+/* ═══════════════════════════════════════════════════════════
+   3D SCENE — wrapped in interactive depth stage
+   ═══════════════════════════════════════════════════════════ */
+function Scene({ type, isActive }: { type: Step["scene"]; isActive: boolean }) {
   return (
-    <div className="kg-story-scene" aria-hidden="true">
-      <svg viewBox="0 0 360 230" className="kg-story-scene-svg" fill="none" role="presentation">
-        <rect x="1" y="1" width="358" height="228" rx="24" fill="var(--surface)" fillOpacity=".55" />
-        <circle cx="294" cy="49" r="35" fill="#569ab5" fillOpacity=".09" />
-        <circle cx="57" cy="184" r="50" fill="#569ab5" fillOpacity=".07" />
-        {type === "camera" && (
-          <>
-            <rect x="123" y="18" width="115" height="196" rx="21" fill="var(--bg-secondary)" stroke="#427c94" strokeWidth="4" />
-            <rect x="132" y="39" width="97" height="137" rx="10" fill="#d7e9ee" />
-            <rect x="142" y="75" width="77" height="63" rx="10" fill="#a8d1de" />
-            <path d="M142 130l21-23 15 13 18-29 23 39" fill="#427c94" fillOpacity=".7" />
-            <circle cx="196" cy="91" r="8" fill="#fff" />
-            <circle cx="181" cy="194" r="8" stroke="#427c94" strokeWidth="3" />
-            <g className="kg-scene-float">
-              <rect x="39" y="78" width="100" height="73" rx="14" fill="var(--surface)" stroke="#569ab5" strokeWidth="3" />
-              <path d="M56 98h22l7-9h19l7 9h11v34H56V98Z" stroke="#427c94" strokeWidth="3" strokeLinejoin="round" />
-              <circle cx="90" cy="114" r="11" stroke="#427c94" strokeWidth="3" />
-            </g>
-            <g className="kg-scene-pulse"><circle cx="259" cy="100" r="21" fill="#569ab5" fillOpacity=".17" /><path d="M249 100h20m-10-10v20" stroke="#427c94" strokeWidth="3" strokeLinecap="round" /></g>
-          </>
-        )}
-        {type === "listing" && (
-          <>
-            <g className="kg-scene-float">
-              <rect x="56" y="35" width="136" height="161" rx="17" fill="var(--surface)" stroke="#569ab5" strokeWidth="3" />
-              <rect x="69" y="49" width="110" height="83" rx="10" fill="#c4e0e8" />
-              <path d="M80 121l26-31 18 16 17-22 28 37" fill="#569ab5" fillOpacity=".75" />
-              <circle cx="151" cy="75" r="9" fill="white" />
-              <rect x="72" y="146" width="77" height="7" rx="3.5" fill="#427c94" fillOpacity=".8" />
-              <rect x="72" y="160" width="57" height="6" rx="3" fill="#569ab5" fillOpacity=".4" />
-              <rect x="72" y="174" width="92" height="10" rx="5" fill="#427c94" fillOpacity=".2" />
-            </g>
-            <path d="M192 111h50m-13-13 13 13-13 13" stroke="#427c94" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="kg-scene-arrow" />
-            <rect x="244" y="70" width="78" height="85" rx="16" fill="#427c94" />
-            <path d="M259 93h48l-4 46h-40l-4-46Z" stroke="white" strokeWidth="3" strokeLinejoin="round" />
-            <path d="M271 94v-7a12 12 0 0 1 24 0v7" stroke="white" strokeWidth="3" />
-            <circle cx="305" cy="66" r="17" fill="#d6f2e8" stroke="#427c94" strokeWidth="2" />
-            <path d="m297 66 5 5 9-10" stroke="#427c94" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-          </>
-        )}
-        {type === "chat" && (
-          <>
-            <g className="kg-scene-float">
-              <circle cx="92" cy="75" r="26" fill="#c4e0e8" stroke="#427c94" strokeWidth="3" />
-              <circle cx="92" cy="69" r="9" fill="#427c94" />
-              <path d="M76 91c4-14 28-14 32 0" fill="#427c94" />
-              <rect x="42" y="113" width="148" height="57" rx="17" fill="var(--surface)" stroke="#569ab5" strokeWidth="3" />
-              <path d="M58 133h111M58 146h74" stroke="#427c94" strokeOpacity=".7" strokeWidth="5" strokeLinecap="round" />
-            </g>
-            <g className="kg-scene-chat-reply">
-              <circle cx="266" cy="75" r="26" fill="#427c94" />
-              <circle cx="266" cy="69" r="9" fill="white" />
-              <path d="M250 91c4-14 28-14 32 0" fill="white" />
-              <rect x="193" y="135" width="133" height="58" rx="17" fill="#427c94" />
-              <path d="M208 154h100M208 168h61" stroke="white" strokeOpacity=".9" strokeWidth="5" strokeLinecap="round" />
-            </g>
-            <path d="M169 71h45m-12-11 12 11-12 11" stroke="#569ab5" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-          </>
-        )}
-      </svg>
+    <div
+      className={`kg-scene3d relative mx-auto transition-transform duration-700 ease-out ${
+        isActive ? "scale-105 -translate-y-1" : "group-hover:scale-105 group-hover:-translate-y-1"
+      }`}
+      aria-hidden="true"
+    >
+      {/* Dynamic multi-layered ambient aura */}
+      <div className="kg-scene3d__glow" />
+      <div
+        className={`pointer-events-none absolute inset-4 rounded-full blur-2xl transition-opacity duration-700 ${
+          isActive ? "opacity-55" : "opacity-20 group-hover:opacity-50"
+        }`}
+        style={{
+          background:
+            type === "camera"
+              ? "radial-gradient(circle, rgba(255,93,0,0.45) 0%, transparent 70%)"
+              : type === "listing"
+                ? "radial-gradient(circle, rgba(66,124,148,0.5) 0%, transparent 70%)"
+                : "radial-gradient(circle, rgba(86,154,181,0.5) 0%, transparent 70%)",
+        }}
+      />
+
+      {type === "camera" && (
+        <div className="kg-scene3d__stage">
+          <div className="kg-3d-phone">
+            <div className="kg-3d-phone__screen">
+              <div className="kg-3d-phone__landscape" />
+              <div className="kg-3d-phone__sun" />
+              <div className="kg-3d-phone__hill" />
+            </div>
+            <div className="kg-3d-phone__notch" />
+            <div className="kg-3d-phone__home" />
+          </div>
+
+          <div className="kg-3d-camera">
+            <div className="kg-3d-camera__body">
+              <div className="kg-3d-camera__lens">
+                <div className="kg-3d-camera__lens-inner" />
+              </div>
+              <div className="kg-3d-camera__flash" />
+            </div>
+          </div>
+
+          <div className="kg-3d-badge">
+            <span>+</span>
+          </div>
+        </div>
+      )}
+
+      {type === "listing" && (
+        <div className="kg-scene3d__stage">
+          <div className="kg-3d-card">
+            <div className="kg-3d-card__img">
+              <div className="kg-3d-card__mount" />
+              <div className="kg-3d-card__sun" />
+            </div>
+            <div className="kg-3d-card__line kg-3d-card__line--lg" />
+            <div className="kg-3d-card__line kg-3d-card__line--md" />
+            <div className="kg-3d-card__line kg-3d-card__line--sm" />
+          </div>
+
+          <div className="kg-3d-arrow">
+            <span>→</span>
+          </div>
+
+          <div className="kg-3d-bag">
+            <div className="kg-3d-bag__handle" />
+            <div className="kg-3d-bag__body">
+              <div className="kg-3d-bag__shine" />
+            </div>
+          </div>
+
+          <div className="kg-3d-check">
+            <span>✓</span>
+          </div>
+        </div>
+      )}
+
+      {type === "chat" && (
+        <div className="kg-scene3d__stage">
+          <div className="kg-3d-chat kg-3d-chat--left">
+            <div className="kg-3d-chat__avatar kg-3d-chat__avatar--user" />
+            <div className="kg-3d-chat__bubble kg-3d-chat__bubble--light">
+              <div className="kg-3d-chat__line kg-3d-chat__line--lg" />
+              <div className="kg-3d-chat__line kg-3d-chat__line--sm" />
+            </div>
+          </div>
+
+          <div className="kg-3d-arrow kg-3d-arrow--chat">
+            <span>→</span>
+          </div>
+
+          <div className="kg-3d-chat kg-3d-chat--right">
+            <div className="kg-3d-chat__avatar kg-3d-chat__avatar--seller" />
+            <div className="kg-3d-chat__bubble kg-3d-chat__bubble--dark">
+              <div className="kg-3d-chat__line kg-3d-chat__line--lg" />
+              <div className="kg-3d-chat__line kg-3d-chat__line--sm" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
+/* ═══════════════════════════════════════════════════════════
+   INTERACTIVE 3D TILT + SPOTLIGHT STEP CARD
+   ═══════════════════════════════════════════════════════════ */
+function StoryStepCard({
+  step,
+  index,
+  isActive,
+  visible,
+  onSelect,
+}: {
+  step: Step
+  index: number
+  isActive: boolean
+  visible: boolean
+  onSelect: () => void
+}) {
+  const cardRef = useRef<HTMLElement | null>(null)
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0, mx: 50, my: 50, hovering: false })
+
+  const handleMouseMove = (e: MouseEvent<HTMLElement>) => {
+    const el = cardRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const px = x / rect.width
+    const py = y / rect.height
+
+    setTilt({
+      rx: (0.5 - py) * 10, // subtle 3D pitch
+      ry: (px - 0.5) * 10, // subtle 3D yaw
+      mx: px * 100,
+      my: py * 100,
+      hovering: true,
+    })
+  }
+
+  const handleMouseLeave = () => {
+    setTilt((prev) => ({ ...prev, rx: 0, ry: 0, hovering: false }))
+  }
+
+  return (
+    <article
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onMouseEnter={onSelect}
+      style={{
+        transitionDelay: visible ? `${index * 140}ms` : "0ms",
+        transform: tilt.hovering
+          ? `perspective(1100px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) translateY(-6px)`
+          : isActive
+            ? "perspective(1100px) translateY(-4px)"
+            : "perspective(1100px) translateY(0px)",
+      }}
+      className={`kg-story-step group relative flex flex-col justify-between overflow-hidden rounded-[2rem] border p-7 text-center backdrop-blur-xl transition-all duration-500 ease-out sm:p-9 ${
+        visible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
+      } ${
+        isActive
+          ? "border-[#FF5D00]/45 bg-[var(--glass-soft-bg)] shadow-[0_24px_60px_-15px_rgba(255,93,0,0.18),0_0_0_1px_rgba(255,93,0,0.12)]"
+          : "border-[var(--glass-border)] bg-[var(--glass-soft-bg)]/65 shadow-[0_12px_40px_-15px_rgba(16,36,54,0.08)] hover:border-[var(--primary)]/50 hover:shadow-[0_24px_60px_-15px_rgba(66,124,148,0.22)]"
+      }`}
+    >
+      {/* Cursor-following radial spotlight */}
+      <div
+        className="pointer-events-none absolute inset-0 transition-opacity duration-500"
+        style={{
+          opacity: tilt.hovering ? 1 : 0,
+          background: `radial-gradient(420px circle at ${tilt.mx}% ${tilt.my}%, rgba(255, 93, 0, 0.12), rgba(86, 154, 181, 0.08) 45%, transparent 75%)`,
+        }}
+      />
+
+      {/* Top rim light highlight */}
+      <div
+        className={`pointer-events-none absolute inset-x-8 top-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#FF5D00]/70 to-transparent transition-opacity duration-500 ${
+          isActive || tilt.hovering ? "opacity-100" : "opacity-0"
+        }`}
+      />
+
+      {/* Giant watermark step number */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-2 -top-4 select-none text-[5.5rem] font-black leading-none tracking-tighter text-[var(--text)] opacity-[0.035] transition-transform duration-500 group-hover:scale-110"
+      >
+        {step.number}
+      </span>
+
+      {/* Top status pill */}
+      <div className="relative z-10 mb-4 flex items-center justify-between">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider transition-colors duration-300 ${
+            isActive
+              ? "bg-[#FF5D00]/12 text-[#FF5D00]"
+              : "bg-[var(--primary)]/10 text-[var(--primary)]"
+          }`}
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              isActive ? "animate-pulse bg-[#FF5D00]" : "bg-[var(--primary)]"
+            }`}
+          />
+          {step.badge}
+        </span>
+
+        <span className="font-mono text-xs font-black tracking-widest text-[var(--text-muted)]">
+          /{step.number}
+        </span>
+      </div>
+
+      {/* 3D Scene Stage */}
+      <div className="relative z-10 my-2">
+        <Scene type={step.scene} isActive={isActive} />
+      </div>
+
+      {/* Text Content */}
+      <div className="relative z-10 mt-6">
+        <h3 className="text-xl font-black tracking-tight text-[var(--text)] transition-colors duration-300 group-hover:text-[var(--primary)] sm:text-2xl">
+          {step.title}
+        </h3>
+        <p className="mt-3 text-sm leading-7 text-[var(--text-secondary)]">
+          {step.description}
+        </p>
+      </div>
+
+      {/* Bottom active progress bar */}
+      <div className="relative z-10 mt-7 h-1 w-full overflow-hidden rounded-full bg-[var(--glass-border)]/50">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7A29] to-[#569ab5] transition-all duration-700 ease-out"
+          style={{
+            width: isActive ? "100%" : tilt.hovering ? "65%" : "22%",
+          }}
+        />
+      </div>
+    </article>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HOME STORY
+   ═══════════════════════════════════════════════════════════ */
 export default function HomeStory() {
   const sectionRef = useRef<HTMLElement | null>(null)
   const [visible, setVisible] = useState(false)
+  const [activeStep, setActiveStep] = useState(0)
+  const [paused, setPaused] = useState(false)
 
+  // Reveal section on scroll
   useEffect(() => {
     const section = sectionRef.current
     if (!section) return
@@ -106,58 +304,167 @@ export default function HomeStory() {
       setVisible(true)
       return
     }
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setVisible(true)
-        observer.disconnect()
-      }
-    }, { threshold: 0.12 })
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.1 },
+    )
     observer.observe(section)
     return () => observer.disconnect()
   }, [])
 
+  // Auto-cycle active step spotlight every 3.5s unless user is hovering/interacting
+  useEffect(() => {
+    if (!visible || paused) return
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % steps.length)
+    }, 3500)
+    return () => clearInterval(timer)
+  }, [visible, paused])
+
   return (
-    <section ref={sectionRef} aria-labelledby="home-story-title" className="kg-story-section relative bg-[var(--bg)] px-4 py-20 sm:px-6 sm:py-28">
-      <div className="mx-auto max-w-7xl">
-        {/* Restored original introduction — unchanged wording */}
-        <div className={`mx-auto max-w-3xl text-center transition-all duration-700 motion-reduce:transform-none motion-reduce:transition-none ${visible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}`}>
-          <span className="inline-flex rounded-full border border-[var(--glass-border)] bg-[var(--glass-soft-bg)] px-4 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-[var(--primary-hover)]">Amahirwe yo kugurisha</span>
-          <h2 id="home-story-title" className="mt-6 text-3xl font-black leading-tight tracking-tight text-[var(--text)] sm:text-5xl">
-            Ufite icyo ushaka kugurisha, ariko <span className="text-[var(--primary)]">ukabura umuguzi?</span>
+    <section
+      ref={sectionRef}
+      aria-labelledby="home-story-title"
+      className="kg-story-section relative overflow-x-clip bg-[var(--bg)] px-4 py-24 sm:px-6 sm:py-32"
+    >
+      {/* Architectural ambient light mesh & subtle grid */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)",
+            backgroundSize: "32px 32px",
+          }}
+        />
+        <div className="absolute -left-40 top-16 h-[520px] w-[520px] rounded-full bg-[var(--glow-color)] opacity-45 blur-[130px]" />
+        <div className="absolute left-1/2 top-1/3 h-[360px] w-[360px] -translate-x-1/2 rounded-full bg-[#FF5D00]/10 blur-[140px]" />
+        <div className="absolute -right-32 bottom-16 h-[460px] w-[460px] rounded-full bg-[#569ab5]/15 blur-[130px]" />
+      </div>
+
+      <div className="relative mx-auto max-w-7xl">
+        {/* Editorial Header */}
+        <div
+          className={`mx-auto max-w-3xl text-center transition-all duration-1000 ease-out motion-reduce:transform-none motion-reduce:transition-none ${
+            visible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+          }`}
+        >
+          <span className="inline-flex items-center gap-2.5 rounded-full border border-[var(--glass-border)] bg-[var(--glass-soft-bg)] px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.22em] text-[var(--primary-hover)] shadow-sm backdrop-blur-md">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inset-0 animate-ping rounded-full bg-[#FF5D00] opacity-75" />
+              <span className="relative flex h-2 w-2 rounded-full bg-[#FF5D00]" />
+            </span>
+            Amahirwe yo kugurisha
+          </span>
+
+          <h2
+            id="home-story-title"
+            className="mt-7 text-4xl font-black leading-[1.03] tracking-[-0.045em] text-[var(--text)] sm:text-5xl lg:text-[3.75rem]"
+          >
+            Ufite icyo ushaka kugurisha, ariko{" "}
+            <span className="relative inline-block">
+              <span className="bg-[linear-gradient(110deg,#FF5D00_0%,#FF7A29_45%,#39778f_85%,#569ab5_100%)] bg-[size:200%_100%] bg-clip-text text-transparent [animation:kg-shimmer_7s_ease-in-out_infinite]">
+                ukabura umuguzi?
+              </span>
+              <span className="absolute -bottom-1.5 left-0 right-0 h-[4px] rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7A29] to-[#569ab5] opacity-75" />
+            </span>
           </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[var(--text-secondary)] sm:text-lg">
-            Hari igihe ukenera amafaranga byihutirwa, kandi ufite ikintu ushobora kugurisha ariko ukabura aho uhera ushaka umuguzi. KUGURISHA.COM iguha aho werekanira icyo ufite kugira ngo abakigukeneye babashe kukibona.
+
+          <p className="mx-auto mt-7 max-w-2xl text-base leading-8 text-[var(--text-secondary)] sm:text-lg">
+            Hari igihe ukenera amafaranga byihutirwa, kandi ufite ikintu ushobora
+            kugurisha ariko ukabura aho uhera ushaka umuguzi.{" "}
+            <span className="font-extrabold text-[var(--text)]">KUGURISHA.COM</span>{" "}
+            iguha aho werekanira icyo ufite kugira ngo abakigukeneye babashe
+            kukibona.
           </p>
-          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[var(--text-muted)] sm:text-base">
-            Yaba telefoni, mudasobwa, ibikoresho byo mu rugo, imodoka, inzu cyangwa ubutaka — shyiraho amafoto n'ibisobanuro, utangire kugera ku bashobora kukigura.
-          </p>
+
+          {/* Interactive category pills */}
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            {[
+              "Telefoni",
+              "Mudasobwa",
+              "Ibikoresho byo mu rugo",
+              "Imodoka",
+              "Inzu n'ubutaka",
+            ].map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-[var(--glass-border)] bg-[var(--glass-soft-bg)]/80 px-3.5 py-1 text-xs font-semibold text-[var(--text-muted)] backdrop-blur-sm transition-colors hover:border-[#FF5D00]/40 hover:text-[var(--text)]"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
         </div>
 
-        <div className="kg-story-stack mt-14 sm:mt-20">
-          {steps.map((step, index) => (
-            <article key={step.number} className="kg-story-step" style={{ zIndex: index + 1, top: `calc(96px + ${index * 13}px)` }}>
-              <div className="kg-story-step-inner">
-                {/* Independent left-side text div */}
-                <div className="kg-story-copy">
-                  <span className="kg-story-number">INTAMBWE {step.number}</span>
-                  <h3 className="kg-story-title">{step.title}</h3>
-                  <p className="kg-story-description">{step.description}</p>
-                </div>
-                {/* Independent right-side 2D animation div */}
-                <div className="kg-story-visual">
-                  <Scene type={step.scene} />
-                </div>
-              </div>
-            </article>
-          ))}
+        {/* 3D Interactive Cards Grid + Desktop Energy Connector */}
+        <div
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          className="relative mt-20"
+        >
+          {/* Glowing horizontal energy pipeline connecting cards on desktop */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-[16%] right-[16%] top-1/2 hidden -translate-y-1/2 md:block"
+          >
+            <div className="h-[2px] w-full rounded-full bg-[var(--glass-border)]/70" />
+            <div
+              className="h-[2px] -translate-y-[2px] rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7A29] to-[#569ab5] shadow-[0_0_16px_rgba(255,93,0,0.6)] transition-all duration-700 ease-out"
+              style={{
+                width:
+                  activeStep === 0 ? "18%" : activeStep === 1 ? "55%" : "100%",
+              }}
+            />
+          </div>
+
+          <div className="relative z-10 grid gap-8 md:grid-cols-3 lg:gap-10">
+            {steps.map((step, index) => (
+              <StoryStepCard
+                key={step.number}
+                step={step}
+                index={index}
+                isActive={activeStep === index}
+                visible={visible}
+                onSelect={() => setActiveStep(index)}
+              />
+            ))}
+          </div>
         </div>
 
-        <div className="mt-14 flex flex-col items-center gap-4 text-center">
-          <p className="max-w-xl text-sm font-semibold leading-7 text-[var(--text-secondary)]">
-            Ntugomba kuba ufite iduka kugira ngo werekane icyo ugurisha. Tangira n'icyo ufite.
+        {/* High-Craft Bottom CTA */}
+        <div
+          className={`mt-20 flex flex-col items-center gap-6 text-center transition-all delay-300 duration-1000 ${
+            visible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+          }`}
+        >
+          <p className="max-w-xl text-sm font-semibold leading-7 text-[var(--text-secondary)] sm:text-base">
+            Ntugomba kuba ufite iduka kugira ngo werekane icyo ugurisha.{" "}
+            <span className="text-[var(--text)] font-bold">
+              Tangira n'icyo ufite uyu munsi.
+            </span>
           </p>
-          <Link to="/create-listing" className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-[#427c94] px-7 py-3 text-sm font-extrabold text-white shadow-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--primary)]">
-            Shyiraho icyo ushaka kugurisha <span aria-hidden="true" className="ml-2">→</span>
+
+          <Link
+            to="/create-listing"
+            className="group relative inline-flex min-h-14 items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF6E1A] to-[#427c94] p-[2px] shadow-[0_14px_40px_-10px_rgba(255,93,0,0.5)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_50px_-10px_rgba(255,93,0,0.7)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF5D00]"
+          >
+            <span className="relative flex h-full w-full items-center justify-center rounded-full bg-[#102436] px-9 py-3.5 text-sm font-black tracking-wide text-white transition-colors duration-300 group-hover:bg-[#102436]/90 sm:text-base">
+              {/* Shimmer sweep */}
+              <span className="pointer-events-none absolute inset-0 -translate-x-full bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.28)_50%,transparent_65%)] transition-transform duration-700 group-hover:translate-x-full" />
+              <span className="relative">Shyiraho icyo ushaka kugurisha</span>
+              <span
+                aria-hidden="true"
+                className="relative ml-2.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#FF5D00] text-xs text-white transition-transform duration-300 group-hover:translate-x-1"
+              >
+                →
+              </span>
+            </span>
           </Link>
         </div>
       </div>

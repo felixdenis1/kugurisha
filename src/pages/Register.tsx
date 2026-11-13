@@ -2,6 +2,92 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "../services/supabase"
 
+/* ──────────────────────────────────────────────────────────────────────────
+   ICON SYSTEM
+   ────────────────────────────────────────────────────────────────────────── */
+type IconProps = { className?: string }
+const Icon = {
+  User: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+    </svg>
+  ),
+  Mail: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+    </svg>
+  ),
+  Lock: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+    </svg>
+  ),
+  Eye: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  ),
+  EyeOff: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+    </svg>
+  ),
+  ArrowRight: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+    </svg>
+  ),
+  ArrowLeft: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+    </svg>
+  ),
+  Alert: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+    </svg>
+  ),
+  Check: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
+  ),
+  Shield: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+    </svg>
+  ),
+  Bolt: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+    </svg>
+  ),
+  Sparkles: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+    </svg>
+  ),
+  Tag: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+    </svg>
+  ),
+  ShoppingCart: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+    </svg>
+  ),
+  Store: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
+    </svg>
+  ),
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   COMPONENT
+   ────────────────────────────────────────────────────────────────────────── */
 function Register() {
   const navigate = useNavigate()
   const [fullName, setFullName] = useState("")
@@ -12,22 +98,19 @@ function Register() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [success, setSuccess] = useState(false)
+  const [focused, setFocused] = useState<string | null>(null)
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
-
     setLoading(true)
     setMessage("")
     setSuccess(false)
 
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: email.trim(),
       password,
       options: {
-        data: {
-          full_name: fullName,
-          role,
-        },
+        data: { full_name: fullName.trim(), role },
       },
     })
 
@@ -40,513 +123,348 @@ function Register() {
     setSuccess(true)
     setLoading(false)
 
-    // Check if session exists (Confirm email is OFF in Supabase dashboard)
     if (data.session) {
       setMessage("Konti yakozwe neza! Turimo kukujyana ahatangirira...")
-      setTimeout(() => {
-        navigate("/") // Hano wahinduye cyangwa wateganyije '/' cyangwa '/home'
-      }, 1000)
+      setTimeout(() => navigate("/"), 1000)
     } else {
-      // If email confirmation is still ON in Supabase dashboard
-      setMessage(
-        "Konti yakozwe neza. Reba email yawe niba verification isabwa."
-      )
+      setMessage("Konti yakozwe neza. Reba email yawe niba verification isabwa.")
     }
   }
 
+  const isNameValid = fullName.trim().length >= 2
+  const isEmailValid = email.includes("@") && email.includes(".")
+  const isPasswordValid = password.length >= 6
+  const canSubmit = isNameValid && isEmailValid && isPasswordValid && !loading
+
   return (
-    <main className="relative min-h-screen overflow-hidden bg-slate-50 text-slate-900">
-      {/* =========================================================
-          STRONG VISIBLE GRADIENT BACKGROUND
-          ========================================================= */}
+    <main className="relative min-h-screen overflow-hidden bg-[#060f19] text-slate-100">
+      {/* ═══════════════ CINEMATIC BACKGROUND ═══════════════ */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        {/* Main blue glow */}
-        <div className="absolute left-1/2 top-1/2 h-[38rem] w-[38rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/35 blur-[120px]" />
-
-        {/* Top-left indigo glow */}
-        <div className="absolute -left-32 -top-32 h-[32rem] w-[32rem] rounded-full bg-indigo-500/30 blur-[110px]" />
-
-        {/* Bottom-right cyan glow */}
-        <div className="absolute -bottom-32 -right-32 h-[34rem] w-[34rem] rounded-full bg-cyan-400/25 blur-[120px]" />
-
-        {/* Secondary blue glow */}
-        <div className="absolute right-[10%] top-[15%] h-[24rem] w-[24rem] rounded-full bg-blue-600/25 blur-[100px]" />
-
-        {/* Bottom indigo glow */}
-        <div className="absolute bottom-[5%] left-[15%] h-[22rem] w-[22rem] rounded-full bg-indigo-600/20 blur-[100px]" />
-
-        {/* Subtle gradient wash */}
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(59,130,246,0.08),transparent_35%,rgba(99,102,241,0.08)_65%,rgba(6,182,212,0.06))]" />
+        <div className="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/25 blur-[140px]" />
+        <div className="absolute -left-32 -top-32 h-[34rem] w-[34rem] rounded-full bg-indigo-500/25 blur-[120px]" />
+        <div className="absolute -bottom-32 -right-32 h-[36rem] w-[36rem] rounded-full bg-cyan-400/20 blur-[130px]" />
+        <div className="absolute right-[10%] top-[12%] h-[26rem] w-[26rem] rounded-full bg-blue-600/20 blur-[110px]" />
+        <div className="absolute bottom-[8%] left-[12%] h-[24rem] w-[24rem] rounded-full bg-indigo-600/20 blur-[110px]" />
+        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
       </div>
 
-      {/* =========================================================
-          MAIN CONTENT
-          ========================================================= */}
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-900/15 lg:grid-cols-[1.05fr_0.95fr]">
-          {/* =====================================================
-              BRAND PANEL
-              ===================================================== */}
-          <section className="relative hidden overflow-hidden bg-slate-900 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-12">
-            {/* Decorative glow */}
-            <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
+      {/* ═══════════════ TOP NAV ═══════════════ */}
+      <nav className="relative z-20 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
+        <Link to="/" className="group flex items-center gap-2.5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-105">
+            <Icon.Tag className="w-4 h-4" />
+          </span>
+          <div>
+            <p className="text-sm font-black tracking-tight text-white">
+              KUGURISHA
+              <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">.COM</span>
+            </p>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Isoko ryawe</p>
+          </div>
+        </Link>
 
-            <div className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+        <div className="flex items-center gap-2">
+          <span className="hidden items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-400 sm:inline-flex">
+            <Icon.Shield className="w-3 h-3" />
+            Secure
+          </span>
+          <Link
+            to="/login"
+            className="group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-black text-white backdrop-blur-md transition hover:border-white/30 hover:bg-white/10"
+          >
+            Injira
+            <Icon.ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+      </nav>
 
-            <div className="relative">
-              {/* Brand */}
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-base font-black text-slate-900 shadow-lg">
-                  K
-                </div>
-
-                <div>
-                  <p className="text-lg font-black tracking-tight">
-                    KUGURISHA.COM
-                  </p>
-
-                  <p className="text-xs text-slate-400">
-                    Isoko ryawe ryo mu Rwanda
-                  </p>
-                </div>
-              </div>
-
-              {/* Main message */}
-              <div className="mt-20 max-w-md xl:mt-28">
-                <div className="mb-5 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300">
-                  🇷🇼 Tangira urugendo rwawe
-                </div>
-
-                <h2 className="text-4xl font-black leading-tight tracking-tight xl:text-5xl">
-                  Fungura konti.
-                  <br />
-
-                  <span className="text-slate-400">
-                    Tangira kugura.
-                  </span>
-
-                  <br />
-
-                  <span className="text-slate-400">
-                    Tangira kugurisha.
-                  </span>
-                </h2>
-
-                <p className="mt-6 max-w-sm text-sm leading-7 text-slate-400 xl:text-base">
-                  Kora konti yawe kuri KUGURISHA.COM hanyuma ubone
-                  uburyo bworoshye bwo kugura cyangwa kugurisha mu Rwanda.
-                </p>
-              </div>
-            </div>
-
-            {/* Bottom */}
-            <div className="relative flex items-center gap-3 border-t border-white/10 pt-6 text-sm text-slate-400">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5">
-                🇷🇼
-              </span>
-
-              <span>
-                Isoko ry'abanyarwanda,
-                <br />
-                ahantu hamwe.
-              </span>
-            </div>
-          </section>
-
-          {/* =====================================================
-              REGISTER PANEL
-              ===================================================== */}
-          <section className="bg-white px-5 py-8 sm:px-10 sm:py-10 lg:px-12 xl:px-14 xl:py-12">
+      {/* ═══════════════ MAIN PANEL ═══════════════ */}
+      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-84px)] max-w-7xl items-center justify-center px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03] shadow-[0_40px_100px_-30px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
+          <section className="relative px-6 py-10 sm:px-10 sm:py-12">
             <div className="mx-auto w-full max-w-md">
               {/* Mobile brand */}
-              <div className="mb-9 lg:hidden">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-base font-black text-white shadow-sm">
-                    K
-                  </div>
-
-                  <div>
-                    <p className="text-lg font-black tracking-tight text-slate-950">
-                      KUGURISHA.COM
-                    </p>
-
-                    <p className="text-xs text-slate-500">
-                      Isoko ryawe ryo mu Rwanda
-                    </p>
-                  </div>
-                </div>
+              <div className="mb-8 flex items-center justify-between sm:hidden">
+                <Link to="/" className="group flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md">
+                    <Icon.Tag className="w-4 h-4" />
+                  </span>
+                  <p className="text-sm font-black text-white">
+                    KUGURISHA<span className="text-blue-400">.COM</span>
+                  </p>
+                </Link>
+                <Link to="/" className="text-xs font-bold text-slate-400 hover:text-white">
+                  ← Ahabanza
+                </Link>
               </div>
 
               {/* Header */}
               <div>
-                <div className="mb-4 inline-flex items-center rounded-xl border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
-                  ✨ Tangira ubu
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-blue-400 backdrop-blur">
+                  <Icon.Sparkles className="w-3 h-3" />
+                  Tangira ubu
                 </div>
 
-                <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-                  Fungura konti
+                <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+                  Fungura{" "}
+                  <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+                    konti nshya
+                  </span>
                 </h1>
 
-                <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-base">
-                  Uzuza amakuru make hanyuma utangire gukoresha
-                  KUGURISHA.COM.
+                <p className="mt-2 text-sm font-medium text-slate-400">
+                  Uzuza amakuru make hanyuma utangire gukoresha KUGURISHA.COM.
                 </p>
               </div>
 
-              {/* =================================================
-                  FORM
-                  ================================================= */}
-              <form onSubmit={handleRegister} className="mt-8 space-y-5">
+              {/* ═════════ FORM ═════════ */}
+              <form onSubmit={handleRegister} className="mt-6 space-y-4">
                 {/* Full name */}
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
-                  <label
-                    htmlFor="fullName"
-                    className="block text-sm font-bold text-slate-700"
-                  >
-                    Amazina yawe
+                <div>
+                  <label htmlFor="fullName" className="flex items-center justify-between text-xs font-black text-slate-300">
+                    <span>Amazina yawe</span>
+                    {fullName && (
+                      <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${isNameValid ? "text-emerald-400" : "text-amber-400"}`}>
+                        {isNameValid ? <Icon.Check className="w-3 h-3" /> : <Icon.Alert className="w-3 h-3" />}
+                        {isNameValid ? "Byiza" : "Nibura 2"}
+                      </span>
+                    )}
                   </label>
-
                   <div className="relative mt-2">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        className="h-5 w-5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"
-                        />
-
-                        <circle cx="9" cy="7" r="4" />
-
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
-                        />
-                      </svg>
-                    </div>
-
+                    <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center transition-colors ${focused === "name" ? "text-blue-400" : "text-slate-500"}`}>
+                      <Icon.User className="w-4 h-4" />
+                    </span>
                     <input
                       id="fullName"
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
+                      onFocus={() => setFocused("name")}
+                      onBlur={() => setFocused(null)}
                       required
                       placeholder="Andika amazina yawe"
                       autoComplete="name"
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                      className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-12 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-blue-400/60 focus:bg-white/[0.06] focus:ring-4 focus:ring-blue-500/15"
                     />
                   </div>
                 </div>
 
                 {/* Email */}
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-bold text-slate-700"
-                  >
-                    Email
+                <div>
+                  <label htmlFor="email" className="flex items-center justify-between text-xs font-black text-slate-300">
+                    <span>Email</span>
+                    {email && (
+                      <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${isEmailValid ? "text-emerald-400" : "text-amber-400"}`}>
+                        {isEmailValid ? <Icon.Check className="w-3 h-3" /> : <Icon.Alert className="w-3 h-3" />}
+                        {isEmailValid ? "Byiza" : "Si email"}
+                      </span>
+                    )}
                   </label>
-
                   <div className="relative mt-2">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        className="h-5 w-5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M3 7.5 12 13l9-5.5M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"
-                        />
-                      </svg>
-                    </div>
-
+                    <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center transition-colors ${focused === "email" ? "text-blue-400" : "text-slate-500"}`}>
+                      <Icon.Mail className="w-4 h-4" />
+                    </span>
                     <input
                       id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      onFocus={() => setFocused("email")}
+                      onBlur={() => setFocused(null)}
                       required
                       placeholder="email@example.com"
                       autoComplete="email"
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                      className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-12 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-blue-400/60 focus:bg-white/[0.06] focus:ring-4 focus:ring-blue-500/15"
                     />
                   </div>
                 </div>
 
-                {/* Password with Show/Hide toggle */}
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5">
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-bold text-slate-700"
-                  >
-                    Password
+                {/* Password */}
+                <div>
+                  <label htmlFor="password" className="flex items-center justify-between text-xs font-black text-slate-300">
+                    <span>Password</span>
+                    {password && (
+                      <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${isPasswordValid ? "text-emerald-400" : "text-amber-400"}`}>
+                        {isPasswordValid ? <Icon.Check className="w-3 h-3" /> : <Icon.Alert className="w-3 h-3" />}
+                        {isPasswordValid ? "Byiza" : "Nibura 6"}
+                      </span>
+                    )}
                   </label>
-
                   <div className="relative mt-2">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        className="h-5 w-5"
-                      >
-                        <rect
-                          width="16"
-                          height="11"
-                          x="4"
-                          y="10"
-                          rx="2"
-                        />
-
-                        <path
-                          strokeLinecap="round"
-                          d="M8 10V7a4 4 0 0 1 8 0v3"
-                        />
-                      </svg>
-                    </div>
-
+                    <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center transition-colors ${focused === "password" ? "text-blue-400" : "text-slate-500"}`}>
+                      <Icon.Lock className="w-4 h-4" />
+                    </span>
                     <input
                       id="password"
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      onFocus={() => setFocused("password")}
+                      onBlur={() => setFocused(null)}
                       required
                       minLength={6}
                       placeholder="Nibura inyuguti 6"
                       autoComplete="new-password"
-                      className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-12 pr-12 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                      className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-12 pr-12 text-sm font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-blue-400/60 focus:bg-white/[0.06] focus:ring-4 focus:ring-blue-500/15"
                     />
-
                     <button
                       type="button"
-                      onClick={() => setShowPassword((previous) => !previous)}
+                      onClick={() => setShowPassword((p) => !p)}
                       aria-label={showPassword ? "Hisha ijambo ry'ibanga" : "Erekana ijambo ry'ibanga"}
-                      aria-pressed={showPassword}
-                      title={showPassword ? "Hisha password" : "Erekana password"}
-                      className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-400 transition hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+                      className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-500 transition hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
                     >
-                      {showPassword ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
-                          <path d="M3 3l18 18" />
-                          <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
-                          <path d="M9.9 5.2A10.9 10.9 0 0 1 12 5c5 0 9 4.5 10 7a14 14 0 0 1-3.1 4.5" />
-                          <path d="M6.6 6.6C4.3 8 2.8 10.2 2 12c1 2.5 5 7 10 7 1.7 0 3.3-.5 4.7-1.3" />
-                        </svg>
-                      ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden="true">
-                          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      )}
+                      {showPassword ? <Icon.EyeOff className="w-4 h-4" /> : <Icon.Eye className="w-4 h-4" />}
                     </button>
                   </div>
-
-                  <p className="mt-2 text-xs leading-5 text-slate-400">
-                    Password igomba kuba nibura inyuguti 6.
-                  </p>
                 </div>
 
                 {/* Role */}
                 <div>
-                  <p className="mb-3 text-sm font-bold text-slate-700">
-                    Uje gukora iki?
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Buyer */}
-                    <button
-                      type="button"
-                      onClick={() => setRole("buyer")}
-                      aria-pressed={role === "buyer"}
-                      className={`group rounded-2xl border p-4 text-left transition ${
-                        role === "buyer"
-                          ? "border-blue-500 bg-blue-50 shadow-sm shadow-blue-600/10"
-                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                      }`}
-                    >
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl transition ${
-                          role === "buyer"
-                            ? "bg-blue-600 text-white"
-                            : "bg-slate-100"
-                        }`}
-                      >
-                        🛒
-                      </div>
-
-                      <span
-                        className={`mt-3 block text-xs font-black sm:text-sm ${
-                          role === "buyer"
-                            ? "text-blue-700"
-                            : "text-slate-700"
-                        }`}
-                      >
-                        NDASHAKA KUGURA
-                      </span>
-
-                      <span className="mt-1 block text-[11px] leading-4 text-slate-400">
-                        Shaka ibyo ushaka kugura.
-                      </span>
-
-                      {role === "buyer" && (
-                        <div className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-blue-600">
-                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-white">
-                            ✓
-                          </span>
-
-                          Wahisemo
-                        </div>
-                      )}
-                    </button>
-
-                    {/* Seller */}
-                    <button
-                      type="button"
-                      onClick={() => setRole("seller")}
-                      aria-pressed={role === "seller"}
-                      className={`group rounded-2xl border p-4 text-left transition ${
-                        role === "seller"
-                          ? "border-blue-500 bg-blue-50 shadow-sm shadow-blue-600/10"
-                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                      }`}
-                    >
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl transition ${
-                          role === "seller"
-                            ? "bg-blue-600 text-white"
-                            : "bg-slate-100"
-                        }`}
-                      >
-                        🏷️
-                      </div>
-
-                      <span
-                        className={`mt-3 block text-xs font-black sm:text-sm ${
-                          role === "seller"
-                            ? "text-blue-700"
-                            : "text-slate-700"
-                        }`}
-                      >
-                        NDASHAKA KUGURISHA
-                      </span>
-
-                      <span className="mt-1 block text-[11px] leading-4 text-slate-400">
-                        Tangira kugurisha ibyo ufite.
-                      </span>
-
-                      {role === "seller" && (
-                        <div className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-blue-600">
-                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-white">
-                            ✓
-                          </span>
-
-                          Wahisemo
-                        </div>
-                      )}
-                    </button>
+                  <p className="mb-2 text-xs font-black text-slate-300">Uje gukora iki?</p>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {[
+                      {
+                        value: "buyer" as const,
+                        icon: Icon.ShoppingCart,
+                        title: "NDASHAKA KUGURA",
+                        subtitle: "Shaka ibintu",
+                        tone: "blue",
+                      },
+                      {
+                        value: "seller" as const,
+                        icon: Icon.Store,
+                        title: "NDASHAKA KUGURISHA",
+                        subtitle: "Gurisha ibintu",
+                        tone: "orange",
+                      },
+                    ].map((option) => {
+                      const isActive = role === option.value
+                      const OptionIcon = option.icon
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setRole(option.value)}
+                          aria-pressed={isActive}
+                          className={`group relative rounded-xl border p-3.5 text-left transition-all ${
+                            isActive
+                              ? option.tone === "blue"
+                                ? "border-blue-400/50 bg-blue-500/[0.08] shadow-[0_8px_25px_-10px_rgba(59,130,246,0.5)] ring-2 ring-blue-500/20"
+                                : "border-[#FF5D00]/50 bg-[#FF5D00]/[0.08] shadow-[0_8px_25px_-10px_rgba(255,93,0,0.5)] ring-2 ring-[#FF5D00]/20"
+                              : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <span className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
+                              isActive
+                                ? option.tone === "blue"
+                                  ? "bg-blue-500 text-white shadow-md shadow-blue-500/30"
+                                  : "bg-[#FF5D00] text-white shadow-md shadow-[#FF5D00]/30"
+                                : "bg-white/[0.06] text-slate-400"
+                            }`}>
+                              <OptionIcon className="w-4 h-4" />
+                            </span>
+                            {isActive && (
+                              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-white ${
+                                option.tone === "blue" ? "bg-blue-500" : "bg-[#FF5D00]"
+                              }`}>
+                                <Icon.Check className="w-3 h-3" />
+                              </span>
+                            )}
+                          </div>
+                          <p className={`mt-2.5 text-[10px] font-black uppercase tracking-wider ${
+                            isActive
+                              ? option.tone === "blue" ? "text-blue-300" : "text-[#FF7424]"
+                              : "text-slate-300"
+                          }`}>
+                            {option.title}
+                          </p>
+                          <p className="mt-0.5 text-[10px] font-medium text-slate-500">{option.subtitle}</p>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
                 {/* Message */}
                 {message && (
-                  <div
-                    role="alert"
-                    className={`flex gap-3 rounded-2xl border p-4 text-sm leading-6 ${
-                      success
-                        ? "border-emerald-100 bg-emerald-50 text-emerald-700"
-                        : "border-red-100 bg-red-50 text-red-700"
-                    }`}
-                  >
-                    <span className="mt-0.5 shrink-0">
-                      {success ? "✓" : "⚠️"}
+                  <div className={`flex items-start gap-2.5 rounded-xl border p-3 text-xs font-semibold ${
+                    success
+                      ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
+                      : "border-rose-500/25 bg-rose-500/10 text-rose-300"
+                  }`}>
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                      success ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
+                    }`}>
+                      {success ? <Icon.Check className="w-3.5 h-3.5" /> : <Icon.Alert className="w-3.5 h-3.5" />}
                     </span>
-
-                    <p>{message}</p>
+                    <p className="mt-1 leading-5">{message}</p>
                   </div>
                 )}
 
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="group flex h-12 w-full items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-extrabold text-white shadow-sm transition hover:bg-slate-800 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={!canSubmit}
+                  className="group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] text-sm font-black text-white shadow-[0_16px_38px_-10px_rgba(255,93,0,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_45px_-10px_rgba(255,93,0,0.85)] active:scale-95 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:shadow-none disabled:opacity-60"
                 >
-                  <span className="transition group-hover:translate-x-0.5">
-                    {loading
-                      ? "Turimo gukora konti..."
-                      : "Fungura konti"}
-                  </span>
-
-                  {!loading && (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="ml-2 h-4 w-4 transition group-hover:translate-x-1"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 12h14m-6-6 6 6-6 6"
-                      />
-                    </svg>
-                  )}
-
-                  {loading && (
-                    <span className="ml-3 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                  {loading ? (
+                    <>
+                      <span className="relative h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                      <span className="relative">Turimo gukora konti...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon.Sparkles className="relative w-4 h-4" />
+                      <span className="relative">Fungura konti</span>
+                      <Icon.ArrowRight className="relative w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                    </>
                   )}
                 </button>
               </form>
 
-              {/* Login */}
-              <div className="mt-8 border-t border-slate-100 pt-7 text-center">
-                <p className="text-sm text-slate-500">
-                  Usanzwe ufite konti?
-                </p>
-
+              {/* Login link */}
+              <div className="mt-6 text-center">
+                <p className="text-xs font-semibold text-slate-400">Usanzwe ufite konti?</p>
                 <Link
                   to="/login"
-                  className="mt-2 inline-flex items-center text-sm font-extrabold text-blue-600 transition hover:text-blue-700 hover:underline"
+                  className="group mt-1.5 inline-flex items-center gap-1.5 text-sm font-black text-blue-400 transition hover:text-blue-300"
                 >
                   Injira muri konti
-
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="ml-1.5 h-4 w-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 12h14m-6-6 6 6-6 6"
-                    />
-                  </svg>
+                  <Icon.ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                 </Link>
               </div>
 
-              {/* Footer */}
-              <p className="mt-8 text-center text-xs leading-5 text-slate-400">
-                © {new Date().getFullYear()} KUGURISHA.COM
-                <br />
-                Isoko ryawe ryo mu Rwanda 🇷🇼
-              </p>
+              {/* Trust footer */}
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-white/5 pt-5 text-[10px] font-semibold text-slate-500">
+                <span className="flex items-center gap-1">
+                  <Icon.Shield className="w-3 h-3 text-emerald-500" />
+                  Umutekano
+                </span>
+                <span className="flex items-center gap-1">
+                  <Icon.Bolt className="w-3 h-3 text-blue-400" />
+                  Byihuse
+                </span>
+                <span className="flex items-center gap-1">
+                  <Icon.Check className="w-3 h-3 text-emerald-500" />
+                  Byizewe
+                </span>
+              </div>
             </div>
           </section>
         </div>
+      </div>
+
+      {/* Back link */}
+      <div className="relative z-10 mx-auto mb-6 max-w-7xl px-5 text-center sm:px-8">
+        <Link
+          to="/"
+          className="group inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-white"
+        >
+          <Icon.ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+          Subira ku isoko
+        </Link>
       </div>
     </main>
   )

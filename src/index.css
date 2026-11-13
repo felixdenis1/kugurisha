@@ -1122,14 +1122,349 @@ h4 {
   to   { transform: translateX(-50%); }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   27. INFINITE SCROLL (marquee for products) — COMPLETE
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes infinite-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+
 .animate-infinite-scroll {
   display: flex;
   width: max-content;
-  animation: infinite-scroll 35s linear infinite;
+  animation: infinite-scroll 45s linear infinite;
   will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 
+/* Pause on hover / focus / active drag */
 .animate-infinite-scroll:hover,
-.animate-infinite-scroll:focus-within {
+.animate-infinite-scroll:focus-within,
+.animate-infinite-scroll:active {
   animation-play-state: paused;
+}
+
+/* Reduced motion — kill the animation */
+@media (prefers-reduced-motion: reduce) {
+  .animate-infinite-scroll {
+    animation: none;
+  }
+}
+
+/* ── Slider track wrapper ──────────────────────────────── */
+#home-product-slider-track {
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* IE / Edge legacy */
+}
+
+#home-product-slider-track::-webkit-scrollbar {
+  display: none;              /* Chrome / Safari */
+}
+
+/* ── Edge fade mask (premium Apple-style) ──────────────── */
+#home-product-slider-track {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 40px,
+    black calc(100% - 40px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black 40px,
+    black calc(100% - 40px),
+    transparent 100%
+  );
+}
+
+/* Ensure native form controls stay legible in dark mode */
+.dark input,
+.dark textarea,
+.dark select {
+  color-scheme: dark;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgb(148 163 184); /* slate-400 */
+}
+/* Prevent white-on-white when focusing light-styled inputs in dark mode */
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  background-color: rgb(15 23 42); /* slate-900 */
+  color: white;
+}
+
+/* Footer micro-animations */
+@keyframes footer-drift {
+  from { background-position: 0 0; }
+  to   { background-position: 320px 320px; }
+}
+
+@keyframes footer-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+
+@keyframes footer-breathe {
+  0%, 100% { opacity: 0; transform: scale(0.95); }
+  50%      { opacity: 0.9; transform: scale(1.15); }
+}
+
+@keyframes footer-shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe\:animate-\[footer-drift_60s_linear_infinite\],
+  .motion-safe\:animate-\[footer-breathe_4\.5s_ease-in-out_infinite\],
+  .\[animation\:footer-shimmer_6s_ease-in-out_infinite\] {
+    animation: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   28. MOBILE UX HARDENING  (≤ 700px)  — append at end of file
+   Fixes: font-size zoom, safe area, touch targets, story card,
+   header condensing, slider mask, slider mask / iOS momentum.
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 700px) {
+  /* ── 28.1 Base font + input zoom fix ─────────────────── */
+  html {
+    scroll-padding-top: calc(80px + env(safe-area-inset-top, 0px));
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    /* iOS zooms in on any input < 16px — lift base a touch */
+    font-size: 15.5px;
+    line-height: 1.6;
+  }
+
+  /* Any interactive input must be ≥ 16px to suppress focus-zoom */
+  input,
+  textarea,
+  select,
+  .kg-input {
+    font-size: max(16px, 1em);
+  }
+
+  /* ── 28.2 Header: safe-area + smaller panel ──────────── */
+  .kg-header {
+    top: env(safe-area-inset-top, 0px);
+    padding-top: 0;
+  }
+
+  .kg-header .kg-header-panel,
+  .kg-h-panel {
+    /* Trust the container for width — just breathe less */
+    padding-inline: 0.75rem;
+    border-radius: 20px;
+    /* On mobile, condensing causes a jump — lock height */
+    min-height: 60px;
+    transition: background 0.25s ease, border-color 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  /* Disable scroll-condense on mobile — it fights the pill */
+  .kg-header-scrolled .kg-header-panel,
+  .kg-h-scrolled .kg-h-panel {
+    min-height: 60px;
+  }
+
+  /* Hide the tagline below 420px — it eats the burger row */
+  .kg-h-tagline {
+    display: none;
+  }
+
+  .kg-h-wordmark {
+    font-size: 17px;
+    letter-spacing: -0.05em;
+  }
+
+  /* ── 28.3 Touch targets ≥ 44px ───────────────────────── */
+  .kg-h-navlink {
+    min-height: 44px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .kg-h-mobilelink {
+    min-height: 48px;
+    padding: 14px 14px;
+    font-size: 14px;
+  }
+
+  .kg-h-action,
+  .kg-h-login,
+  .kg-h-sell {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── 28.4 Story cards: unstack + de-sticky ───────────── */
+  .kg-story-stack {
+    gap: 18px;
+    max-width: 100%;
+  }
+
+  .kg-story-step,
+  .kg-story-card {
+    /* The stacking affordance is desktop-only */
+    position: relative;
+    top: auto;
+  }
+
+  .kg-story-card {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+    margin-bottom: 20px;
+    padding: 22px;
+    border-radius: 22px;
+    transform: none; /* kill the scale() stacking trick */
+  }
+
+  .kg-story-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .kg-story-copy {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: auto;
+    padding: 22px;
+    border-radius: 18px;
+    text-align: left;
+  }
+
+  .kg-story-title,
+  .kg-story-heading {
+    font-size: clamp(24px, 6vw, 34px);
+    line-height: 1.08;
+    margin-top: 14px;
+  }
+
+  .kg-story-description {
+    font-size: clamp(15px, 4.2vw, 18px);
+    line-height: 1.55;
+    max-width: 40ch;
+  }
+
+  .kg-story-visual {
+    min-height: 200px;
+    padding: 10px;
+    border-radius: 18px;
+  }
+
+  .kg-story-scene {
+    min-height: 180px;
+    border-radius: 16px;
+  }
+
+  /* ── 28.5 Slider: drop mask on mobile ────────────────── */
+  #home-product-slider-track {
+    /* mask-image disables iOS momentum scroll on some versions */
+    mask-image: none;
+    -webkit-mask-image: none;
+    padding-inline: 4px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  /* ── 28.6 Glass blur is expensive on low-end Android ─── */
+  .glass,
+  .glass-soft,
+  .glass-strong {
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+
+  /* ── 28.7 Section paddings — cap the desktop ones ────── */
+  /* (Not a bug, but reduces the "empty phone screen" feel) */
+  .kg-story-section {
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   28b. Very small phones (≤ 400px)  — tight wordmark
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 400px) {
+  .kg-h-wordmark {
+    font-size: 15.5px;
+  }
+
+  .kg-h-panel {
+    padding-inline: 0.5rem;
+  }
+
+  .kg-story-title,
+  .kg-story-heading {
+    font-size: clamp(21px, 6.4vw, 26px);
+  }
+
+  .kg-story-copy {
+    padding: 18px;
+  }
+
+  .kg-story-description {
+    font-size: 15px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   28c. Touch-only devices — remove hover-only transforms
+   ═══════════════════════════════════════════════════════════ */
+@media (hover: none) and (pointer: coarse) {
+  .kg-card-interactive:hover {
+    transform: none;
+    box-shadow: var(--card-shadow);
+  }
+  .kg-h-sell:hover {
+    transform: none;
+    filter: none;
+  }
+  .kg-h-action:hover {
+    transform: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   28d. Reduced-motion — also neutralize safe-motion classes
+   ═══════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+
+  .kg-animate-fade-up,
+  .kg-animate-fade-in,
+  .kg-animate-pulse {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+#root, body { min-height: 100dvh; }
+.kg-story-title, .kg-story-heading { text-wrap: balance; }
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--input-text);
+  transition: background-color 9999s ease-out;
 }

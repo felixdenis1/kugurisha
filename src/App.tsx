@@ -1,6 +1,6 @@
 // src/App.tsx
 
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 
 import { ThemeProvider } from "./components/ThemeProvider"
 import MainLayout from "./layouts/MainLayout"
@@ -32,6 +32,12 @@ import AdminListings from "./pages/AdminListings"
 import AdminReports from "./pages/AdminReports"
 import NotFound from "./pages/NotFound"
 
+/* Legal / help pages (new) */
+import Terms from "./pages/Terms"
+import Privacy from "./pages/Privacy"
+import Help from "./pages/Help"
+import Cookies from "./pages/Cookies"
+
 function App() {
   return (
     <ThemeProvider>
@@ -44,11 +50,17 @@ function App() {
           {/* Dedicated All Listings page */}
           <Route path="/listings" element={<AllListings />} />
 
-          {/* Shared layout for the new standalone information pages. */}
+          {/* Shared layout for the standalone information pages. */}
           <Route element={<MainLayout />}>
             <Route path="/categories" element={<Categories />} />
             <Route path="/about" element={<About />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
+
+            {/* Legal & help (new) */}
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/cookies" element={<Cookies />} />
           </Route>
 
           {/* Authentication */}
@@ -81,6 +93,9 @@ function App() {
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/listings" element={<AdminListings />} />
           <Route path="/admin/reports" element={<AdminReports />} />
+
+          {/* Convenience aliases (optional) */}
+          <Route path="/faq" element={<Navigate to="/help" replace />} />
 
           {/* Not found */}
           <Route path="*" element={<NotFound />} />

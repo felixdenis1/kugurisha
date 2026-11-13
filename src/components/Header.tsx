@@ -40,9 +40,11 @@ type IconName =
 function Icon({
   name,
   size = 19,
+  className,
 }: {
   name: IconName
   size?: number
+  className?: string
 }) {
   const paths: Record<IconName, ReactNode> = {
     search: (
@@ -117,6 +119,7 @@ function Icon({
       strokeWidth={1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
+      className={className}
       aria-hidden="true"
     >
       {paths[name]}
@@ -144,6 +147,10 @@ const accountLinks: {
   { label: "Imenyesha", to: "/notifications", icon: "bell" },
 ]
 
+/* ── hover intent tuning ────────────────────────────────── */
+const HOVER_OPEN_DELAY = 120
+const HOVER_CLOSE_DELAY = 180
+
 export default function Header({
   searchValue,
   onSearchChange,
@@ -165,12 +172,50 @@ export default function Header({
   const headerRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
+  /* hover intent timers for the account dropdown */
+  const hoverOpenTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hoverCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const search = searchValue ?? internalSearch
 
   function closeMenus() {
     setMobileOpen(false)
     setAccountOpen(false)
     setSearchOpen(false)
+  }
+
+  function clearHoverTimers() {
+    if (hoverOpenTimer.current) {
+      clearTimeout(hoverOpenTimer.current)
+      hoverOpenTimer.current = null
+    }
+    if (hoverCloseTimer.current) {
+      clearTimeout(hoverCloseTimer.current)
+      hoverCloseTimer.current = null
+    }
+  }
+
+  function handleAccountEnter() {
+    if (hoverCloseTimer.current) {
+      clearTimeout(hoverCloseTimer.current)
+      hoverCloseTimer.current = null
+    }
+    if (accountOpen) return
+    hoverOpenTimer.current = setTimeout(() => {
+      setAccountOpen(true)
+      setSearchOpen(false)
+      setMobileOpen(false)
+    }, HOVER_OPEN_DELAY)
+  }
+
+  function handleAccountLeave() {
+    if (hoverOpenTimer.current) {
+      clearTimeout(hoverOpenTimer.current)
+      hoverOpenTimer.current = null
+    }
+    hoverCloseTimer.current = setTimeout(() => {
+      setAccountOpen(false)
+    }, HOVER_CLOSE_DELAY)
   }
 
   useEffect(() => {
@@ -209,6 +254,11 @@ export default function Header({
       document.removeEventListener("mousedown", handleOutside)
       document.removeEventListener("keydown", handleEscape)
     }
+  }, [])
+
+  /* cleanup hover timers on unmount */
+  useEffect(() => {
+    return () => clearHoverTimers()
   }, [])
 
   useEffect(() => {
@@ -320,49 +370,65 @@ export default function Header({
   }
 
   const actionClass =
-    "kg-h-action relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]"
+    "kg-h-action relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]"
 
   return (
     <div
       ref={headerRef}
-      className={`kg-h-root sticky top-0 z-[100] w-full ${
-        scrolled ? "kg-h-scrolled" : ""
+      className={`kg-h-root sticky top-0 z-[100] w-full transition-all duration-500 ${
+        scrolled ? "py-2 shadow-xl backdrop-blur-xl bg-white/70 dark:bg-slate-950/70 border-b border-slate-200/50 dark:border-white/10" : "py-4"
       }`}
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+        alignSelf: "stretch",
+      }}
     >
-      <header
-        className={`transition-[padding] duration-300 ${
-          scrolled ? "py-2.5" : "py-3.5"
-        }`}
-      >
+      <header className="transition-all duration-300 ease-out">
         <div className="mx-auto max-w-[1520px] px-3 sm:px-6 lg:px-8">
-          <div className="kg-h-panel relative flex min-h-[76px] items-center justify-between gap-3 rounded-full px-4 sm:px-7 shadow-lg backdrop-blur-md">
+          {/* ============ MAIN CAPSULE PANEL ============ */}
+          <div
+            className={`kg-h-panel relative flex items-center justify-between gap-3 rounded-full px-3.5 sm:px-6 lg:px-7 border border-white/40 bg-white/80 dark:bg-slate-900/80 dark:border-white/10 shadow-[0_12px_40px_-15px_rgba(16,36,54,0.12)] backdrop-blur-2xl ${
+              scrolled ? "min-h-[58px]" : "min-h-[72px]"
+            } transition-all duration-500 ease-out`}
+          >
             {/* BRAND */}
             <Link
               to="/"
               onClick={closeMenus}
-              className="kg-h-brand flex shrink-0 items-center gap-3"
+              className="kg-h-brand group flex shrink-0 items-center gap-2.5 sm:gap-3"
               aria-label="KUGURISHA - Ahabanza"
             >
-              <span className="kg-h-logo flex h-12 w-12 shrink-0 items-center justify-center">
+              <span className="kg-h-logo flex h-10 w-10 shrink-0 items-center justify-center sm:h-11 sm:w-11 rounded-2xl bg-gradient-to-br from-[var(--primary)]/15 to-[#FF5D00]/10 p-1.5 transition-transform duration-300 group-hover:scale-105">
                 <img
                   src="/favicon.svg"
                   alt=""
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-contain filter drop-shadow-sm"
                 />
               </span>
 
               <span className="flex min-w-0 flex-col">
-                <span className="kg-h-wordmark text-2xl sm:text-[32px] font-extrabold tracking-tight leading-none" style={{ fontFamily: 'Instagram Sans, sans-serif', letterSpacing: '-0.02em', textTransform: 'none' }}>
+                <span
+                  className={`kg-h-wordmark text-[20px] sm:text-[24px] lg:text-[27px] font-black leading-none transition-all duration-300 ${
+                    scrolled ? "sm:text-[21px] lg:text-[23px]" : ""
+                  }`}
+                  style={{
+                    fontFamily:
+                      "Instagram Sans, var(--font-display), sans-serif",
+                    letterSpacing: "-0.04em",
+                    textTransform: "none",
+                  }}
+                >
                   kugurisha
-                  <span className="kg-h-brand-dot text-[var(--primary)]">.</span>
+                  
                 </span>
-               
               </span>
             </Link>
 
             {/* DESKTOP NAVIGATION */}
             <nav
-              className="kg-h-nav hidden items-center gap-1 xl:flex mx-auto"
+              className="kg-h-nav hidden items-center gap-1 xl:flex mx-auto bg-slate-100/70 dark:bg-white/[0.04] p-1.5 rounded-full border border-slate-200/60 dark:border-white/10 backdrop-blur-md"
               aria-label="Menu nyamukuru"
             >
               {navigation.map((item) => (
@@ -371,31 +437,45 @@ export default function Header({
                   to={item.to}
                   end={item.to === "/"}
                   className={({ isActive }) =>
-                    `kg-h-navlink px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${isActive ? "is-active font-semibold" : ""}`
+                    `kg-h-navlink rounded-full px-4 py-2 text-[13px] font-bold transition-all duration-300 ${
+                      isActive
+                        ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm is-active"
+                        : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5"
+                    }`
                   }
                 >
                   {item.label}
                 </NavLink>
               ))}
 
+              <span
+                className="mx-1 h-4 w-px bg-slate-300 dark:bg-white/15"
+                aria-hidden="true"
+              />
+
               <NavLink
                 to="/ai-search"
                 className={({ isActive }) =>
-                  `kg-h-navlink kg-h-ai px-3.5 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition-colors whitespace-nowrap ${
-                    isActive ? "is-active font-semibold" : ""
+                  `kg-h-navlink kg-h-ai group rounded-full px-4 py-2 text-[13px] font-extrabold flex items-center gap-2 transition-all duration-300 ${
+                    isActive
+                      ? "bg-gradient-to-r from-[#FF5D00] to-[#FF8533] text-white shadow-md shadow-[#FF5D00]/25 is-active"
+                      : "bg-[#FF5D00]/10 text-[#FF5D00] hover:bg-[#FF5D00]/20"
                   }`
                 }
               >
-                <Icon name="spark" size={15} />
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-300 group-hover:scale-110">
+                  <Icon name="spark" size={13} />
+                </span>
                 Baza AI
               </NavLink>
             </nav>
 
             {/* ACTIONS */}
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              {/* Search toggle */}
               <button
                 type="button"
-                className={actionClass}
+                className={`${actionClass} relative h-10 w-10 rounded-2xl bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15`}
                 onClick={() => {
                   setSearchOpen((previous) => !previous)
                   setAccountOpen(false)
@@ -405,95 +485,125 @@ export default function Header({
                 aria-expanded={searchOpen}
                 title="Shakisha"
               >
-                <Icon name={searchOpen ? "close" : "search"} size={19} />
+                <Icon name={searchOpen ? "close" : "search"} size={18} />
               </button>
 
+              {/* Theme toggle */}
               <button
                 type="button"
-                className={`${actionClass} hidden sm:flex`}
+                className={`${actionClass} hidden h-10 w-10 items-center justify-center rounded-2xl bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15 sm:flex`}
                 onClick={toggleTheme}
                 aria-label={
-                  theme === "dark"
-                    ? "Koresha light mode"
-                    : "Koresha dark mode"
+                  theme === "dark" ? "Koresha light mode" : "Koresha dark mode"
                 }
                 title={theme === "dark" ? "Light mode" : "Dark mode"}
               >
-                <Icon
-                  name={theme === "dark" ? "sun" : "moon"}
-                  size={19}
-                />
+                <Icon name={theme === "dark" ? "sun" : "moon"} size={18} />
               </button>
 
+              {/* Notifications */}
               {userId && (
                 <Link
                   to="/notifications"
                   onClick={closeMenus}
-                  className={actionClass}
+                  className={`${actionClass} relative flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15`}
                   aria-label={`Imenyesha: ${unreadCount} utarasoma`}
                 >
-                  <Icon name="bell" size={19} />
+                  <Icon name="bell" size={18} />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                    <span className="absolute -right-1 -top-1 flex min-h-[19px] min-w-[19px] items-center justify-center rounded-full bg-[#FF5D00] px-1 text-[10px] font-black text-white ring-2 ring-white dark:ring-slate-900 shadow-md">
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
                 </Link>
               )}
 
+              {/* Account / Login — hover-intent dropdown */}
               {userId ? (
-                <div ref={accountRef} className="relative hidden sm:block">
+                <div
+                  ref={accountRef}
+                  className="relative hidden sm:block"
+                  onMouseEnter={handleAccountEnter}
+                  onMouseLeave={handleAccountLeave}
+                >
                   <button
                     type="button"
-                    className={`${actionClass} gap-1.5 px-3 sm:w-auto rounded-full`}
+                    className={`${actionClass} group flex h-10 items-center gap-2 rounded-2xl bg-slate-100/80 dark:bg-white/[0.06] px-3 lg:px-3.5 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15 ${
+                      accountOpen ? "ring-2 ring-[#FF5D00]/50" : ""
+                    }`}
                     onClick={() => {
+                      clearHoverTimers()
                       setAccountOpen((previous) => !previous)
                       setSearchOpen(false)
                       setMobileOpen(false)
                     }}
                     aria-expanded={accountOpen}
+                    aria-haspopup="menu"
                     aria-label="Fungura konti"
                   >
-                    <Icon name="user" size={18} />
+                    <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-white dark:bg-white/10 text-[#FF5D00] shadow-sm transition-transform duration-300 group-hover:scale-110">
+                      <Icon name="user" size={15} />
+                    </span>
                     <span className="hidden text-xs font-bold lg:inline">
                       Konti
                     </span>
-                    <Icon name="chevron" size={13} />
+                    <Icon
+                      name="chevron"
+                      size={13}
+                      className={`transition-transform duration-300 text-slate-400 ${
+                        accountOpen ? "rotate-180" : ""
+                      }`}
+                    />
                   </button>
 
                   {accountOpen && (
-                    <div className="kg-h-dropdown absolute right-0 top-[calc(100%+15px)] z-[110] w-64 rounded-3xl p-2.5 shadow-2xl">
-                      <p className="px-3 py-2.5 text-xs font-extrabold">
+                    <div
+                      role="menu"
+                      className="kg-h-dropdown kg-account-menu absolute right-0 top-[calc(100%+12px)] z-[110] w-64 rounded-[2rem] p-3 shadow-2xl border border-slate-200/80 dark:border-white/15 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200"
+                    >
+                      {/* invisible bridge */}
+                      <span
+                        aria-hidden="true"
+                        className="absolute -top-3 left-0 right-0 h-3"
+                      />
+
+                      <p className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
                         Konti yanjye
                       </p>
 
-                      {accountLinks.map((item) => (
-                        <Link
-                          key={item.to}
-                          to={item.to}
-                          onClick={closeMenus}
-                          className="kg-h-menuitem flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-colors"
-                        >
-                          <Icon name={item.icon} size={17} />
-                          {item.label}
-                          {item.to === "/notifications" &&
-                            unreadCount > 0 && (
-                              <span className="ml-auto text-xs font-bold text-[var(--primary)]">
-                                {unreadCount}
-                              </span>
-                            )}
-                        </Link>
-                      ))}
+                      <div className="space-y-1 mt-1">
+                        {accountLinks.map((item) => (
+                          <Link
+                            key={item.to}
+                            to={item.to}
+                            onClick={closeMenus}
+                            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-[#FF5D00]"
+                          >
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400">
+                              <Icon name={item.icon} size={16} />
+                            </span>
+                            {item.label}
+                            {item.to === "/notifications" &&
+                              unreadCount > 0 && (
+                                <span className="ml-auto rounded-full bg-[#FF5D00] px-2.5 py-0.5 text-[10px] font-black text-white shadow-sm">
+                                  {unreadCount}
+                                </span>
+                              )}
+                          </Link>
+                        ))}
+                      </div>
 
-                      <div className="kg-h-divider my-2" />
+                      <div className="my-2 h-[1px] bg-slate-200/80 dark:bg-white/10" />
 
                       <button
                         type="button"
                         onClick={() => void logout()}
                         disabled={loggingOut}
-                        className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-bold text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
                       >
-                        <Icon name="logout" size={17} />
+                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
+                          <Icon name="logout" size={16} />
+                        </span>
                         {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
                       </button>
                     </div>
@@ -503,21 +613,26 @@ export default function Header({
                 <Link
                   to="/login"
                   onClick={closeMenus}
-                  className="kg-h-login hidden rounded-full px-4.5 py-2.5 text-xs font-bold sm:inline-flex items-center transition-all whitespace-nowrap"
+                  className="hidden h-10 items-center rounded-2xl px-5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-all sm:inline-flex"
                 >
                   Injira
                 </Link>
               )}
 
+              {/* Sell CTA — the hero action */}
               <Link
                 to="/create-listing"
                 onClick={closeMenus}
-                className="kg-h-sell hidden h-10 items-center gap-2 rounded-full px-5 text-xs font-extrabold sm:flex shadow-sm transition-all whitespace-nowrap shrink-0"
+                className="group relative hidden h-11 items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7522] to-[#FF5D00] px-5 text-xs font-black text-white shadow-lg shadow-[#FF5D00]/30 transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-[#FF5D00]/40 active:scale-95 sm:flex lg:px-6"
               >
-                <Icon name="plus" size={17} />
-                Gurisha
+                <span className="pointer-events-none absolute inset-0 -translate-x-full bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.35)_50%,transparent_65%)] transition-transform duration-700 group-hover:translate-x-full" />
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-300 group-hover:rotate-90">
+                  <Icon name="plus" size={13} />
+                </span>
+                <span className="whitespace-nowrap tracking-tight">Gurisha</span>
               </Link>
 
+              {/* Mobile menu toggle */}
               <button
                 type="button"
                 onClick={() => {
@@ -525,26 +640,23 @@ export default function Header({
                   setSearchOpen(false)
                   setAccountOpen(false)
                 }}
-                className={`${actionClass} xl:hidden`}
+                className={`${actionClass} flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15 xl:hidden`}
                 aria-label={mobileOpen ? "Funga menu" : "Fungura menu"}
                 aria-expanded={mobileOpen}
               >
-                <Icon
-                  name={mobileOpen ? "close" : "menu"}
-                  size={21}
-                />
+                <Icon name={mobileOpen ? "close" : "menu"} size={20} />
               </button>
             </div>
           </div>
 
-          {/* SEARCH PANEL */}
+          {/* ============ SEARCH PANEL ============ */}
           {searchOpen && (
             <form
               onSubmit={submitSearch}
               role="search"
-              className="kg-h-dropdown mx-auto mt-3 flex max-w-xl items-center gap-3 rounded-full p-2.5 shadow-2xl"
+              className="kg-h-dropdown mx-auto mt-3 flex max-w-2xl items-center gap-2 rounded-full p-2.5 pl-5 shadow-2xl border border-slate-200/80 dark:border-white/15 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl animate-in slide-in-from-top-3 duration-300"
             >
-              <span className="pl-3 text-[var(--primary)]">
+              <span className="text-[#FF5D00]">
                 <Icon name="search" size={19} />
               </span>
 
@@ -554,25 +666,22 @@ export default function Header({
                 value={search}
                 onChange={(event) => updateSearch(event.target.value)}
                 placeholder="Urashaka iki? iPhone, inzu, laptop..."
-                className="kg-h-input min-w-0 flex-1 bg-transparent px-2 py-2 text-sm outline-none"
+                className="kg-h-input min-w-0 flex-1 bg-transparent px-2 py-1.5 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 outline-none"
               />
 
               <button
                 type="submit"
-                className="kg-h-sell rounded-full px-4.5 py-2 text-xs font-bold shadow-sm"
+                className="rounded-full bg-gradient-to-r from-[#FF5D00] to-[#FF8533] px-6 py-2.5 text-xs font-black text-white shadow-md shadow-[#FF5D00]/30 transition-all hover:scale-105 active:scale-95"
               >
                 Shakisha
               </button>
             </form>
           )}
 
-          {/* MOBILE / TABLET MENU */}
+          {/* ============ MOBILE / TABLET MENU ============ */}
           {mobileOpen && (
-            <div className="kg-h-dropdown mt-3 rounded-[32px] p-4 xl:hidden shadow-2xl">
-              <nav
-                className="grid gap-1.5"
-                aria-label="Menu ya telefoni"
-              >
+            <div className="kg-h-dropdown mt-3 max-h-[calc(100dvh-100px)] overflow-y-auto rounded-[2rem] p-4 xl:hidden shadow-2xl border border-slate-200/80 dark:border-white/15 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl animate-in slide-in-from-top-4 duration-300">
+              <nav className="grid gap-1.5" aria-label="Menu ya telefoni">
                 {navigation.map((item) => (
                   <NavLink
                     key={item.to}
@@ -580,13 +689,15 @@ export default function Header({
                     end={item.to === "/"}
                     onClick={closeMenus}
                     className={({ isActive }) =>
-                      `kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm transition-colors ${
-                        isActive ? "is-active font-semibold" : ""
+                      `kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm font-bold transition-all ${
+                        isActive
+                          ? "bg-[#FF5D00]/10 text-[#FF5D00]"
+                          : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
                       }`
                     }
                   >
                     <span>{item.label}</span>
-                    <Icon name="arrow" size={16} />
+                    <Icon name="arrow" size={16} className="text-slate-400" />
                   </NavLink>
                 ))}
 
@@ -594,8 +705,10 @@ export default function Header({
                   to="/ai-search"
                   onClick={closeMenus}
                   className={({ isActive }) =>
-                    `kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm transition-colors ${
-                      isActive ? "is-active font-semibold" : ""
+                    `kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm font-extrabold transition-all ${
+                      isActive
+                        ? "bg-gradient-to-r from-[#FF5D00] to-[#FF8533] text-white shadow-md"
+                        : "bg-[#FF5D00]/10 text-[#FF5D00]"
                     }`
                   }
                 >
@@ -608,36 +721,40 @@ export default function Header({
 
                 {userId && (
                   <>
-                    <div className="kg-h-divider my-2" />
+                    <div className="my-2 h-[1px] bg-slate-200/80 dark:bg-white/10" />
                     {accountLinks.map((item) => (
                       <Link
                         key={item.to}
                         to={item.to}
                         onClick={closeMenus}
-                        className="kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm transition-colors"
+                        className="kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
                       >
                         <span className="flex items-center gap-3">
-                          <Icon name={item.icon} size={17} />
+                          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">
+                            <Icon name={item.icon} size={16} />
+                          </span>
                           {item.label}
                         </span>
-                        <Icon name="arrow" size={16} />
+                        <Icon name="arrow" size={16} className="text-slate-400" />
                       </Link>
                     ))}
                   </>
                 )}
 
-                <div className="kg-h-divider my-2" />
+                <div className="my-2 h-[1px] bg-slate-200/80 dark:bg-white/10" />
 
                 <button
                   type="button"
                   onClick={toggleTheme}
-                  className="kg-h-mobilelink text-left sm:hidden rounded-2xl px-4 py-3 flex items-center text-sm transition-colors"
+                  className="kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 sm:hidden"
                 >
                   <span className="flex items-center gap-3">
-                    <Icon
-                      name={theme === "dark" ? "sun" : "moon"}
-                      size={18}
-                    />
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">
+                      <Icon
+                        name={theme === "dark" ? "sun" : "moon"}
+                        size={17}
+                      />
+                    </span>
                     {theme === "dark" ? "Light mode" : "Dark mode"}
                   </span>
                 </button>
@@ -645,7 +762,7 @@ export default function Header({
                 <Link
                   to="/create-listing"
                   onClick={closeMenus}
-                  className="kg-h-sell mt-2 flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-extrabold shadow-sm"
+                  className="group mt-2 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#FF5D00] to-[#FF8533] px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-[#FF5D00]/30"
                 >
                   <Icon name="plus" size={18} />
                   Gurisha ikintu
@@ -655,7 +772,7 @@ export default function Header({
                   <Link
                     to="/login"
                     onClick={closeMenus}
-                    className="kg-h-mobilelink justify-center sm:hidden rounded-2xl py-3 text-center text-sm font-bold"
+                    className="mt-1.5 justify-center rounded-2xl py-3 text-center text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 sm:hidden"
                   >
                     Injira mu konti
                   </Link>
@@ -664,9 +781,9 @@ export default function Header({
                     type="button"
                     onClick={() => void logout()}
                     disabled={loggingOut}
-                    className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-red-500 disabled:opacity-50 transition-colors hover:bg-red-500/10"
+                    className="mt-1.5 flex items-center justify-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
                   >
-                    <Icon name="logout" size={18} />
+                    <Icon name="logout" size={17} />
                     {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
                   </button>
                 )}
