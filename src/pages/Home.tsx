@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { useNavigate } from "react-router-dom"
+import SliderRiseCTA from "../components/SliderRiseCTA"
+import SystemAnalyticsCard from "../components/SystemAnalyticsCard"
 import HomeStory from "../components/HomeStory"
+import HomeRentStory from "../components/HomeRentStory"  // ← new import
 import MovingStory from "../components/MovingStory"
 import Header from "../components/Header"
 import { supabase } from "../services/supabase"
@@ -547,401 +550,298 @@ export default function Home() {
         <Header searchValue={search} onSearchChange={setSearch} />
       )}
 
-      <section className="relative isolate overflow-hidden bg-[#f5f9fb] dark:bg-[#07111c]">
-        {/* ═════════ CINEMATIC AMBIENT MESH & ARCHITECTURAL GRID ═════════ */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -right-32 -top-36 h-[620px] w-[620px] rounded-full bg-[radial-gradient(circle,rgba(86,154,181,0.22)_0%,transparent_70%)] blur-3xl dark:bg-[radial-gradient(circle,rgba(86,154,181,0.25)_0%,transparent_70%)]" />
-          <div className="absolute -left-36 top-1/4 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(255,93,0,0.12)_0%,transparent_70%)] blur-3xl dark:bg-[radial-gradient(circle,rgba(255,93,0,0.16)_0%,transparent_70%)]" />
-          <div className="absolute -bottom-40 left-1/3 h-[540px] w-[540px] rounded-full bg-cyan-400/10 blur-[120px]" />
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(57,119,143,.045)_1px,transparent_1px),linear-gradient(90deg,rgba(57,119,143,.045)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_at_50%_30%,black_35%,transparent_82%)]" />
-          <div
-            className="absolute inset-0 opacity-[.03] mix-blend-multiply dark:opacity-[.05] dark:mix-blend-screen"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-            }}
-          />
+    <section className="relative isolate overflow-hidden bg-[#f5f9fb] dark:bg-[#07111c]">
+  {/* ═════════ CINEMATIC AMBIENT MESH & ARCHITECTURAL GRID ═════════ */}
+  <div className="pointer-events-none absolute inset-0 overflow-hidden">
+    <div className="absolute -right-32 -top-36 h-[620px] w-[620px] rounded-full bg-[radial-gradient(circle,rgba(86,154,181,0.22)_0%,transparent_70%)] blur-3xl dark:bg-[radial-gradient(circle,rgba(86,154,181,0.25)_0%,transparent_70%)]" />
+    <div className="absolute -left-36 top-1/4 h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(255,93,0,0.12)_0%,transparent_70%)] blur-3xl dark:bg-[radial-gradient(circle,rgba(255,93,0,0.16)_0%,transparent_70%)]" />
+    <div className="absolute -bottom-40 left-1/3 h-[540px] w-[540px] rounded-full bg-cyan-400/10 blur-[120px]" />
+    <div className="absolute inset-0 bg-[linear-gradient(rgba(57,119,143,.045)_1px,transparent_1px),linear-gradient(90deg,rgba(57,119,143,.045)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_at_50%_30%,black_35%,transparent_82%)]" />
+    <div
+      className="absolute inset-0 opacity-[.03] mix-blend-multiply dark:opacity-[.05] dark:mix-blend-screen"
+      style={{
+        backgroundImage:
+          "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+      }}
+    />
+  </div>
+
+  <div className="relative mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-14 lg:pb-28 lg:pt-16">
+    {/* ═════════ MAIN HERO GRID ═════════ */}
+    <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+      <div className="kug-reveal relative z-10">
+        <div className="inline-flex items-center gap-3 rounded-full border border-[#569ab5]/25 bg-white/85 px-4 py-2 shadow-[0_8px_24px_-10px_rgba(16,36,54,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/75">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inset-0 animate-ping rounded-full bg-[#FF5D00] opacity-75" />
+            <span className="relative flex h-2 w-2 rounded-full bg-[#FF5D00]" />
+          </span>
+          <span className="text-[10px] font-black uppercase tracking-[.22em] text-[#39778f] dark:text-[#83c2dc]">
+            Isoko ryawe ryo mu Rwanda
+          </span>
+          <span className="h-3 w-[1px] bg-slate-200 dark:bg-white/15" />
+          <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+            {showSellHeadline ? "Gurisha" : "Gura"}
+          </span>
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-14 lg:pb-28 lg:pt-16">
-          {/* ═════════ MAIN HERO GRID ═════════ */}
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-            <div className="kug-reveal relative z-10">
-              <div className="inline-flex items-center gap-3 rounded-full border border-[#569ab5]/25 bg-white/85 px-4 py-2 shadow-[0_8px_24px_-10px_rgba(16,36,54,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/75">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inset-0 animate-ping rounded-full bg-[#FF5D00] opacity-75" />
-                  <span className="relative flex h-2 w-2 rounded-full bg-[#FF5D00]" />
+        <div className="mt-7 min-h-[7.2rem] sm:min-h-[8.8rem] lg:min-h-[9.8rem]">
+          <h1
+            key={showSellHeadline ? "sell-mode" : "buy-mode"}
+            className="max-w-2xl text-[2.85rem] font-black leading-[1.01] tracking-[-.055em] text-[#102436] transition-all duration-700 ease-out dark:text-white sm:text-6xl lg:text-[4.35rem]"
+          >
+            {showSellHeadline ? (
+              <span className="block animate-[fadeSlideUp_0.55s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+                Ibyo ufite,
+                <br />
+                <span className="relative inline-block">
+                  <span className="bg-[linear-gradient(110deg,#FF5D00_0%,#FF7A29_40%,#FFA066_65%,#FF5D00_100%)] bg-[size:200%_100%] bg-clip-text text-transparent [animation:kg-shimmer_6s_ease-in-out_infinite]">
+                    bigurishirize aha.
+                  </span>
+                  <span className="absolute -bottom-1.5 left-0 h-[4px] w-28 rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7A29] to-transparent opacity-90" />
                 </span>
-                <span className="text-[10px] font-black uppercase tracking-[.22em] text-[#39778f] dark:text-[#83c2dc]">
-                  Isoko ryawe ryo mu Rwanda
+              </span>
+            ) : (
+              <span className="block animate-[fadeSlideUp_0.55s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+                Ibyo ushaka,
+                <br />
+                <span className="relative inline-block">
+                  <span className="bg-[linear-gradient(110deg,#39778f_0%,#569ab5_40%,#82bfd4_65%,#39778f_100%)] bg-[size:200%_100%] bg-clip-text text-transparent [animation:kg-shimmer_6s_ease-in-out_infinite]">
+                    ubisanga hano.
+                  </span>
+                  <span className="absolute -bottom-1.5 left-0 h-[4px] w-28 rounded-full bg-gradient-to-r from-[#39778f] via-[#569ab5] to-transparent opacity-90" />
                 </span>
-                <span className="h-3 w-[1px] bg-slate-200 dark:bg-white/15" />
-                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                  {showSellHeadline ? "Gurisha" : "Gura"}
-                </span>
+              </span>
+            )}
+          </h1>
+        </div>
+
+        <p className="mt-5 max-w-xl text-sm font-medium leading-8 text-slate-600 dark:text-slate-300 sm:text-base">
+          Gura, gurisha kandi uhure n'abantu bafite ibyo ukeneye. Kuva ku
+          bikoresho, imodoka n'imitungo itimukanwa,{" "}
+          <span className="font-bold text-slate-900 dark:text-white">KUGURISHA.COM</span>{" "}
+          ni isoko rihuza abafite ibyo bashaka gutanga n'ababikeneye.
+        </p>
+
+        <div className="mt-8 flex flex-wrap items-center gap-3.5">
+          <Link
+            to="/create-listing"
+            className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF6D1A] to-[#e05200] px-6 py-3.5 text-white shadow-[0_14px_34px_-10px_rgba(255,93,0,0.6)] ring-1 ring-white/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-10px_rgba(255,93,0,0.75)] active:translate-y-0"
+          >
+            <span className="pointer-events-none absolute inset-0 -translate-x-full rounded-full bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,.3)_50%,transparent_65%)] transition-transform duration-700 ease-out group-hover:translate-x-full" />
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 ring-1 ring-white/25 transition-transform duration-300 group-hover:rotate-90 group-hover:scale-110">
+              <Icon name="plus" size={12} />
+            </span>
+            <span className="text-[13px] font-extrabold tracking-tight">Gurisha ubu</span>
+            <Icon name="arrow-right" size={14} className="ml-0.5 shrink-0 text-white/80 transition-all duration-300 group-hover:translate-x-1 group-hover:text-white" />
+          </Link>
+
+          <Link
+            to="/ai-search"
+            className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-slate-300/80 bg-[#102436] px-6 py-3.5 text-white shadow-[0_12px_30px_-12px_rgba(16,36,54,0.65)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-[#569ab5]/50 hover:bg-[#152f46] hover:shadow-[0_18px_36px_-12px_rgba(16,36,54,0.85)] active:translate-y-0 dark:border-white/15"
+          >
+            <span className="pointer-events-none absolute inset-0 -translate-x-full rounded-full bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,.18)_50%,transparent_65%)] transition-transform duration-700 ease-out group-hover:translate-x-full" />
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#569ab5]/25 text-[#82bfd4] ring-1 ring-[#82bfd4]/30 transition-transform duration-300 group-hover:scale-110">
+              <Icon name="spark" size={12} />
+            </span>
+            <span className="text-[13px] font-extrabold tracking-tight">Baza AI</span>
+            <Icon name="arrow-right" size={14} className="ml-0.5 shrink-0 text-white/60 transition-all duration-300 group-hover:translate-x-1 group-hover:text-white" />
+          </Link>
+        </div>
+
+        <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3 border-t border-slate-200/80 pt-6 dark:border-white/10">
+          <span className="group flex items-center gap-2.5 text-xs font-bold text-slate-600 transition-colors hover:text-[#39778f] dark:text-slate-300 dark:hover:text-[#83c2dc]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70 text-[#569ab5] transition-transform duration-300 group-hover:scale-110 dark:bg-white/5 dark:ring-white/10">
+              <Icon name="map-pin" size={14} />
+            </span>
+            Mu Rwanda hose
+          </span>
+          <span className="group flex items-center gap-2.5 text-xs font-bold text-slate-600 transition-colors hover:text-[#FF5D00] dark:text-slate-300 dark:hover:text-[#FF7A29]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70 text-[#FF5D00] transition-transform duration-300 group-hover:scale-110 dark:bg-white/5 dark:ring-white/10">
+              <Icon name="users" size={14} />
+            </span>
+            Abaguzi n'abagurisha
+          </span>
+          <span className="group flex items-center gap-2.5 text-xs font-bold text-slate-600 transition-colors hover:text-[#39778f] dark:text-slate-300 dark:hover:text-[#83c2dc]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70 text-[#569ab5] transition-transform duration-300 group-hover:scale-110 dark:bg-white/5 dark:ring-white/10">
+              <Icon name="zap" size={14} />
+            </span>
+            Byoroshye gukoresha
+          </span>
+        </div>
+      </div>
+
+      <div className="relative mx-auto w-full max-w-[620px] lg:ml-auto">
+        <div className="pointer-events-none absolute -inset-6 rounded-[3.5rem] bg-[radial-gradient(ellipse_at_top_right,rgba(86,154,181,.35),transparent_65%)] blur-2xl" />
+        <div className="pointer-events-none absolute -inset-6 rounded-[3.5rem] bg-[radial-gradient(ellipse_at_bottom_left,rgba(255,93,0,.22),transparent_65%)] blur-2xl" />
+
+        <div className="group relative">
+          <div className="relative overflow-hidden rounded-[2.25rem] border border-white/60 bg-white/40 p-2 shadow-[0_30px_70px_-20px_rgba(16,36,54,0.28)] backdrop-blur-xl dark:border-white/15 dark:bg-white/[0.04] sm:rounded-[2.75rem] sm:p-2.5">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[1.85rem] bg-slate-900 sm:rounded-[2.25rem]">
+              <img
+                src="/homeimg.png"
+                alt="KUGURISHA.COM - Isoko rihuza Abanyarwanda"
+                className="h-full w-full object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-[1.06]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#081724]/90 via-[#081724]/20 to-transparent" />
+
+              <div className="absolute left-5 top-5 h-7 w-7 rounded-tl-xl border-l-2 border-t-2 border-white/60 transition-all duration-500 group-hover:scale-105 group-hover:border-[#FF5D00]" />
+              <div className="absolute right-5 top-5 h-7 w-7 rounded-tr-xl border-r-2 border-t-2 border-white/60 transition-all duration-500 group-hover:scale-105 group-hover:border-[#82bfd4]" />
+
+              <div className="absolute right-5 top-5 hidden items-center gap-2 rounded-full border border-white/20 bg-black/45 px-3.5 py-1.5 text-[10px] font-bold text-white backdrop-blur-md sm:flex">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                <span>Kigali • Musanze • Rubavu • Huye</span>
               </div>
 
-              <div className="mt-7 min-h-[7.2rem] sm:min-h-[8.8rem] lg:min-h-[9.8rem]">
-                <h1
-                  key={showSellHeadline ? "sell-mode" : "buy-mode"}
-                  className="max-w-2xl text-[2.85rem] font-black leading-[1.01] tracking-[-.055em] text-[#102436] transition-all duration-700 ease-out dark:text-white sm:text-6xl lg:text-[4.35rem]"
-                >
-                  {showSellHeadline ? (
-                    <span className="block animate-[fadeSlideUp_0.55s_cubic-bezier(0.16,1,0.3,1)_forwards]">
-                      Ibyo ufite,
-                      <br />
-                      <span className="relative inline-block">
-                        <span className="bg-[linear-gradient(110deg,#FF5D00_0%,#FF7A29_40%,#FFA066_65%,#FF5D00_100%)] bg-[size:200%_100%] bg-clip-text text-transparent [animation:kg-shimmer_6s_ease-in-out_infinite]">
-                          bigurishirize aha.
-                        </span>
-                        <span className="absolute -bottom-1.5 left-0 h-[4px] w-28 rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7A29] to-transparent opacity-90" />
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="block animate-[fadeSlideUp_0.55s_cubic-bezier(0.16,1,0.3,1)_forwards]">
-                      Ibyo ushaka,
-                      <br />
-                      <span className="relative inline-block">
-                        <span className="bg-[linear-gradient(110deg,#39778f_0%,#569ab5_40%,#82bfd4_65%,#39778f_100%)] bg-[size:200%_100%] bg-clip-text text-transparent [animation:kg-shimmer_6s_ease-in-out_infinite]">
-                          ubisanga hano.
-                        </span>
-                        <span className="absolute -bottom-1.5 left-0 h-[4px] w-28 rounded-full bg-gradient-to-r from-[#39778f] via-[#569ab5] to-transparent opacity-90" />
-                      </span>
-                    </span>
-                  )}
-                </h1>
-              </div>
-
-              <p className="mt-5 max-w-xl text-sm font-medium leading-8 text-slate-600 dark:text-slate-300 sm:text-base">
-                Gura, gurisha kandi uhure n'abantu bafite ibyo ukeneye. Kuva ku
-                bikoresho, imodoka n'imitungo itimukanwa,{" "}
-                <span className="font-bold text-slate-900 dark:text-white">KUGURISHA.COM</span>{" "}
-                ni isoko rihuza abafite ibyo bashaka gutanga n'ababikeneye.
-              </p>
-
-              <div className="mt-8 flex flex-wrap items-center gap-3.5">
-                <Link
-                  to="/create-listing"
-                  className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF6D1A] to-[#e05200] px-6 py-3.5 text-white shadow-[0_14px_34px_-10px_rgba(255,93,0,0.6)] ring-1 ring-white/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_20px_42px_-10px_rgba(255,93,0,0.75)] active:translate-y-0"
-                >
-                  <span className="pointer-events-none absolute inset-0 -translate-x-full rounded-full bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,.3)_50%,transparent_65%)] transition-transform duration-700 ease-out group-hover:translate-x-full" />
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 ring-1 ring-white/25 transition-transform duration-300 group-hover:rotate-90 group-hover:scale-110">
-                    <Icon name="plus" size={12} />
-                  </span>
-                  <span className="text-[13px] font-extrabold tracking-tight">Gurisha ubu</span>
-                  <Icon name="arrow-right" size={14} className="ml-0.5 shrink-0 text-white/80 transition-all duration-300 group-hover:translate-x-1 group-hover:text-white" />
-                </Link>
-
-                <Link
-                  to="/ai-search"
-                  className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-slate-300/80 bg-[#102436] px-6 py-3.5 text-white shadow-[0_12px_30px_-12px_rgba(16,36,54,0.65)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-[#569ab5]/50 hover:bg-[#152f46] hover:shadow-[0_18px_36px_-12px_rgba(16,36,54,0.85)] active:translate-y-0 dark:border-white/15"
-                >
-                  <span className="pointer-events-none absolute inset-0 -translate-x-full rounded-full bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,.18)_50%,transparent_65%)] transition-transform duration-700 ease-out group-hover:translate-x-full" />
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#569ab5]/25 text-[#82bfd4] ring-1 ring-[#82bfd4]/30 transition-transform duration-300 group-hover:scale-110">
-                    <Icon name="spark" size={12} />
-                  </span>
-                  <span className="text-[13px] font-extrabold tracking-tight">Baza AI</span>
-                  <Icon name="arrow-right" size={14} className="ml-0.5 shrink-0 text-white/60 transition-all duration-300 group-hover:translate-x-1 group-hover:text-white" />
-                </Link>
-              </div>
-
-              <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3 border-t border-slate-200/80 pt-6 dark:border-white/10">
-                <span className="group flex items-center gap-2.5 text-xs font-bold text-slate-600 transition-colors hover:text-[#39778f] dark:text-slate-300 dark:hover:text-[#83c2dc]">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70 text-[#569ab5] transition-transform duration-300 group-hover:scale-110 dark:bg-white/5 dark:ring-white/10">
-                    <Icon name="map-pin" size={14} />
-                  </span>
-                  Mu Rwanda hose
-                </span>
-                <span className="group flex items-center gap-2.5 text-xs font-bold text-slate-600 transition-colors hover:text-[#FF5D00] dark:text-slate-300 dark:hover:text-[#FF7A29]">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70 text-[#FF5D00] transition-transform duration-300 group-hover:scale-110 dark:bg-white/5 dark:ring-white/10">
-                    <Icon name="users" size={14} />
-                  </span>
-                  Abaguzi n'abagurisha
-                </span>
-                <span className="group flex items-center gap-2.5 text-xs font-bold text-slate-600 transition-colors hover:text-[#39778f] dark:text-slate-300 dark:hover:text-[#83c2dc]">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70 text-[#569ab5] transition-transform duration-300 group-hover:scale-110 dark:bg-white/5 dark:ring-white/10">
-                    <Icon name="zap" size={14} />
-                  </span>
-                  Byoroshye gukoresha
-                </span>
-              </div>
-            </div>
-
-            <div className="relative mx-auto w-full max-w-[620px] lg:ml-auto">
-              <div className="pointer-events-none absolute -inset-6 rounded-[3.5rem] bg-[radial-gradient(ellipse_at_top_right,rgba(86,154,181,.35),transparent_65%)] blur-2xl" />
-              <div className="pointer-events-none absolute -inset-6 rounded-[3.5rem] bg-[radial-gradient(ellipse_at_bottom_left,rgba(255,93,0,.22),transparent_65%)] blur-2xl" />
-
-              <div className="group relative">
-                <div className="relative overflow-hidden rounded-[2.25rem] border border-white/60 bg-white/40 p-2 shadow-[0_30px_70px_-20px_rgba(16,36,54,0.28)] backdrop-blur-xl dark:border-white/15 dark:bg-white/[0.04] sm:rounded-[2.75rem] sm:p-2.5">
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-[1.85rem] bg-slate-900 sm:rounded-[2.25rem]">
-                    <img
-                      src="/homeimg.png"
-                      alt="KUGURISHA.COM - Isoko rihuza Abanyarwanda"
-                      className="h-full w-full object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-[1.06]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#081724]/90 via-[#081724]/20 to-transparent" />
-
-                    <div className="absolute left-5 top-5 h-7 w-7 rounded-tl-xl border-l-2 border-t-2 border-white/60 transition-all duration-500 group-hover:scale-105 group-hover:border-[#FF5D00]" />
-                    <div className="absolute right-5 top-5 h-7 w-7 rounded-tr-xl border-r-2 border-t-2 border-white/60 transition-all duration-500 group-hover:scale-105 group-hover:border-[#82bfd4]" />
-
-                    <div className="absolute right-5 top-5 hidden items-center gap-2 rounded-full border border-white/20 bg-black/45 px-3.5 py-1.5 text-[10px] font-bold text-white backdrop-blur-md sm:flex">
-                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                      <span>Kigali • Musanze • Rubavu • Huye</span>
-                    </div>
-
-                    <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-4 p-5 sm:p-8">
-                      <div>
-                        <p className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[9px] font-black uppercase tracking-[.22em] text-white backdrop-blur-md">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#FF5D00]" />
-                          KUGURISHA.COM
-                        </p>
-                        <h2 className="mt-3 max-w-sm text-2xl font-black leading-[1.04] tracking-tight text-white sm:text-3xl">
-                          Isoko ryawe.
-                          <br />
-                          <span className="bg-gradient-to-r from-white via-white to-[#FFA066] bg-clip-text text-transparent">
-                            Amahirwe yawe.
-                          </span>
-                        </h2>
-                      </div>
-
-                      <Link
-                        to="/Listings"
-                        className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-[#FF5D00] hover:bg-[#FF5D00] sm:flex"
-                        aria-label="Reba ibicuruzwa"
-                      >
-                        <Icon name="arrow-right" size={18} />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ═════════ INTERACTIVE MARKETPLACE STREAM ═════════ */}
-          <div className="relative mt-20 grid items-stretch gap-8 lg:mt-24 lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] lg:gap-10">
-            <div className="relative flex flex-col justify-between overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/80 p-6 shadow-[0_24px_60px_-20px_rgba(16,36,54,0.12)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-white/[0.035] dark:shadow-black/50 sm:p-8">
-              <div className="pointer-events-none absolute -left-16 -top-16 h-52 w-52 rounded-full bg-[#569ab5]/20 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-16 -right-16 h-52 w-52 rounded-full bg-[#FF5D00]/15 blur-3xl" />
-
-              <div className="relative z-10">
-                <div className="inline-flex items-center gap-2 rounded-full bg-[#FF5D00]/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#FF5D00]">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inset-0 animate-ping rounded-full bg-[#FF5D00] opacity-75" />
-                    <span className="relative flex h-2 w-2 rounded-full bg-[#FF5D00]" />
-                  </span>
-                  Isoko riri gukora ubu
-                </div>
-
-                <h2 className="mt-4 text-2xl font-black leading-[1.12] tracking-tight text-slate-900 dark:text-slate-50 sm:text-3xl">
-                  Abaguzi bagenda <br />
-                  <span className="bg-gradient-to-r from-[#36677b] via-[#569ab5] to-[#FF5D00] bg-clip-text text-transparent">
-                    bahitamo ibintu ubu.
-                  </span>
-                </h2>
-
-                <p className="mt-3.5 text-xs font-medium leading-relaxed text-slate-600 dark:text-slate-300 sm:text-sm">
-                  Buri munota, Abanyarwanda bagenda bagura ibintu abandi bakagurisha
-                  ibyo bafite kuri{" "}
-                  <span className="font-extrabold text-slate-900 underline decoration-[#FF5D00]/50 underline-offset-4 dark:text-white">
+              <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-4 p-5 sm:p-8">
+                <div>
+                  <p className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[9px] font-black uppercase tracking-[.22em] text-white backdrop-blur-md">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#FF5D00]" />
                     KUGURISHA.COM
-                  </span>{" "}
-                  — kuva ku bikoresho byo mu rugo, telefoni, imodoka, kugera ku
-                  mitungo itimukanwa.
-                </p>
-              </div>
-
-              <div className="relative z-10 mt-6 border-t border-slate-200/70 pt-5 dark:border-white/10">
-                <p className="mb-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
-                  Hitamo icyiciro wihuse:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { label: "Byose", value: "" },
-                    { label: "Telefoni", value: "Telefoni" },
-                    { label: "Imodoka", value: "Imodoka" },
-                    { label: "Inzu n'ubutaka", value: "Inzu" },
-                    { label: "Ibikoresho", value: "Ibikoresho" },
-                  ].map((chip) => {
-                    const active = search.toLowerCase() === chip.value.toLowerCase()
-                    return (
-                      <button
-                        key={chip.label}
-                        type="button"
-                        onClick={() => setSearch(chip.value)}
-                        className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-all duration-200 ${
-                          active
-                            ? "bg-[#102436] text-white shadow-md shadow-slate-900/20 dark:bg-[#FF5D00] dark:text-white"
-                            : "border border-slate-200/80 bg-white/70 text-slate-600 hover:border-[#FF5D00]/50 hover:text-slate-900 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:text-white"
-                        }`}
-                      >
-                        {chip.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col justify-between space-y-4">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2.5">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="absolute inset-0 animate-ping rounded-full bg-[#FF5D00] opacity-75" />
-                    <span className="relative flex h-2.5 w-2.5 rounded-full bg-[#FF5D00]" />
-                  </span>
-                  <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
-                    Ibyashyizweho vuba
-                  </h3>
-                  {search && (
-                    <button
-                      type="button"
-                      onClick={() => setSearch("")}
-                      className="rounded-full bg-[#FF5D00]/10 px-2.5 py-0.5 text-[10px] font-bold text-[#FF5D00] hover:bg-[#FF5D00]/20"
-                    >
-                      {search} ×
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const container = document.getElementById("home-product-slider-track")
-                      if (container) container.scrollBy({ left: -240, behavior: "smooth" })
-                    }}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200"
-                    aria-label="Scroll left"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const container = document.getElementById("home-product-slider-track")
-                      if (container) container.scrollBy({ left: 240, behavior: "smooth" })
-                    }}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200"
-                    aria-label="Scroll right"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => navigate("/Listings")}
-                    className="group inline-flex items-center gap-1.5 rounded-full bg-[#102436] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FF5D00] hover:shadow-md hover:shadow-[#FF5D00]/25 active:scale-95 dark:bg-white/10 dark:hover:bg-[#FF5D00]"
-                  >
-                    <span>Reba byose</span>
-                    <svg className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {loading ? (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white/60 dark:border-white/10 dark:bg-white/[0.03]">
-                      <div className="kug-shimmer h-40" />
-                      <div className="space-y-2 p-3.5">
-                        <div className="kug-shimmer h-3 w-3/4 rounded" />
-                        <div className="kug-shimmer h-3 w-1/2 rounded" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : filteredListings.length > 0 ? (
-                <div id="home-product-slider-track" className="no-scrollbar relative w-full overflow-x-auto py-2 touch-pan-x scroll-smooth">
-                  <div className="flex w-max animate-infinite-scroll gap-4 hover:[animation-play-state:paused] focus-within:[animation-play-state:paused]">
-                    {[...filteredListings.slice(0, 12), ...filteredListings.slice(0, 12)].map(
-                      (listing, index) => (
-                        <Link
-                          key={`${listing.id}-${index}`}
-                          to={`/listing/${listing.id}`}
-                          className="group relative flex w-48 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-[#FF5D00]/45 hover:shadow-xl dark:border-white/10 dark:bg-slate-900 sm:w-56"
-                        >
-                          <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                            {images?.[listing.id] ? (
-                              <img
-                                src={images[listing.id]}
-                                alt={listing.title}
-                                loading="lazy"
-                                decoding="async"
-                                className="h-full w-full object-cover object-center transform-gpu transition-transform duration-700 ease-out group-hover:scale-105"
-                              />
-                            ) : (
-                              <div className="flex h-full items-center justify-center text-slate-400">
-                                <Icon name="shopping-bag" size={28} />
-                              </div>
-                            )}
-
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-
-                            <div className="absolute left-2.5 right-2.5 top-2.5 flex items-center justify-between">
-                              <span className="rounded-full bg-black/60 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
-                                {listing.category?.name || "Ibindi"}
-                              </span>
-                              <span className="rounded-full bg-[#FF5D00] px-2 py-0.5 text-[9px] font-extrabold text-white shadow-sm">
-                                {listing.condition || "New"}
-                              </span>
-                            </div>
-
-                            <div className="absolute bottom-0 left-0 right-0 p-3.5 space-y-1">
-                              <h3 className="line-clamp-1 text-xs font-bold leading-tight text-white transition group-hover:text-[#FF5D00] sm:text-[13px]">
-                                {listing.title}
-                              </h3>
-
-                              <p className="flex items-center gap-1 text-[10px] text-slate-300">
-                                <Icon name="map-pin" size={10} className="shrink-0 text-[#569ab5]" />
-                                <span className="truncate">{formatLocation(listing)}</span>
-                              </p>
-
-                              <div className="pt-1 flex items-center justify-between">
-                                <span className="text-xs sm:text-sm font-black tracking-tight text-white">
-                                  {formatPrice(listing)}
-                                </span>
-                                <span className="text-[10px] font-semibold text-[#FF5D00] opacity-0 transition-opacity group-hover:opacity-100">
-                                  Reba →
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      ),
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-3xl border border-dashed border-slate-300 bg-white/50 p-8 py-14 text-center dark:border-white/10 dark:bg-white/[0.02]">
-                  <Icon name="search" size={36} className="mx-auto mb-3 text-slate-400" />
-                  <h4 className="font-bold text-slate-800 dark:text-slate-200">Nta bintu bibonetse</h4>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Gerageza guhindura amagambo washakishije cyangwa icyiciro.
                   </p>
-                  {search && (
-                    <button
-                      type="button"
-                      onClick={() => setSearch("")}
-                      className="mt-4 rounded-full bg-[#FF5D00] px-4 py-1.5 text-xs font-bold text-white"
-                    >
-                      Erekana byose
-                    </button>
-                  )}
+                  <h2 className="mt-3 max-w-sm text-2xl font-black leading-[1.04] tracking-tight text-white sm:text-3xl">
+                    Isoko ryawe.
+                    <br />
+                    <span className="bg-gradient-to-r from-white via-white to-[#FFA066] bg-clip-text text-transparent">
+                      Amahirwe yawe.
+                    </span>
+                  </h2>
                 </div>
-              )}
+
+                <Link
+                  to="/Listings"
+                  className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/25 bg-white/15 text-white backdrop-blur-md transition-all duration-300 hover:scale-110 hover:border-[#FF5D00] hover:bg-[#FF5D00] sm:flex"
+                  aria-label="Reba ibicuruzwa"
+                >
+                  <Icon name="arrow-right" size={18} />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
 
+    {/* ═════════ INTERACTIVE MARKETPLACE STREAM ═════════ */}
+    <div className="relative mt-20 grid items-stretch gap-8 lg:mt-24 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
+
+     {/* ────────── LEFT: PRODUCT SLIDER (cleaned) ────────── */}
+<div className="flex flex-col gap-4">
+  {/* Header row: title + Reba byose */}
+  <div className="flex items-center justify-between px-1">
+    <div className="flex items-center gap-2.5">
+      <span className="relative flex h-2.5 w-2.5">
+        <span className="absolute inset-0 animate-ping rounded-full bg-[#FF5D00] opacity-75" />
+        <span className="relative flex h-2.5 w-2.5 rounded-full bg-[#FF5D00]" />
+      </span>
+      <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
+        Ibyashyizweho vuba
+      </h3>
+    </div>
+
+    <button
+      type="button"
+      onClick={() => navigate("/Listings")}
+      className="group inline-flex items-center gap-1.5 rounded-full bg-[#102436] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FF5D00] hover:shadow-md hover:shadow-[#FF5D00]/25 active:scale-95 dark:bg-white/10 dark:hover:bg-[#FF5D00]"
+    >
+      <span>Reba byose</span>
+      <svg className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+      </svg>
+    </button>
+  </div>
+
+  {/* Slider */}
+  {loading ? (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white/60 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="kug-shimmer h-40" />
+          <div className="space-y-2 p-3.5">
+            <div className="kug-shimmer h-3 w-3/4 rounded" />
+            <div className="kug-shimmer h-3 w-1/2 rounded" />
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : filteredListings.length > 0 ? (
+    <div id="home-product-slider-track" className="no-scrollbar relative w-full overflow-x-auto py-2 touch-pan-x scroll-smooth">
+      <div className="flex w-max animate-infinite-scroll gap-4 hover:[animation-play-state:paused] focus-within:[animation-play-state:paused]">
+        {[...filteredListings.slice(0, 12), ...filteredListings.slice(0, 12)].map(
+          (listing, index) => (
+            <Link
+              key={`${listing.id}-${index}`}
+              to={`/listing/${listing.id}`}
+              className="group relative flex w-48 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-[#FF5D00]/45 hover:shadow-xl dark:border-white/10 dark:bg-slate-900 sm:w-56"
+            >
+              <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                {images?.[listing.id] ? (
+                  <img
+                    src={images[listing.id]}
+                    alt={listing.title}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-cover object-center transform-gpu transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-slate-400">
+                    <Icon name="shopping-bag" size={28} />
+                  </div>
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+
+                <div className="absolute left-2.5 right-2.5 top-2.5 flex items-center justify-between">
+                  <span className="rounded-full bg-black/60 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                    {listing.category?.name || "Ibindi"}
+                  </span>
+                  <span className="rounded-full bg-[#FF5D00] px-2 py-0.5 text-[9px] font-extrabold text-white shadow-sm">
+                    {listing.condition || "New"}
+                  </span>
+                </div>
+
+                <div className="absolute bottom-0 left-0 right-0 p-3.5 space-y-1">
+                  <h3 className="line-clamp-1 text-xs font-bold leading-tight text-white transition group-hover:text-[#FF5D00] sm:text-[13px]">
+                    {listing.title}
+                  </h3>
+
+                  <p className="flex items-center gap-1 text-[10px] text-slate-300">
+                    <Icon name="map-pin" size={10} className="shrink-0 text-[#569ab5]" />
+                    <span className="truncate">{formatLocation(listing)}</span>
+                  </p>
+
+                  <div className="pt-1 flex items-center justify-between">
+                    <span className="text-xs sm:text-sm font-black tracking-tight text-white">
+                      {formatPrice(listing)}
+                    </span>
+                    <span className="text-[10px] font-semibold text-[#FF5D00] opacity-0 transition-opacity group-hover:opacity-100">
+                      Reba →
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ),
+        )}
+      </div>
+    </div>
+  ) : (
+    <div className="rounded-3xl border border-dashed border-slate-300 bg-white/50 p-8 py-14 text-center dark:border-white/10 dark:bg-white/[0.02]">
+      <Icon name="search" size={36} className="mx-auto mb-3 text-slate-400" />
+      <h4 className="font-bold text-slate-800 dark:text-slate-200">Nta bintu bibonetse</h4>
+      <p className="mt-1 text-xs text-slate-500">
+        Nta bicuruzwa biri ku isoko ubu.
+      </p>
+    </div>
+  )}
+    {/* ← NEW: Rise CTA banner */}
+  <SliderRiseCTA />
+</div>
+
+      {/* ────────── RIGHT: LIVE ANALYTICS (replaces "Isoko riri gukora ubu") ────────── */}
+      <SystemAnalyticsCard />
+    </div>
+  </div>
+</section>
       {/* TRUST AND SAFETY */}
       <section className="bg-white pb-16 dark:bg-[#080f1b] sm:pb-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -997,6 +897,7 @@ export default function Home() {
       </section>
 
       <HomeStory />
+      <HomeRentStory />
       <MovingStory />
       <SellCTA />
       <HomeFooter />
