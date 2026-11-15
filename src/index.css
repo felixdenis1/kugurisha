@@ -12,6 +12,17 @@
 
 @custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
+@theme {
+  /* Explicit breakpoints — prevents Tailwind v4 from silently dropping
+     defaults when any single breakpoint is redefined. */
+  --breakpoint-xs: 30rem;   /* 480px */
+  --breakpoint-sm: 40rem;   /* 640px */
+  --breakpoint-md: 48rem;   /* 768px */
+  --breakpoint-lg: 64rem;   /* 1024px */
+  --breakpoint-xl: 80rem;   /* 1280px */
+  --breakpoint-2xl: 96rem;  /* 1536px */
+}
+
 /* 02. TAILWIND THEME */
 @theme {
   --color-emerald-50: #f2f7f9;
@@ -1842,12 +1853,6 @@ body,
 }
 .kg-3d-chat__bubble--teal {
   background: linear-gradient(150deg, #39778f, #2a5d70) !important;
-}
-@theme {
-  --breakpoint-xs: 30rem; /* 480px */
-}
-@theme {
-  --breakpoint-xs: 30rem; /* 480px — needed for the xs: classes */
 }
 /* ═══════════════════════════════════════════════════════════
    30. DROPDOWN / MENU CLICK FIX

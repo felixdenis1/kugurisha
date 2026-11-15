@@ -550,7 +550,7 @@ export default function Home() {
         <Header searchValue={search} onSearchChange={setSearch} />
       )}
 
-    <section className="relative isolate overflow-hidden bg-[#f5f9fb] dark:bg-[#07111c]">
+   <section className="relative isolate overflow-hidden bg-[#f5f9fb] dark:bg-[#07111c]">
   {/* ═════════ CINEMATIC AMBIENT MESH & ARCHITECTURAL GRID ═════════ */}
   <div className="pointer-events-none absolute inset-0 overflow-hidden">
     <div className="absolute -right-32 -top-36 h-[620px] w-[620px] rounded-full bg-[radial-gradient(circle,rgba(86,154,181,0.22)_0%,transparent_70%)] blur-3xl dark:bg-[radial-gradient(circle,rgba(86,154,181,0.25)_0%,transparent_70%)]" />
@@ -722,123 +722,126 @@ export default function Home() {
     </div>
 
     {/* ═════════ INTERACTIVE MARKETPLACE STREAM ═════════ */}
-    <div className="relative mt-20 grid items-stretch gap-8 lg:mt-24 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
+    <div className="relative mt-20 grid min-h-0 items-stretch gap-8 lg:mt-24 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
 
-     {/* ────────── LEFT: PRODUCT SLIDER (cleaned) ────────── */}
-<div className="flex flex-col gap-4">
-  {/* Header row: title + Reba byose */}
-  <div className="flex items-center justify-between px-1">
-    <div className="flex items-center gap-2.5">
-      <span className="relative flex h-2.5 w-2.5">
-        <span className="absolute inset-0 animate-ping rounded-full bg-[#FF5D00] opacity-75" />
-        <span className="relative flex h-2.5 w-2.5 rounded-full bg-[#FF5D00]" />
-      </span>
-      <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
-        Ibyashyizweho vuba
-      </h3>
-    </div>
-
-    <button
-      type="button"
-      onClick={() => navigate("/Listings")}
-      className="group inline-flex items-center gap-1.5 rounded-full bg-[#102436] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FF5D00] hover:shadow-md hover:shadow-[#FF5D00]/25 active:scale-95 dark:bg-white/10 dark:hover:bg-[#FF5D00]"
-    >
-      <span>Reba byose</span>
-      <svg className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-      </svg>
-    </button>
-  </div>
-
-  {/* Slider */}
-  {loading ? (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white/60 dark:border-white/10 dark:bg-white/[0.03]">
-          <div className="kug-shimmer h-40" />
-          <div className="space-y-2 p-3.5">
-            <div className="kug-shimmer h-3 w-3/4 rounded" />
-            <div className="kug-shimmer h-3 w-1/2 rounded" />
+      {/* ────────── LEFT: PRODUCT SLIDER (cleaned) ────────── */}
+      <div className="flex min-w-0 flex-col gap-4">
+        {/* Header row: title + Reba byose */}
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inset-0 animate-ping rounded-full bg-[#FF5D00] opacity-75" />
+              <span className="relative flex h-2.5 w-2.5 rounded-full bg-[#FF5D00]" />
+            </span>
+            <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
+              Ibyashyizweho vuba
+            </h3>
           </div>
+
+          <button
+            type="button"
+            onClick={() => navigate("/Listings")}
+            className="group inline-flex items-center gap-1.5 rounded-full bg-[#102436] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FF5D00] hover:shadow-md hover:shadow-[#FF5D00]/25 active:scale-95 dark:bg-white/10 dark:hover:bg-[#FF5D00]"
+          >
+            <span>Reba byose</span>
+            <svg className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </button>
         </div>
-      ))}
-    </div>
-  ) : filteredListings.length > 0 ? (
-    <div id="home-product-slider-track" className="no-scrollbar relative w-full overflow-x-auto py-2 touch-pan-x scroll-smooth">
-      <div className="flex w-max animate-infinite-scroll gap-4 hover:[animation-play-state:paused] focus-within:[animation-play-state:paused]">
-        {[...filteredListings.slice(0, 12), ...filteredListings.slice(0, 12)].map(
-          (listing, index) => (
-            <Link
-              key={`${listing.id}-${index}`}
-              to={`/listing/${listing.id}`}
-              className="group relative flex w-48 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-[#FF5D00]/45 hover:shadow-xl dark:border-white/10 dark:bg-slate-900 sm:w-56"
-            >
-              <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                {images?.[listing.id] ? (
-                  <img
-                    src={images[listing.id]}
-                    alt={listing.title}
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover object-center transform-gpu transition-transform duration-700 ease-out group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-slate-400">
-                    <Icon name="shopping-bag" size={28} />
-                  </div>
-                )}
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-
-                <div className="absolute left-2.5 right-2.5 top-2.5 flex items-center justify-between">
-                  <span className="rounded-full bg-black/60 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
-                    {listing.category?.name || "Ibindi"}
-                  </span>
-                  <span className="rounded-full bg-[#FF5D00] px-2 py-0.5 text-[9px] font-extrabold text-white shadow-sm">
-                    {listing.condition || "New"}
-                  </span>
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 p-3.5 space-y-1">
-                  <h3 className="line-clamp-1 text-xs font-bold leading-tight text-white transition group-hover:text-[#FF5D00] sm:text-[13px]">
-                    {listing.title}
-                  </h3>
-
-                  <p className="flex items-center gap-1 text-[10px] text-slate-300">
-                    <Icon name="map-pin" size={10} className="shrink-0 text-[#569ab5]" />
-                    <span className="truncate">{formatLocation(listing)}</span>
-                  </p>
-
-                  <div className="pt-1 flex items-center justify-between">
-                    <span className="text-xs sm:text-sm font-black tracking-tight text-white">
-                      {formatPrice(listing)}
-                    </span>
-                    <span className="text-[10px] font-semibold text-[#FF5D00] opacity-0 transition-opacity group-hover:opacity-100">
-                      Reba →
-                    </span>
-                  </div>
+        {/* Slider */}
+        {loading ? (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white/60 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="kug-shimmer h-40" />
+                <div className="space-y-2 p-3.5">
+                  <div className="kug-shimmer h-3 w-3/4 rounded" />
+                  <div className="kug-shimmer h-3 w-1/2 rounded" />
                 </div>
               </div>
-            </Link>
-          ),
-        )}
-      </div>
-    </div>
-  ) : (
-    <div className="rounded-3xl border border-dashed border-slate-300 bg-white/50 p-8 py-14 text-center dark:border-white/10 dark:bg-white/[0.02]">
-      <Icon name="search" size={36} className="mx-auto mb-3 text-slate-400" />
-      <h4 className="font-bold text-slate-800 dark:text-slate-200">Nta bintu bibonetse</h4>
-      <p className="mt-1 text-xs text-slate-500">
-        Nta bicuruzwa biri ku isoko ubu.
-      </p>
-    </div>
-  )}
-    {/* ← NEW: Rise CTA banner */}
-  <SliderRiseCTA />
-</div>
+            ))}
+          </div>
+        ) : filteredListings.length > 0 ? (
+          <div id="home-product-slider-track" className="no-scrollbar relative w-full overflow-x-auto py-2 touch-pan-x scroll-smooth">
+            <div className="flex w-max animate-infinite-scroll gap-4 hover:[animation-play-state:paused] focus-within:[animation-play-state:paused]">
+              {[...filteredListings.slice(0, 12), ...filteredListings.slice(0, 12)].map(
+                (listing, index) => (
+                  <Link
+                    key={`${listing.id}-${index}`}
+                    to={`/listing/${listing.id}`}
+                    className="group relative flex w-48 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-[#FF5D00]/45 hover:shadow-xl dark:border-white/10 dark:bg-slate-900 sm:w-56"
+                  >
+                    <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                      {images?.[listing.id] ? (
+                        <img
+                          src={images[listing.id]}
+                          alt={listing.title}
+                          loading="lazy"
+                          decoding="async"
+                          className="h-full w-full object-cover object-center transform-gpu transition-transform duration-700 ease-out group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-slate-400">
+                          <Icon name="shopping-bag" size={28} />
+                        </div>
+                      )}
 
-      {/* ────────── RIGHT: LIVE ANALYTICS (replaces "Isoko riri gukora ubu") ────────── */}
-      <SystemAnalyticsCard />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+
+                      <div className="absolute left-2.5 right-2.5 top-2.5 flex items-center justify-between">
+                        <span className="rounded-full bg-black/60 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                          {listing.category?.name || "Ibindi"}
+                        </span>
+                        <span className="rounded-full bg-[#FF5D00] px-2 py-0.5 text-[9px] font-extrabold text-white shadow-sm">
+                          {listing.condition || "New"}
+                        </span>
+                      </div>
+
+                      <div className="absolute bottom-0 left-0 right-0 p-3.5 space-y-1">
+                        <h3 className="line-clamp-1 text-xs font-bold leading-tight text-white transition group-hover:text-[#FF5D00] sm:text-[13px]">
+                          {listing.title}
+                        </h3>
+
+                        <p className="flex items-center gap-1 text-[10px] text-slate-300">
+                          <Icon name="map-pin" size={10} className="shrink-0 text-[#569ab5]" />
+                          <span className="truncate">{formatLocation(listing)}</span>
+                        </p>
+
+                        <div className="pt-1 flex items-center justify-between">
+                          <span className="text-xs sm:text-sm font-black tracking-tight text-white">
+                            {formatPrice(listing)}
+                          </span>
+                          <span className="text-[10px] font-semibold text-[#FF5D00] opacity-0 transition-opacity group-hover:opacity-100">
+                            Reba →
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ),
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-white/50 p-8 py-14 text-center dark:border-white/10 dark:bg-white/[0.02]">
+            <Icon name="search" size={36} className="mx-auto mb-3 text-slate-400" />
+            <h4 className="font-bold text-slate-800 dark:text-slate-200">Nta bintu bibonetse</h4>
+            <p className="mt-1 text-xs text-slate-500">
+              Nta bicuruzwa biri ku isoko ubu.
+            </p>
+          </div>
+        )}
+
+        {/* ← CTA banner */}
+        <SliderRiseCTA />
+      </div>
+
+      {/* ────────── RIGHT: LIVE ANALYTICS ────────── */}
+      <div className="min-w-0">
+        <SystemAnalyticsCard />
+      </div>
     </div>
   </div>
 </section>

@@ -1,16 +1,21 @@
 /* ═══════════════════════════════════════════════════════════════
    SliderRiseCTA — editorial CTA banner under the home slider.
-   Teal/Gukodesha palette · classic typography · large 3D person.
+
+   Responsive strategy (permanent fix):
+     - Stacked vertically up to `lg` (1024px) — no `sm:flex-row`
+       squeeze that caused text clipping on tablet.
+     - Side-by-side only at `lg:` where there is real room.
+     - Copy column uses `min-w-0 flex-1` so it can shrink and
+       never overflow its parent.
    ═══════════════════════════════════════════════════════════════ */
 
 export default function SliderRiseCTA() {
   return (
-    <div className="group relative mt-6 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-gradient-to-br from-white via-[#f5fafc] to-[#eaf4f9] shadow-[0_24px_70px_-30px_rgba(57,119,143,0.28)] backdrop-blur-xl transition-all duration-500 hover:shadow-[0_30px_80px_-30px_rgba(57,119,143,0.4)] dark:border-white/10 dark:from-[#0d1a29] dark:via-[#0a1725] dark:to-[#08131f] dark:shadow-black/60">
+    <div className="group relative mt-6 w-full overflow-hidden rounded-[2rem] border border-slate-200/80 bg-gradient-to-br from-white via-[#f5fafc] to-[#eaf4f9] shadow-[0_24px_70px_-30px_rgba(57,119,143,0.28)] backdrop-blur-xl transition-all duration-500 hover:shadow-[0_30px_80px_-30px_rgba(57,119,143,0.4)] dark:border-white/10 dark:from-[#0d1a29] dark:via-[#0a1725] dark:to-[#08131f] dark:shadow-black/60">
 
       {/* Ambient glows — teal primary */}
       <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#569ab5]/25 blur-3xl dark:bg-[#569ab5]/20" />
       <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-[#6ec5c9]/20 blur-3xl dark:bg-[#6ec5c9]/12" />
-      {/* Small warm accent, used sparingly */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#FF7A29]/10 blur-3xl" />
 
       {/* Subtle grid */}
@@ -25,13 +30,13 @@ export default function SliderRiseCTA() {
         }}
       />
 
-      {/* ═══════════ LAYOUT ═══════════ */}
-      <div className="relative flex flex-col gap-8 p-6 sm:flex-row sm:items-center sm:gap-10 sm:p-10">
+      {/* ═══════════ LAYOUT — stacked until lg, side-by-side at lg ═══════════ */}
+      <div className="relative flex flex-col items-center gap-6 p-6 sm:p-8 lg:flex-row lg:items-center lg:gap-8 lg:p-10 xl:gap-10">
 
-        {/* ───── LEFT: illustrated stage (bigger, framed) ───── */}
-        <div className="relative flex shrink-0 items-center justify-center sm:w-[240px]">
-          {/* Stage card behind illustration */}
-          <div className="relative flex h-[220px] w-[220px] items-center justify-center rounded-[1.75rem] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_12px_40px_-20px_rgba(57,119,143,0.4)] backdrop-blur-md dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+        {/* ───── ILLUSTRATION (centered on mobile, left on desktop) ───── */}
+        <div className="relative flex w-full shrink-0 justify-center lg:w-[200px] xl:w-[240px]">
+          <div className="relative flex h-[200px] w-[200px] items-center justify-center rounded-[1.75rem] border border-white/70 bg-white/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_12px_40px_-20px_rgba(57,119,143,0.4)] backdrop-blur-md dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:h-[220px] sm:w-[220px] lg:h-[200px] lg:w-[200px] xl:h-[220px] xl:w-[220px]">
+
             {/* Glow behind product */}
             <div className="pointer-events-none absolute left-1/2 top-6 h-20 w-20 -translate-x-1/2 rounded-full bg-[#6ec5c9]/40 blur-2xl dark:bg-[#6ec5c9]/30" />
 
@@ -75,11 +80,11 @@ export default function SliderRiseCTA() {
               </div>
             </div>
 
-            {/* ── LARGE 3D PERSON looking up ── */}
+            {/* ── 3D PERSON ── */}
             <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
               <svg
                 viewBox="0 0 100 100"
-                className="h-[130px] w-[130px] drop-shadow-[0_10px_16px_rgba(16,36,54,0.28)]"
+                className="h-[120px] w-[120px] drop-shadow-[0_10px_16px_rgba(16,36,54,0.28)] sm:h-[130px] sm:w-[130px] lg:h-[115px] lg:w-[115px] xl:h-[130px] xl:w-[130px]"
                 style={{ animation: "kg-cta-look 4s ease-in-out infinite" }}
               >
                 <defs>
@@ -102,52 +107,36 @@ export default function SliderRiseCTA() {
                   </linearGradient>
                 </defs>
 
-                {/* Ground shadow */}
                 <ellipse cx="50" cy="96" rx="30" ry="4" fill="rgba(16,36,54,0.18)" />
-
-                {/* Neck */}
                 <rect x="42" y="52" width="16" height="10" rx="7" fill="#c98a55" />
-
-                {/* Torso */}
                 <path
                   d="M 26 62 Q 24 90 33 93 L 67 93 Q 76 90 74 62 Q 70 54 50 54 Q 30 54 26 62 Z"
                   fill="url(#kgTorsoGrad2)"
                 />
-                {/* Torso highlight panel */}
                 <path
                   d="M 33 62 Q 31 82 35 88 L 44 88 Q 39 78 39 62 Z"
                   fill="url(#kgTorsoHighlight2)"
                 />
-
-                {/* Left arm raised */}
                 <path
                   d="M 30 66 Q 18 58 14 44 Q 13 40 16 39 Q 19 38 21 42 Q 27 54 36 62 Z"
                   fill="url(#kgArmGrad2)"
                 />
                 <circle cx="15" cy="39" r="4.2" fill="#f5cba7" />
-
-                {/* Right arm resting */}
                 <path
                   d="M 70 66 Q 80 72 78 84 Q 77 88 73 87 Q 70 86 70 80 Q 70 74 64 68 Z"
                   fill="url(#kgArmGrad2)"
                 />
                 <circle cx="75" cy="87" r="3.4" fill="#f5cba7" />
-
-                {/* Head tilted back */}
                 <g style={{ transformOrigin: "50px 40px", transform: "rotate(-12deg)" }}>
                   <circle cx="50" cy="40" r="16" fill="url(#kgHeadGrad2)" />
-                  {/* Hair cap */}
                   <path
                     d="M 34 36 Q 36 22 50 22 Q 64 22 66 36 Q 63 28 50 27 Q 37 28 34 36 Z"
                     fill="#1e293b"
                   />
-                  {/* Eyes looking up */}
                   <ellipse cx="44.5" cy="36" rx="1.9" ry="2.6" fill="#1e293b" />
                   <ellipse cx="55.5" cy="36" rx="1.9" ry="2.6" fill="#1e293b" />
-                  {/* Eyebrows raised (curiosity) */}
                   <path d="M 42 31 Q 44.5 30 47 31" stroke="#1e293b" strokeWidth="1" fill="none" strokeLinecap="round" />
                   <path d="M 53 31 Q 55.5 30 58 31" stroke="#1e293b" strokeWidth="1" fill="none" strokeLinecap="round" />
-                  {/* Smile */}
                   <path
                     d="M 45 47 Q 50 50 55 47"
                     fill="none"
@@ -156,8 +145,6 @@ export default function SliderRiseCTA() {
                     strokeLinecap="round"
                   />
                 </g>
-
-                {/* Gaze dashed line to product */}
                 <line
                   x1="50"
                   y1="22"
@@ -173,7 +160,6 @@ export default function SliderRiseCTA() {
               </svg>
             </div>
 
-            {/* Sparkles */}
             <span
               className="pointer-events-none absolute right-5 top-5 h-1.5 w-1.5 rounded-full bg-[#6ec5c9]"
               style={{ animation: "kg-cta-sparkle 2s ease-in-out infinite" }}
@@ -185,8 +171,8 @@ export default function SliderRiseCTA() {
           </div>
         </div>
 
-        {/* ───── RIGHT: classic editorial content ───── */}
-        <div className="min-w-0 flex-1 sm:py-2">
+        {/* ───── CONTENT (centered on mobile/tablet, left on desktop) ───── */}
+        <div className="min-w-0 w-full flex-1 text-center lg:text-left">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#569ab5]/25 bg-[#569ab5]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] text-[#39778f] dark:border-[#6ec5c9]/25 dark:bg-[#6ec5c9]/10 dark:text-[#6ec5c9]">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inset-0 animate-ping rounded-full bg-[#569ab5] opacity-75" />
@@ -195,12 +181,14 @@ export default function SliderRiseCTA() {
             Tangira ubu
           </div>
 
-          <p className="mt-3 max-w-md text-sm font-medium leading-7 text-slate-600 dark:text-slate-400 sm:text-[15px]">
+        
+
+          <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-7 text-slate-600 dark:text-slate-400 lg:mx-0 sm:text-[15px]">
             Iyo ushyize ikintu kuri KUGURISHA.COM, kigera ku bantu benshi
-            bafite ibyo bakeneye — mu Rwanda hose. 
+            bafite ibyo bakeneye — mu Rwanda hose.
           </p>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2.5">
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 lg:justify-start">
             <a
               href="/create-listing"
               className="group/btn relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-[#39778f] via-[#569ab5] to-[#427c94] px-5 py-2.5 text-xs font-black text-white shadow-[0_10px_24px_-8px_rgba(57,119,143,0.6)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_32px_-8px_rgba(57,119,143,0.8)] sm:text-sm"
@@ -223,18 +211,18 @@ export default function SliderRiseCTA() {
             </a>
           </div>
 
-          {/* Trust line */}
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-            <span className="inline-flex items-center gap-1">
-              <svg className="h-3 w-3 text-[#569ab5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
+          {/* Trust ribbon — wraps gracefully */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 lg:justify-start">
+            <span className="inline-flex items-center gap-1 whitespace-nowrap">
+              <svg className="h-3 w-3 shrink-0 text-[#569ab5]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
               </svg>
               Ubuntu
             </span>
-            <span className="h-2 w-px bg-slate-300 dark:bg-white/15" />
-            <span>Abaguzi babona vuba</span>
-            <span className="h-2 w-px bg-slate-300 dark:bg-white/15" />
-            <span>Mu Rwanda hose</span>
+            <span className="h-2 w-px shrink-0 bg-slate-300 dark:bg-white/15" />
+            <span className="whitespace-nowrap">Abaguzi babona vuba</span>
+            <span className="h-2 w-px shrink-0 bg-slate-300 dark:bg-white/15" />
+            <span className="whitespace-nowrap">Mu Rwanda hose</span>
           </div>
         </div>
       </div>
