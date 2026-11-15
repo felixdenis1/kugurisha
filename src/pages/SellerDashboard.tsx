@@ -266,6 +266,7 @@ function SellerDashboard() {
         .from("listings")
         .select(`id, title, description, price, currency, status, listing_type, created_at, category:categories (name)`)
         .eq("seller_id", user.id)
+        .is("deleted_at", null)   // ← NEW: hide soft-deleted rows
         .order("created_at", { ascending: false })
       if (error) { console.error(error); setMessage(error.message); return }
       setListings(data || [])
@@ -274,18 +275,62 @@ function SellerDashboard() {
     } finally { setLoading(false) }
   }
 
+  /**
+   * Update listing status.
+   * - "sold" → also stamps deleted_at so analytics counts it AND the dashboard hides it.
+   * - "active" (restore from sold) → clears deleted_at.
+   * - "paused" / "active" → normal status toggle, deleted_at untouched.
+   */
   async function updateStatus(listingId: string, status: "active" | "paused" | "sold") {
     setUpdatingId(listingId)
-    const { error } = await supabase.from("listings").update({ status, updated_at: new Date().toISOString() }).eq("id", listingId)
+    const payload: {
+      status: string
+      updated_at: string
+      deleted_at?: string | null
+    } = {
+      status,
+      updated_at: new Date().toISOString(),
+    }
+
+    // Sold = mark as deleted too (so it disappears from dashboard + counts as sold)
+    if (status === "sold") {
+      payload.deleted_at = new Date().toISOString()
+    }
+
+    // Restoring from sold → clear deleted_at
+    // (We can't know if it was sold, so we check the current listing in state)
+    const current = listings.find((l) => l.id === listingId)
+    if (current?.status === "sold" && status === "active") {
+      payload.deleted_at = null
+    }
+
+    const { error } = await supabase
+      .from("listings")
+      .update(payload)
+      .eq("id", listingId)
+
     if (error) { alert(error.message); setUpdatingId(null); return }
-    setListings((cur) => cur.map((l) => (l.id === listingId ? { ...l, status } : l)))
+
+    // If we hid it (sold), drop from state. Otherwise just swap the status.
+    if (status === "sold") {
+      setListings((cur) => cur.filter((l) => l.id !== listingId))
+    } else {
+      setListings((cur) => cur.map((l) => (l.id === listingId ? { ...l, status } : l)))
+    }
     setUpdatingId(null)
   }
 
   async function deleteListing(listingId: string) {
     if (!window.confirm("Urashaka koko gusiba iyi listing?")) return
     setDeletingId(listingId)
-    const { error } = await supabase.from("listings").delete().eq("id", listingId)
+    // SOFT DELETE — row stays in DB, analytics can count it
+    const { error } = await supabase
+      .from("listings")
+      .update({
+        deleted_at: new Date().toISOString(),
+        status: "deleted",
+      })
+      .eq("id", listingId)
     if (error) { alert(error.message); setDeletingId(null); return }
     setListings((cur) => cur.filter((l) => l.id !== listingId))
     setDeletingId(null)
@@ -298,7 +343,7 @@ function SellerDashboard() {
   }
 
   function statusLabel(s: string) {
-    return ({ active: "Biraboneka", paused: "Byahagaritswe", sold: "Byagurishijwe", pending: "Birategereje", rejected: "Byanzwe", draft: "Draft", expired: "Byarangiye" } as Record<string, string>)[s] || s
+    return ({ active: "Biraboneka", paused: "Byahagaritswe", sold: "Byagurishijwe", pending: "Birategereje", rejected: "Byanzwe", draft: "Draft", expired: "Byarangiye", deleted: "Byasibwe" } as Record<string, string>)[s] || s
   }
 
   function statusStyle(status: string) {
@@ -307,6 +352,7 @@ function SellerDashboard() {
       case "sold": return { chip: "bg-blue-500/10 text-blue-600 ring-1 ring-blue-500/25 dark:text-blue-400", bar: "from-blue-500 to-indigo-500", dot: "bg-blue-500", icon: Icon.Check, hex: "#3b82f6" }
       case "paused": return { chip: "bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/25 dark:text-amber-400", bar: "from-amber-500 to-orange-500", dot: "bg-amber-500", icon: Icon.Pause, hex: "#f59e0b" }
       case "rejected": return { chip: "bg-rose-500/10 text-rose-600 ring-1 ring-rose-500/25 dark:text-rose-400", bar: "from-rose-500 to-pink-500", dot: "bg-rose-500", icon: Icon.Alert, hex: "#f43f5e" }
+      case "deleted": return { chip: "bg-slate-500/10 text-slate-600 ring-1 ring-slate-500/20 dark:text-slate-400", bar: "from-slate-500 to-slate-400", dot: "bg-slate-500", icon: Icon.Trash, hex: "#64748b" }
       default: return { chip: "bg-slate-500/10 text-slate-600 ring-1 ring-slate-500/20 dark:text-slate-400", bar: "from-slate-500 to-slate-400", dot: "bg-slate-500", icon: Icon.Clock, hex: "#64748b" }
     }
   }

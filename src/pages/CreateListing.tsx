@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "../services/supabase"
 
@@ -13,7 +13,7 @@ type PreviousPhoneOption = {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   ICON SYSTEM — inline SVG, consistent 1.8 stroke, inherits currentColor
+   ICON SYSTEM — unchanged, inline SVG, 1.8 stroke, inherits currentColor
    ────────────────────────────────────────────────────────────────────────── */
 type IconProps = { className?: string }
 
@@ -128,15 +128,43 @@ const Icon = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   ),
+  ChevronDown: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+    </svg>
+  ),
+  ChevronUp: ({ className = "w-4 h-4" }: IconProps) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+    </svg>
+  ),
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Safe UUID — falls back if crypto.randomUUID is missing (very old WebView)
+   Does NOT change the happy path.
+   ────────────────────────────────────────────────────────────────────────── */
+function safeUUID(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
+  }
+  // Fallback: RFC4122 v4-ish (only used on old browsers)
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === "x" ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }
 
 export default function CreateListing() {
   const navigate = useNavigate()
+  const formRef = useRef<HTMLFormElement | null>(null)
 
   const [categories, setCategories] = useState<Category[]>([])
   const [images, setImages] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])
   const [activePreviewIndex, setActivePreviewIndex] = useState(0)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   const [title, setTitle] = useState("")
   const [categoryId, setCategoryId] = useState("")
@@ -158,6 +186,7 @@ export default function CreateListing() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
   const [success, setSuccess] = useState(false)
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null)
 
   useEffect(() => {
     void loadCategories()
@@ -167,9 +196,22 @@ export default function CreateListing() {
   useEffect(() => {
     const urls = images.map((file) => URL.createObjectURL(file))
     setPreviewUrls(urls)
-    setActivePreviewIndex((prev) => (prev >= urls.length ? Math.max(0, urls.length - 1) : prev))
     return () => urls.forEach((url) => URL.revokeObjectURL(url))
   }, [images])
+
+  // Keep active preview index in range (separate effect — no render flash)
+  useEffect(() => {
+    setActivePreviewIndex((prev) =>
+      prev >= previewUrls.length ? Math.max(0, previewUrls.length - 1) : prev,
+    )
+  }, [previewUrls.length])
+
+  // Lightweight draft signal — purely a visual indicator, no persistence
+  useEffect(() => {
+    if (!title && !description && !price && images.length === 0) return
+    const t = setTimeout(() => setDraftSavedAt(Date.now()), 800)
+    return () => clearTimeout(t)
+  }, [title, description, price, images.length])
 
   async function loadCategories(): Promise<void> {
     try {
@@ -231,7 +273,7 @@ export default function CreateListing() {
     }
   }
 
-  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>): void {
+  function handleImageSelect(e: ChangeEvent<HTMLInputElement>): void {
     const files = Array.from(e.target.files || [])
     const total = images.length + files.length
     if (total > 5) {
@@ -301,7 +343,7 @@ export default function CreateListing() {
     for (let i = 0; i < images.length; i++) {
       const image = images[i]
       const extension = image.name.split(".").pop()?.toLowerCase() || "jpg"
-      const filePath = `${userId}/${listingId}/${crypto.randomUUID()}.${extension}`
+      const filePath = `${userId}/${listingId}/${safeUUID()}.${extension}`
       const { error: uploadError } = await supabase.storage
         .from("listing-images")
         .upload(filePath, image, { cacheControl: "3600", upsert: false, contentType: image.type })
@@ -314,17 +356,18 @@ export default function CreateListing() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent): Promise<void> {
+  async function handleSubmit(e: FormEvent): Promise<void> {
     e.preventDefault()
     try {
       setSaving(true); setMessage(""); setSuccess(false)
-      if (!title.trim()) { setMessage("Andika izina ry'ikintu."); return }
-      if (!categoryId) { setMessage("Hitamo category."); return }
-      if (!province.trim()) { setMessage("Andika Province."); return }
+      if (!title.trim()) { setMessage("Andika izina ry'ikintu."); focusField("title"); return }
+      if (!categoryId) { setMessage("Hitamo category."); focusField("category"); return }
+      if (!province.trim()) { setMessage("Andika Province."); focusField("province"); return }
       if (contactPhone) {
-        if (!phoneNumber.trim()) { setMessage("Nyamuneka shyiramo nimero ya telefoni yo guhamagarwa."); return }
+        if (!phoneNumber.trim()) { setMessage("Nyamuneka shyiramo nimero ya telefoni yo guhamagarwa."); focusField("phone"); return }
         if (!validatePhone(phoneNumber)) {
           setMessage("Nimero ya telefoni wanditse ntabwo yubahirije imiterere yemewe (+250 cyangwa 07...).")
+          focusField("phone")
           return
         }
       }
@@ -367,6 +410,17 @@ export default function CreateListing() {
     } finally { setSaving(false) }
   }
 
+  function focusField(key: string) {
+    // Scroll to + focus the invalid field (best-effort, non-breaking)
+    if (!formRef.current) return
+    const el = formRef.current.querySelector<HTMLElement>(`[data-field="${key}"]`)
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" })
+      const input = el.querySelector<HTMLElement>("input, select, textarea")
+      input?.focus({ preventScroll: true })
+    }
+  }
+
   const selectedCategoryName = categories.find((c) => c.id === categoryId)?.name
   const conditionLabelMap: Record<string, string> = {
     new: "Bishya", used: "Byakoreshejwe", refurbished: "Byavuguruwe",
@@ -385,31 +439,144 @@ export default function CreateListing() {
   function renderStepBadge(isDone: boolean, isCurrentNext: boolean, IconComp: React.ComponentType<IconProps>) {
     if (isDone) {
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-600 ring-1 ring-emerald-500/25 dark:text-emerald-400">
+        <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-600 ring-1 ring-emerald-500/25 dark:text-emerald-400">
           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
             <Icon.Check className="w-2.5 h-2.5" />
           </span>
-          Byemejwe
+          <span className="hidden xs:inline sm:inline">Byemejwe</span>
+          <span className="inline xs:hidden sm:hidden">✓</span>
         </span>
       )
     }
     if (isCurrentNext) {
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FF5D00]/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#FF5D00] ring-1 ring-[#FF5D00]/30">
+        <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-[#FF5D00]/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-[#FF5D00] ring-1 ring-[#FF5D00]/30">
           <span className="relative flex h-2 w-2">
             <span className="absolute inset-0 animate-ping rounded-full bg-[#FF5D00] opacity-75" />
             <span className="relative flex h-2 w-2 rounded-full bg-[#FF5D00]" />
           </span>
-          Uzuza aha
+          <span className="hidden xs:inline sm:inline">Uzuza aha</span>
+          <span className="inline xs:hidden sm:hidden">!</span>
         </span>
       )
     }
     return (
-      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-400 ring-1 ring-slate-200/50 dark:bg-white/[0.05] dark:text-slate-500 dark:ring-white/10">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400 ring-1 ring-slate-200/50 dark:bg-white/[0.05] dark:text-slate-500 dark:ring-white/10">
         <IconComp className="w-3.5 h-3.5" />
       </span>
     )
   }
+
+  /* ──────────────────── SHARED PREVIEW ──────────────────── */
+  const previewCard = (
+    <div className="overflow-hidden rounded-[2rem] border border-slate-200/90 bg-white shadow-[0_30px_80px_-25px_rgba(16,36,54,0.28)] dark:border-white/10 dark:bg-slate-900 dark:shadow-black/60">
+      {/* Main image */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+        {previewUrls.length > 0 ? (
+          <img
+            src={previewUrls[activePreviewIndex]}
+            alt={title || "Preview"}
+            className="h-full w-full object-cover transition-all duration-500"
+          />
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/60 text-slate-400 shadow-inner dark:bg-white/5">
+              <Icon.Image className="w-8 h-8" />
+            </div>
+            <p className="mt-3 text-xs font-extrabold text-slate-500 dark:text-slate-400">
+              Ifoto y'ikintu izagaragara hano
+            </p>
+            <p className="mt-1 text-[11px] text-slate-400">Shyiramo amafoto ku ntambwe ya nyuma</p>
+          </div>
+        )}
+
+        <div className="absolute left-3.5 right-3.5 top-3.5 flex items-center justify-between gap-2">
+          <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white backdrop-blur-md">
+            {selectedCategoryName || "Icyiciro"}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="rounded-full bg-[#102436]/85 px-2.5 py-1 text-[10px] font-extrabold text-white backdrop-blur-md">
+              {listingType === "rent" ? "Gukodesha" : "Kugurisha"}
+            </span>
+            <span className="rounded-full bg-[#FF5D00] px-2.5 py-1 text-[10px] font-black text-white shadow-sm">
+              {conditionLabelMap[condition] || "Used"}
+            </span>
+          </div>
+        </div>
+
+        {previewUrls.length > 0 && (
+          <span className="absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md">
+            {activePreviewIndex + 1} / {previewUrls.length}
+          </span>
+        )}
+      </div>
+
+      {previewUrls.length > 1 && (
+        <div className="flex gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-2.5 dark:border-white/5 dark:bg-white/[0.02]">
+          {previewUrls.map((url, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setActivePreviewIndex(idx)}
+              className={`h-11 w-11 overflow-hidden rounded-xl border-2 transition-all ${
+                activePreviewIndex === idx
+                  ? "scale-105 border-[#FF5D00] shadow-sm"
+                  : "border-transparent opacity-60 hover:opacity-100"
+              }`}
+            >
+              <img src={url} alt="" className="h-full w-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="p-6">
+        <h2 className="text-lg font-black leading-snug text-slate-900 dark:text-white">
+          {title.trim() || "Izina ry'ikintu ugurisha..."}
+        </h2>
+
+        <div className="mt-2.5 flex items-baseline gap-2">
+          <span className="text-2xl font-black tracking-tight text-[#FF5D00]">
+            {price && Number(price) > 0 ? `${Number(price).toLocaleString()} FRW` : "0 FRW"}
+          </span>
+          {listingType === "rent" && <span className="text-xs font-bold text-slate-400">/ ukwezi</span>}
+        </div>
+
+        <div className="mt-3 flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+          <Icon.Pin className="w-3.5 h-3.5 text-[#569ab5]" />
+          <span>{formatLocation() || "Kigali, Rwanda"}</span>
+        </div>
+
+        <p className="mt-3.5 line-clamp-3 rounded-2xl bg-slate-50 p-3.5 text-xs font-medium leading-relaxed text-slate-600 dark:bg-white/[0.04] dark:text-slate-300">
+          {description.trim() || "Ibisobanuro by'ikintu cyawe bizagaragara hano kugira ngo abaguzi basobanukirwe neza..."}
+        </p>
+
+        <div className="mt-5 grid grid-cols-2 gap-2.5 border-t border-slate-100 pt-4 dark:border-white/10">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-[#102436] py-2.5 text-xs font-extrabold text-white dark:bg-white/10">
+            <Icon.Chat className="w-3.5 h-3.5" />
+            <span>Andikira</span>
+          </div>
+          <div
+            className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-extrabold ${
+              contactPhone && phoneNumber.trim()
+                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                : "bg-slate-100 text-slate-400 dark:bg-white/[0.04]"
+            }`}
+          >
+            <Icon.Phone className="w-3.5 h-3.5" />
+            <span className="truncate">
+              {contactPhone && phoneNumber.trim() ? phoneNumber.trim() : "Nta telefoni"}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center justify-center gap-1.5 text-[10px] font-semibold text-slate-400">
+          <Icon.Shield className="w-3 h-3" />
+          <span>Kugurisha mu mutekano ku Isoko</span>
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f4f8fb] text-[#102436] dark:bg-[#060f19] dark:text-slate-100">
@@ -419,29 +586,38 @@ export default function CreateListing() {
         <div className="absolute top-1/3 -right-40 h-[500px] w-[500px] rounded-full bg-emerald-500/10 blur-[120px] dark:bg-emerald-500/[0.06]" />
       </div>
 
-      {/* TOP HEADER */}
-      <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/70 backdrop-blur-2xl dark:border-white/10 dark:bg-[#060f19]/70">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
+      {/* TOP HEADER — safe-area aware, mobile-tight */}
+      <header
+        className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/70 backdrop-blur-2xl dark:border-white/10 dark:bg-[#060f19]/70"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-4 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Link
               to="/dashboard"
-              className="group inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3.5 py-2 text-xs font-extrabold text-slate-700 shadow-sm transition-all hover:border-[#FF5D00] hover:text-[#FF5D00] hover:shadow-[0_4px_20px_-6px_rgba(255,93,0,0.4)] dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-200"
+              className="group inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200/80 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm transition-all hover:border-[#FF5D00] hover:text-[#FF5D00] hover:shadow-[0_4px_20px_-6px_rgba(255,93,0,0.4)] dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-200"
             >
               <Icon.ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
               <span className="hidden sm:inline">Dashboard</span>
             </Link>
-            
+           
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            {draftSavedAt && (
+              <span className="hidden items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-bold text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400 md:inline-flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Byabitswe
+              </span>
+            )}
             <div className="text-right">
               <div className="flex items-center justify-end gap-1.5">
                 <span className="text-[11px] font-black text-slate-700 dark:text-slate-200">
                   {stepStatus.completedCount}/{stepStatus.totalSteps}
                 </span>
-                <span className="text-[10px] font-bold text-slate-400">byuzuye</span>
+                <span className="hidden text-[10px] font-bold text-slate-400 xs:inline sm:inline">byuzuye</span>
               </div>
-              <div className="mt-1 h-1.5 w-28 overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10 sm:w-36">
+              <div className="mt-1 h-1.5 w-20 overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10 sm:w-28 md:w-36">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-emerald-500 transition-all duration-700 ease-out"
                   style={{ width: `${stepStatus.progressPercent}%` }}
@@ -452,26 +628,26 @@ export default function CreateListing() {
         </div>
       </header>
 
-      {/* FEEDBACK BANNER */}
+      {/* FEEDBACK BANNER — uses sticky header height via CSS var */}
       {message && (
-        <div className="sticky top-[68px] z-40 mx-auto max-w-7xl px-4 pt-3 sm:px-6 lg:px-8">
+        <div className="sticky top-[calc(56px+env(safe-area-inset-top,0px))] z-40 mx-auto max-w-7xl px-3 pt-3 sm:top-[68px] sm:px-6 lg:px-8">
           <div
-            className={`flex items-center justify-between rounded-2xl border p-3.5 text-sm font-bold shadow-xl backdrop-blur-xl ${
+            className={`flex items-center justify-between gap-3 rounded-2xl border p-3 text-sm font-bold shadow-xl backdrop-blur-xl sm:p-3.5 ${
               success
                 ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
                 : "border-rose-500/30 bg-rose-500/15 text-rose-700 dark:text-rose-300"
             }`}
           >
-            <div className="flex items-center gap-2.5">
-              <span className={`flex h-7 w-7 items-center justify-center rounded-full text-white shadow-sm ${success ? "bg-emerald-500" : "bg-rose-500"}`}>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm ${success ? "bg-emerald-500" : "bg-rose-500"}`}>
                 {success ? <Icon.Check className="w-4 h-4" /> : <Icon.Alert className="w-4 h-4" />}
               </span>
-              <span>{message}</span>
+              <span className="min-w-0 break-words">{message}</span>
             </div>
             <button
               type="button"
               onClick={() => setMessage("")}
-              className="rounded-full p-1.5 text-current opacity-70 transition hover:bg-black/10 hover:opacity-100 dark:hover:bg-white/10"
+              className="shrink-0 rounded-full p-1.5 text-current opacity-70 transition hover:bg-black/10 hover:opacity-100 dark:hover:bg-white/10"
               aria-label="Funga"
             >
               <Icon.Close className="w-4 h-4" />
@@ -480,19 +656,19 @@ export default function CreateListing() {
         </div>
       )}
 
-      <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_420px] xl:grid-cols-[minmax(0,1fr)_460px]">
+      <div className="relative mx-auto max-w-7xl px-3 pb-28 pt-6 sm:px-6 sm:pt-8 lg:px-8 lg:pt-10 lg:pb-10">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_460px]">
 
           {/* ════════════════════════════════════════════════════════
               LEFT: FORM
               ════════════════════════════════════════════════════════ */}
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5">
 
             {/* 1. TITLE */}
-            <div className={`group rounded-3xl border p-5 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isTitleDone, stepStatus.firstIncompleteKey === "title")}`}>
+            <div data-field="title" className={`group rounded-3xl border p-4 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isTitleDone, stepStatus.firstIncompleteKey === "title")}`}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <label className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${stepStatus.isTitleDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
+                <label htmlFor="listing-title" className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${stepStatus.isTitleDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
                     <Icon.Pencil className="w-4 h-4" />
                   </span>
                   Izina ry'ikintu <span className="text-rose-500">*</span>
@@ -500,20 +676,27 @@ export default function CreateListing() {
                 {renderStepBadge(stepStatus.isTitleDone, stepStatus.firstIncompleteKey === "title", Icon.Pencil)}
               </div>
               <input
+                id="listing-title"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                placeholder="Urugero: iPhone 15 Pro Max 256GB"
+                maxLength={80}
+                placeholder="Urugero: iPhone,inzu yo kubamo..."
                 className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none transition-all placeholder:font-semibold placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-slate-500"
               />
+              <div className="mt-1.5 flex justify-end">
+                <span className={`text-[10px] font-bold ${title.length > 70 ? "text-amber-500" : "text-slate-400"}`}>
+                  {title.length}/80
+                </span>
+              </div>
             </div>
 
             {/* 2. CATEGORY */}
-            <div className={`group rounded-3xl border p-5 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isCategoryDone, stepStatus.firstIncompleteKey === "category")}`}>
+            <div data-field="category" className={`group rounded-3xl border p-4 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isCategoryDone, stepStatus.firstIncompleteKey === "category")}`}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <label className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${stepStatus.isCategoryDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
+                <label htmlFor="listing-category" className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${stepStatus.isCategoryDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
                     <Icon.Grid className="w-4 h-4" />
                   </span>
                   Icyiciro <span className="text-rose-500">*</span>
@@ -522,29 +705,28 @@ export default function CreateListing() {
               </div>
               <div className="relative">
                 <select
+                  id="listing-category"
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
                   required
                   className="w-full cursor-pointer appearance-none rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 pr-10 text-sm font-bold text-slate-900 outline-none transition-all focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-slate-900 dark:text-white"
                 >
-                  <option value="">Hitamo category...</option>
+                  <option value="">Hitamo ubwoko...</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
                 <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                  </svg>
+                  <Icon.ChevronDown className="w-4 h-4" />
                 </span>
               </div>
             </div>
 
             {/* 3. PRICE / TYPE / CONDITION */}
-            <div className={`group rounded-3xl border p-5 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isPriceDone, stepStatus.firstIncompleteKey === "price")}`}>
+            <div data-field="price" className={`group rounded-3xl border p-4 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isPriceDone, stepStatus.firstIncompleteKey === "price")}`}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <label className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${stepStatus.isPriceDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${stepStatus.isPriceDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
                     <Icon.Tag className="w-4 h-4" />
                   </span>
                   Igiciro n'Imimerere <span className="text-rose-500">*</span>
@@ -584,6 +766,7 @@ export default function CreateListing() {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     min="0"
+                    inputMode="numeric"
                     placeholder="Igiciro"
                     className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 pr-14 text-sm font-bold text-slate-900 outline-none transition-all placeholder:font-semibold placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-slate-500"
                   />
@@ -598,24 +781,22 @@ export default function CreateListing() {
                     onChange={(e) => setCondition(e.target.value)}
                     className="w-full cursor-pointer appearance-none rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 pr-10 text-sm font-bold text-slate-900 outline-none transition-all focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-slate-900 dark:text-white"
                   >
-                    <option value="new">Bishya (New)</option>
-                    <option value="used">Byakoreshejwe (Used)</option>
-                    <option value="refurbished">Byavuguruwe (Refurbished)</option>
+                    <option value="new">Bishya (Gishya)</option>
+                    <option value="used">Byakoreshejwe (Cyakoze)</option>
+                    <option value="refurbished">Byavuguruwe (Buy)</option>
                   </select>
                   <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
+                    <Icon.ChevronDown className="w-4 h-4" />
                   </span>
                 </div>
               </div>
             </div>
 
             {/* 4. DESCRIPTION */}
-            <div className={`group rounded-3xl border p-5 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isDescriptionDone, stepStatus.firstIncompleteKey === "description")}`}>
+            <div data-field="description" className={`group rounded-3xl border p-4 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isDescriptionDone, stepStatus.firstIncompleteKey === "description")}`}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <label className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${stepStatus.isDescriptionDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
+                <label htmlFor="listing-description" className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${stepStatus.isDescriptionDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
                     <Icon.Document className="w-4 h-4" />
                   </span>
                   Ibisobanuro birambuye
@@ -623,19 +804,26 @@ export default function CreateListing() {
                 {renderStepBadge(stepStatus.isDescriptionDone, stepStatus.firstIncompleteKey === "description", Icon.Document)}
               </div>
               <textarea
+                id="listing-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
+                maxLength={800}
                 placeholder="Sobanura neza imimerere y'ikintu cyawe, ingano, ibara n'ibindi..."
-                className="w-full resize-none rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold text-slate-900 outline-none transition-all placeholder:font-medium placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-slate-500"
+                className="min-h-[120px] w-full resize-none rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 text-sm font-semibold text-slate-900 outline-none transition-all placeholder:font-medium placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-slate-500"
               />
+              <div className="mt-1.5 flex justify-end">
+                <span className={`text-[10px] font-bold ${description.length > 700 ? "text-amber-500" : "text-slate-400"}`}>
+                  {description.length}/800
+                </span>
+              </div>
             </div>
 
             {/* 5. LOCATION */}
-            <div className={`group rounded-3xl border p-5 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isLocationDone, stepStatus.firstIncompleteKey === "location")}`}>
+            <div data-field="province" className={`group rounded-3xl border p-4 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isLocationDone, stepStatus.firstIncompleteKey === "location")}`}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <label className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${stepStatus.isLocationDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${stepStatus.isLocationDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
                     <Icon.Pin className="w-4 h-4" />
                   </span>
                   Aho giherereye <span className="text-rose-500">*</span>
@@ -645,28 +833,31 @@ export default function CreateListing() {
               <div className="grid gap-3 sm:grid-cols-3">
                 <input
                   value={province} onChange={(e) => setProvince(e.target.value)} required
-                  placeholder="Province"
+                  placeholder="Intara"
+                  aria-label="Province"
                   className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none transition-all placeholder:font-semibold placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-slate-500"
                 />
                 <input
                   value={district} onChange={(e) => setDistrict(e.target.value)}
-                  placeholder="District"
+                  placeholder="Akarere"
+                  aria-label="District"
                   className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none transition-all placeholder:font-semibold placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-slate-500"
                 />
                 <input
                   value={sector} onChange={(e) => setSector(e.target.value)}
-                  placeholder="Sector"
+                  placeholder="Umurenge"
+                  aria-label="Sector"
                   className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none transition-all placeholder:font-semibold placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-slate-500"
                 />
               </div>
             </div>
 
             {/* 6. PHONE */}
-            <div className={`group rounded-3xl border p-5 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isPhoneDone, stepStatus.firstIncompleteKey === "phone")}`}>
+            <div data-field="phone" className={`group rounded-3xl border p-4 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isPhoneDone, stepStatus.firstIncompleteKey === "phone")}`}>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <label className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
-                    <span className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${stepStatus.isPhoneDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${stepStatus.isPhoneDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
                       <Icon.Phone className="w-4 h-4" />
                     </span>
                     Nimero ya Telefoni
@@ -729,9 +920,7 @@ export default function CreateListing() {
                             ))}
                           </select>
                           <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                            </svg>
+                            <Icon.ChevronDown className="w-4 h-4" />
                           </span>
                         </div>
                       )}
@@ -743,6 +932,8 @@ export default function CreateListing() {
                       type="tel"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
+                      inputMode="tel"
+                      autoComplete="tel"
                       placeholder="Urugero: 0788000000 cyangwa +250788000000"
                       className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none transition-all placeholder:font-semibold placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-slate-500"
                     />
@@ -750,88 +941,247 @@ export default function CreateListing() {
                 </div>
               )}
             </div>
+{/* 7. IMAGES — premium cover + grid layout */}
+<div
+  data-field="images"
+  className={`group rounded-3xl border p-4 transition-all duration-300 sm:p-6 ${getFieldCardClasses(
+    stepStatus.isImagesDone,
+    stepStatus.firstIncompleteKey === "images",
+  )}`}
+>
+  {/* Header row */}
+  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+    <label className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
+      <span
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${
+          stepStatus.isImagesDone
+            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+            : "bg-[#FF5D00]/10 text-[#FF5D00]"
+        }`}
+      >
+        <Icon.Camera className="w-4 h-4" />
+      </span>
+      Amafoto y'ikintu
+      <span className="font-bold text-slate-400">
+        ({images.length}/5)
+      </span>
+    </label>
 
-            {/* 7. IMAGES */}
-            <div className={`group rounded-3xl border p-5 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isImagesDone, stepStatus.firstIncompleteKey === "images")}`}>
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <label className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
-                  <span className={`flex h-8 w-8 items-center justify-center rounded-xl transition-colors ${stepStatus.isImagesDone ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-[#FF5D00]/10 text-[#FF5D00]"}`}>
-                    <Icon.Camera className="w-4 h-4" />
-                  </span>
-                  Amafoto y'ikintu <span className="text-slate-400 font-bold">({images.length}/5)</span>
-                </label>
-                {renderStepBadge(stepStatus.isImagesDone, stepStatus.firstIncompleteKey === "images", Icon.Camera)}
-              </div>
+    <div className="flex items-center gap-2">
+      {/* Mini progress dots — one per slot */}
+      <div className="hidden items-center gap-1 sm:flex">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <span
+            key={i}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              i < images.length
+                ? "w-6 bg-[#FF5D00]"
+                : "w-3 bg-slate-200 dark:bg-white/15"
+            }`}
+          />
+        ))}
+      </div>
+      {renderStepBadge(
+        stepStatus.isImagesDone,
+        stepStatus.firstIncompleteKey === "images",
+        Icon.Camera,
+      )}
+    </div>
+  </div>
 
-              {images.length < 5 && (
-                <label className="group/drop flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-7 text-center transition-all hover:border-[#FF5D00] hover:bg-[#FF5D00]/[0.03] dark:border-white/15 dark:bg-white/[0.02] dark:hover:border-[#FF5D00]/60">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF5D00]/10 text-[#FF5D00] transition-transform group-hover/drop:scale-110">
-                    <Icon.Plus className="w-6 h-6" />
-                  </span>
-                  <span className="mt-3 text-xs font-black text-slate-900 dark:text-white">
-                    Kanda ushyiremo amafoto
-                  </span>
-                  <span className="mt-1 text-[11px] font-medium text-slate-400">
-                    Kugera kuri 5 · Ifoto ya mbere igaragara imbere
-                  </span>
-                  <input type="file" accept="image/*" multiple onChange={handleImageSelect} className="hidden" />
-                </label>
-              )}
+  {/* ─────────── EMPTY STATE: premium dropzone ─────────── */}
+  {images.length === 0 && (
+    <label className="group/drop relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white p-8 text-center transition-all duration-300 hover:border-[#FF5D00] hover:from-[#FF5D00]/[0.04] hover:to-white dark:border-white/15 dark:from-white/[0.03] dark:to-transparent dark:hover:border-[#FF5D00]/70 sm:p-10">
+      {/* Corner glow */}
+      <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#FF5D00]/10 blur-3xl transition-all duration-500 group-hover/drop:bg-[#FF5D00]/20" />
+      <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-[#569ab5]/10 blur-3xl" />
 
-              {previewUrls.length > 0 && (
-                <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-5">
-                  {previewUrls.map((url, index) => (
-                    <div key={index} className="group/img relative aspect-square overflow-hidden rounded-2xl border border-slate-200 shadow-sm dark:border-white/10">
-                      <img src={url} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-110" />
-                      {index === 0 && (
-                        <span className="absolute left-1.5 top-1.5 rounded-full bg-[#FF5D00] px-1.5 py-0.5 text-[8px] font-black uppercase text-white shadow">
-                          Main
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-rose-600 text-white shadow-md transition hover:scale-110 hover:bg-rose-700"
-                        aria-label="Siba ifoto"
-                      >
-                        <Icon.Trash className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+      <span className="relative flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-gradient-to-br from-[#FF5D00] to-[#e05200] text-white shadow-[0_16px_35px_-12px_rgba(255,93,0,0.6)] transition-transform duration-300 group-hover/drop:scale-110 group-hover/drop:rotate-3">
+        <Icon.Camera className="h-7 w-7" />
+        <span className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#FF5D00] shadow-md ring-2 ring-[#FF5D00]/20">
+          <Icon.Plus className="h-3.5 w-3.5" />
+        </span>
+      </span>
 
-            {/* PUBLISH BUTTON */}
-            <div className="pt-2">
+      <span className="relative mt-4 text-sm font-black text-slate-900 dark:text-white">
+        Kanda ushyiremo amafoto
+      </span>
+      <span className="relative mt-1 max-w-xs text-[11px] font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+        Ifoto ya mbere ni yo igaragara imbere ku isoko · Kugera kuri 5
+      </span>
+
+      <span className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-slate-900/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:bg-white/5 dark:text-slate-400">
+        <Icon.Image className="h-3 w-3" />
+        JPG · PNG · WEBP
+      </span>
+
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleImageSelect}
+        className="hidden"
+      />
+    </label>
+  )}
+
+  {/* ─────────── FILLED STATE: hero + grid ─────────── */}
+  {images.length > 0 && (
+    <div className="space-y-3">
+      {/* HERO — first image, big, with cover badge */}
+      <div className="group/hero relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-[0_18px_40px_-20px_rgba(16,36,54,0.35)] dark:border-white/10 dark:bg-slate-800">
+        <div className="relative aspect-[16/10] w-full">
+          <img
+            src={previewUrls[0]}
+            alt="Ifoto y'ibanze"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover/hero:scale-[1.03]"
+          />
+
+          {/* Gradient veil */}
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-black/20" />
+
+          {/* Top-left: cover badge */}
+          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-[#FF5D00] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-lg ring-2 ring-white/30 backdrop-blur">
+            <Icon.Sparkles className="h-3 w-3" />
+            Ifoto y'ibanze
+          </span>
+
+          {/* Top-right: remove */}
+          <button
+            type="button"
+            onClick={() => removeImage(0)}
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            aria-label="Siba ifoto y'ibanze"
+          >
+            <Icon.Trash className="h-4 w-4" />
+          </button>
+
+          {/* Bottom-left: index + count */}
+          <div className="absolute bottom-3 left-3 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur">
+              <Icon.Image className="h-3 w-3" />
+              1 / {images.length}
+            </span>
+          </div>
+
+          {/* Bottom-right: change cover */}
+          <label className="absolute bottom-3 right-3 inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-slate-800 shadow-md backdrop-blur transition-all hover:bg-white hover:shadow-lg dark:bg-slate-900/95 dark:text-slate-100">
+            <Icon.Camera className="h-3 w-3" />
+            Hindura
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* THUMBNAILS + ADD-MORE TILE */}
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
+        {/* Existing thumbnails (skip index 0 — it's the hero) */}
+        {previewUrls.slice(1).map((url, idx) => {
+          const realIndex = idx + 1
+          return (
+            <div
+              key={realIndex}
+              className="group/img relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition-all duration-300 hover:shadow-md dark:border-white/10 dark:bg-slate-800"
+            >
+              <img
+                src={url}
+                alt={`Ifoto ${realIndex + 1}`}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-110"
+              />
+
+              {/* Hover tint */}
+              <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover/img:bg-black/25" />
+
+              {/* Index chip */}
+              <span className="absolute left-1.5 top-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur">
+                {realIndex + 1}
+              </span>
+
+              {/* Remove */}
               <button
-                type="submit"
-                disabled={saving}
-                className="group relative w-full overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] py-4 text-center text-sm font-black text-white shadow-[0_16px_38px_-10px_rgba(255,93,0,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_45px_-10px_rgba(255,93,0,0.85)] active:scale-95 disabled:opacity-50"
+                type="button"
+                onClick={() => removeImage(realIndex)}
+                className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white opacity-0 shadow-md backdrop-blur transition-all duration-200 hover:scale-110 hover:bg-rose-600 group-hover/img:opacity-100 focus:opacity-100"
+                aria-label={`Siba ifoto ${realIndex + 1}`}
               >
-                <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  {saving ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      <span>Turimo gushyira ku isoko...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Icon.Sparkles className="w-4 h-4" />
-                      <span>Shyira ku Isoko Ubu</span>
-                      <Icon.ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                    </>
-                  )}
-                </span>
+                <Icon.Trash className="h-3 w-3" />
               </button>
+            </div>
+          )
+        })}
+
+        {/* Add-more tile (only if under 5) */}
+        {images.length < 5 && (
+          <label className="group/add relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white transition-all duration-300 hover:border-[#FF5D00] hover:from-[#FF5D00]/[0.05] hover:to-white dark:border-white/15 dark:from-white/[0.03] dark:to-transparent dark:hover:border-[#FF5D00]/70">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF5D00]/10 text-[#FF5D00] transition-transform duration-300 group-hover/add:scale-110 group-hover/add:rotate-90">
+              <Icon.Plus className="h-4 w-4" />
+            </span>
+            <span className="mt-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 transition-colors group-hover/add:text-[#FF5D00] dark:text-slate-400">
+              Ongeraho
+            </span>
+            <span className="text-[9px] font-bold text-slate-400">
+              {5 - images.length} isigaye
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+          </label>
+        )}
+      </div>
+
+      {/* Helper footer */}
+      <p className="flex items-start gap-1.5 pt-1 text-[10px] font-medium leading-relaxed text-slate-400 dark:text-slate-500">
+        <Icon.Alert className="mt-px h-3 w-3 shrink-0" />
+        <span>
+          Ifoto ya mbere ni yo ibanza kugaragara ku isoko. Kanda{" "}
+          <strong className="text-slate-600 dark:text-slate-300">Hindura</strong>{" "}
+          ku ifoto y'ibanze kugira ngo ushyireho izindi.
+        </span>
+      </p>
+    </div>
+  )}
+</div>
+
+            {/* Mobile: preview toggle */}
+            <button
+              type="button"
+              onClick={() => setPreviewOpen((v) => !v)}
+              className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm font-bold text-slate-700 shadow-sm backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 lg:hidden"
+            >
+              <span className="flex items-center gap-2">
+                <Icon.Eye className="w-4 h-4 text-[#569ab5]" />
+                Reba uko bigenda kugaragara
+              </span>
+              {previewOpen ? <Icon.ChevronUp className="w-4 h-4" /> : <Icon.ChevronDown className="w-4 h-4" />}
+            </button>
+
+            {/* Mobile: preview panel (collapsible) */}
+            {previewOpen && (
+              <div className="lg:hidden">
+                {previewCard}
+              </div>
+            )}
+
+            {/* PUBLISH BUTTON (in-flow, desktop) */}
+            <div className="hidden pt-2 lg:block">
+              <PublishButton saving={saving} />
             </div>
           </form>
 
           {/* ════════════════════════════════════════════════════════
-              RIGHT: LIVE PREVIEW
+              RIGHT: LIVE PREVIEW (desktop)
               ════════════════════════════════════════════════════════ */}
-          <aside className="lg:sticky lg:top-24">
+          <aside className="hidden lg:sticky lg:top-24 lg:block">
             <div className="mb-3 flex items-center justify-between px-1">
               <div className="inline-flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
@@ -847,117 +1197,63 @@ export default function CreateListing() {
                 Isoko
               </span>
             </div>
-
-            <div className="overflow-hidden rounded-[2rem] border border-slate-200/90 bg-white shadow-[0_30px_80px_-25px_rgba(16,36,54,0.28)] dark:border-white/10 dark:bg-slate-900 dark:shadow-black/60">
-              {/* Main image */}
-              <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
-                {previewUrls.length > 0 ? (
-                  <img
-                    src={previewUrls[activePreviewIndex]}
-                    alt={title || "Preview"}
-                    className="h-full w-full object-cover transition-all duration-500"
-                  />
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/60 text-slate-400 shadow-inner dark:bg-white/5">
-                      <Icon.Image className="w-8 h-8" />
-                    </div>
-                    <p className="mt-3 text-xs font-extrabold text-slate-500 dark:text-slate-400">
-                      Ifoto y'ikintu izagaragara hano
-                    </p>
-                    <p className="mt-1 text-[11px] text-slate-400">Shyiramo amafoto ku ntambwe ya nyuma</p>
-                  </div>
-                )}
-
-                <div className="absolute left-3.5 right-3.5 top-3.5 flex items-center justify-between gap-2">
-                  <span className="rounded-full bg-black/60 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-white backdrop-blur-md">
-                    {selectedCategoryName || "Icyiciro"}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="rounded-full bg-[#102436]/85 px-2.5 py-1 text-[10px] font-extrabold text-white backdrop-blur-md">
-                      {listingType === "rent" ? "Gukodesha" : "Kugurisha"}
-                    </span>
-                    <span className="rounded-full bg-[#FF5D00] px-2.5 py-1 text-[10px] font-black text-white shadow-sm">
-                      {conditionLabelMap[condition] || "Used"}
-                    </span>
-                  </div>
-                </div>
-
-                {previewUrls.length > 0 && (
-                  <span className="absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md">
-                    {activePreviewIndex + 1} / {previewUrls.length}
-                  </span>
-                )}
-              </div>
-
-              {previewUrls.length > 1 && (
-                <div className="flex gap-2 border-b border-slate-100 bg-slate-50/70 px-4 py-2.5 dark:border-white/5 dark:bg-white/[0.02]">
-                  {previewUrls.map((url, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setActivePreviewIndex(idx)}
-                      className={`h-11 w-11 overflow-hidden rounded-xl border-2 transition-all ${
-                        activePreviewIndex === idx
-                          ? "scale-105 border-[#FF5D00] shadow-sm"
-                          : "border-transparent opacity-60 hover:opacity-100"
-                      }`}
-                    >
-                      <img src={url} alt="" className="h-full w-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              <div className="p-6">
-                <h2 className="text-lg font-black leading-snug text-slate-900 dark:text-white">
-                  {title.trim() || "Izina ry'ikintu ugurisha..."}
-                </h2>
-
-                <div className="mt-2.5 flex items-baseline gap-2">
-                  <span className="text-2xl font-black tracking-tight text-[#FF5D00]">
-                    {price && Number(price) > 0 ? `${Number(price).toLocaleString()} FRW` : "0 FRW"}
-                  </span>
-                  {listingType === "rent" && <span className="text-xs font-bold text-slate-400">/ ukwezi</span>}
-                </div>
-
-                <div className="mt-3 flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
-                  <Icon.Pin className="w-3.5 h-3.5 text-[#569ab5]" />
-                  <span>{formatLocation() || "Kigali, Rwanda"}</span>
-                </div>
-
-                <p className="mt-3.5 line-clamp-3 rounded-2xl bg-slate-50 p-3.5 text-xs font-medium leading-relaxed text-slate-600 dark:bg-white/[0.04] dark:text-slate-300">
-                  {description.trim() || "Ibisobanuro by'ikintu cyawe bizagaragara hano kugira ngo abaguzi basobanukirwe neza..."}
-                </p>
-
-                <div className="mt-5 grid grid-cols-2 gap-2.5 border-t border-slate-100 pt-4 dark:border-white/10">
-                  <div className="flex items-center justify-center gap-1.5 rounded-xl bg-[#102436] py-2.5 text-xs font-extrabold text-white dark:bg-white/10">
-                    <Icon.Chat className="w-3.5 h-3.5" />
-                    <span>Andikira</span>
-                  </div>
-                  <div
-                    className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-extrabold ${
-                      contactPhone && phoneNumber.trim()
-                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                        : "bg-slate-100 text-slate-400 dark:bg-white/[0.04]"
-                    }`}
-                  >
-                    <Icon.Phone className="w-3.5 h-3.5" />
-                    <span className="truncate">
-                      {contactPhone && phoneNumber.trim() ? phoneNumber.trim() : "Nta telefoni"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex items-center justify-center gap-1.5 text-[10px] font-semibold text-slate-400">
-                  <Icon.Shield className="w-3 h-3" />
-                  <span>Kugurisha mu mutekano ku Isoko</span>
-                </div>
-              </div>
-            </div>
+            {previewCard}
           </aside>
         </div>
       </div>
+
+      {/* MOBILE STICKY ACTION BAR */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/70 bg-white/85 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-2xl dark:border-white/10 dark:bg-[#060f19]/85 lg:hidden"
+      >
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Byuzuye
+            </div>
+            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-emerald-500 transition-all duration-700 ease-out"
+                style={{ width: `${stepStatus.progressPercent}%` }}
+              />
+            </div>
+          </div>
+          <PublishButton saving={saving} compact />
+        </div>
+      </div>
     </main>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Publish button — reused in-form and in sticky bar
+   ────────────────────────────────────────────────────────────────────────── */
+function PublishButton({ saving, compact = false }: { saving: boolean; compact?: boolean }) {
+  return (
+    <button
+      type="submit"
+      disabled={saving}
+      className={`group relative overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] text-center text-sm font-black text-white shadow-[0_16px_38px_-10px_rgba(255,93,0,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_45px_-10px_rgba(255,93,0,0.85)] active:scale-95 disabled:opacity-50 ${
+        compact ? "shrink-0 px-5 py-3 text-xs" : "w-full py-4"
+      }`}
+    >
+      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+      <span className="relative z-10 flex items-center justify-center gap-2">
+        {saving ? (
+          <>
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            {!compact && <span>Birikoherezwa...</span>}
+          </>
+        ) : (
+          <>
+            <Icon.Sparkles className="w-4 h-4" />
+            <span className={compact ? "hidden xs:inline sm:inline" : ""}>
+              Ohereza
+            </span>
+            {!compact && <Icon.ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />}
+          </>
+        )}
+      </span>
+    </button>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import {
   AlertCircle,
@@ -26,6 +26,8 @@ import {
   Grid,
   Pencil,
   Bolt,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 
 import { supabase } from "../services/supabase"
@@ -41,12 +43,6 @@ type ExistingImage = {
   sort_order: number
 }
 
-type LocationData = {
-  province: string | null
-  district: string | null
-  sector: string | null
-}
-
 type PreviousPhoneOption = {
   number: string
   lastUsedAt: string
@@ -58,12 +54,24 @@ type PreviousPhoneOption = {
 const cardCls =
   "relative overflow-hidden rounded-[28px] border border-slate-200/70 bg-white/80 shadow-sm backdrop-blur-sm transition-all duration-300 dark:border-white/10 dark:bg-slate-900/60"
 const cardHeaderCls =
-  "flex items-start justify-between gap-4 border-b border-slate-100 dark:border-white/10 px-6 py-5 sm:px-7"
+  "flex items-start justify-between gap-4 border-b border-slate-100 dark:border-white/10 px-5 py-4 sm:px-7 sm:py-5"
 const inputCls =
-  "mt-2 w-full rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none transition-all placeholder:font-semibold placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-slate-500"
+  "w-full rounded-2xl border border-slate-200/80 bg-slate-50/50 px-4 py-3.5 text-sm font-bold text-slate-900 outline-none transition-all placeholder:font-semibold placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:placeholder:text-slate-500"
 const labelCls = "text-sm font-black text-slate-900 dark:text-white"
 const iconBoxCls =
   "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FF5D00]/10 text-[#FF5D00] ring-1 ring-[#FF5D00]/15"
+
+/* Safe UUID — unchanged happy path, fallback only on ancient WebViews */
+function safeUUID(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID()
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === "x" ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
 
 function SectionHeader({
   icon,
@@ -90,10 +98,13 @@ function SectionHeader({
 export default function EditListing() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const formRef = useRef<HTMLFormElement | null>(null)
 
   const [categories, setCategories] = useState<Category[]>([])
   const [existingImages, setExistingImages] = useState<ExistingImage[]>([])
   const [newImages, setNewImages] = useState<File[]>([])
+  const [newPreviewUrls, setNewPreviewUrls] = useState<string[]>([])
+  const [activePreviewIndex, setActivePreviewIndex] = useState(0)
 
   const [title, setTitle] = useState("")
   const [categoryId, setCategoryId] = useState("")
@@ -105,6 +116,8 @@ export default function EditListing() {
   const [province, setProvince] = useState("")
   const [district, setDistrict] = useState("")
   const [sector, setSector] = useState("")
+  // Track the loaded location row id so save always targets the right row
+  const [locationId, setLocationId] = useState<string | null>(null)
 
   const [contactPhone, setContactPhone] = useState(true)
   const [phoneNumber, setPhoneNumber] = useState("")
@@ -116,6 +129,7 @@ export default function EditListing() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
   const [success, setSuccess] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -124,6 +138,22 @@ export default function EditListing() {
     }
   }, [id])
 
+  /* Revoke new-image object URLs when they change (fixes memory leak in old code) */
+  useEffect(() => {
+    const urls = newImages.map((file) => URL.createObjectURL(file))
+    setNewPreviewUrls(urls)
+    return () => urls.forEach((url) => URL.revokeObjectURL(url))
+  }, [newImages])
+
+  useEffect(() => {
+    setActivePreviewIndex((prev) =>
+      prev >= existingImages.length ? Math.max(0, existingImages.length - 1) : prev,
+    )
+  }, [existingImages.length])
+
+  /* ══════════════════════════════════════════════════════════════
+     LOAD — deterministic location fetch
+     ══════════════════════════════════════════════════════════════ */
   async function loadListing(): Promise<void> {
     try {
       setLoading(true)
@@ -136,8 +166,7 @@ export default function EditListing() {
         .from("listings")
         .select(`
           id, seller_id, title, description, price, listing_type, condition,
-          category_id, location_id, contact_phone, contact_phone_number,
-          locations (province, district, sector)
+          category_id, location_id, contact_phone, contact_phone_number
         `)
         .eq("id", id)
         .eq("seller_id", user.id)
@@ -152,21 +181,29 @@ export default function EditListing() {
       setTitle(listing.title || "")
       setDescription(listing.description || "")
       setPrice(listing.price !== null && listing.price !== undefined ? String(listing.price) : "")
-      // Coerce "free" legacy listings to "sale" since we removed the option
       setListingType(listing.listing_type === "free" ? "sale" : listing.listing_type || "sale")
       setCondition(listing.condition || "used")
       setCategoryId(listing.category_id || "")
       setContactPhone(listing.contact_phone ?? true)
       setPhoneNumber(listing.contact_phone_number || "")
+      setLocationId(listing.location_id ?? null)
 
-      let location: LocationData | null = null
-      if (listing.locations) {
-        location = (Array.isArray(listing.locations) ? listing.locations[0] : listing.locations) as LocationData
-      }
-      if (location) {
-        setProvince(location.province || "")
-        setDistrict(location.district || "")
-        setSector(location.sector || "")
+      /* DETERMINISTIC LOCATION FETCH */
+      if (listing.location_id) {
+        const { data: loc, error: locErr } = await supabase
+          .from("locations")
+          .select("id, province, district, sector")
+          .eq("id", listing.location_id)
+          .maybeSingle()
+        if (!locErr && loc) {
+          setProvince(loc.province || "")
+          setDistrict(loc.district || "")
+          setSector(loc.sector || "")
+        }
+      } else {
+        setProvince("")
+        setDistrict("")
+        setSector("")
       }
 
       const { data: categoryData } = await supabase
@@ -262,7 +299,7 @@ export default function EditListing() {
     for (let i = 0; i < newImages.length; i++) {
       const image = newImages[i]
       const extension = image.name.split(".").pop()?.toLowerCase() || "jpg"
-      const filePath = `${user.id}/${id}/${crypto.randomUUID()}.${extension}`
+      const filePath = `${user.id}/${id}/${safeUUID()}.${extension}`
       const { error: uploadError } = await supabase.storage
         .from("listing-images")
         .upload(filePath, image, { cacheControl: "3600", upsert: false, contentType: image.type })
@@ -293,49 +330,58 @@ export default function EditListing() {
     return [sector, district, province].filter(Boolean).join(", ")
   }
 
+  /* ══════════════════════════════════════════════════════════════
+     SAVE — deterministic location upsert
+     ══════════════════════════════════════════════════════════════ */
   async function handleSave(e: React.FormEvent): Promise<void> {
     e.preventDefault()
     if (!id) return
     try {
       setSaving(true); setMessage(""); setSuccess(false)
-      if (!title.trim()) { setMessage("Andika izina ry'ikintu."); return }
-      if (!categoryId) { setMessage("Hitamo category."); return }
-      if (!province.trim()) { setMessage("Andika Province."); return }
+      if (!title.trim()) { setMessage("Andika izina ry'ikintu."); focusField("title"); return }
+      if (!categoryId) { setMessage("Hitamo category."); focusField("category"); return }
+      if (!province.trim()) { setMessage("Andika Province."); focusField("province"); return }
       if (contactPhone) {
-        if (!phoneNumber.trim()) { setMessage("Nyamuneka shyiramo nimero ya telefoni yo guhamagarwa."); return }
-        if (!validatePhone(phoneNumber)) { setMessage("Nimero ya telefoni wanditse ntabwo yubahirije imiterere yemewe (+250 cyangwa 07...)."); return }
+        if (!phoneNumber.trim()) { setMessage("Nyamuneka shyiramo nimero ya telefoni yo guhamagarwa."); focusField("phone"); return }
+        if (!validatePhone(phoneNumber)) { setMessage("Nimero ya telefoni wanditse ntabwo yubahirije imiterere yemewe (+250 cyangwa 07...)."); focusField("phone"); return }
       }
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { navigate("/login"); return }
 
+      // Re-read location_id fresh — protects against stale state
       const { data: listingData, error: listingFetchError } = await supabase
-        .from("listings").select("location_id").eq("id", id).eq("seller_id", user.id).single()
+        .from("listings")
+        .select("location_id")
+        .eq("id", id)
+        .eq("seller_id", user.id)
+        .single()
       if (listingFetchError) throw listingFetchError
 
-      if (listingData.location_id) {
+      const currentLocationId: string | null = listingData?.location_id ?? locationId
+
+      const locationPayload = {
+        province: province.trim(),
+        district: district.trim() || null,
+        sector: sector.trim() || null,
+      }
+
+      let resolvedLocationId: string | null = currentLocationId
+
+      if (currentLocationId) {
         const { error: locationError } = await supabase
           .from("locations")
-          .update({
-            province: province.trim(),
-            district: district.trim() || null,
-            sector: sector.trim() || null,
-          })
-          .eq("id", listingData.location_id)
+          .update(locationPayload)
+          .eq("id", currentLocationId)
         if (locationError) throw locationError
       } else {
-        const { data: location, error } = await supabase
+        const { data: inserted, error: insertError } = await supabase
           .from("locations")
-          .insert({
-            province: province.trim(),
-            district: district.trim() || null,
-            sector: sector.trim() || null,
-          })
-          .select().single()
-        if (error) throw error
-        const { error: updateLocationError } = await supabase
-          .from("listings").update({ location_id: location.id }).eq("id", id).eq("seller_id", user.id)
-        if (updateLocationError) throw updateLocationError
+          .insert(locationPayload)
+          .select("id")
+          .single()
+        if (insertError) throw insertError
+        resolvedLocationId = inserted.id
       }
 
       const finalNormalizedPhone = contactPhone && phoneNumber.trim() ? normalizePhoneNumber(phoneNumber.trim()) : null
@@ -346,6 +392,7 @@ export default function EditListing() {
         .update({
           title: title.trim(),
           category_id: categoryId,
+          location_id: resolvedLocationId,
           description: description.trim() || null,
           price: parsedPrice,
           listing_type: listingType,
@@ -372,7 +419,16 @@ export default function EditListing() {
     } finally { setSaving(false) }
   }
 
-  // Only two options now — Ubuntu (free) removed
+  function focusField(key: string) {
+    if (!formRef.current) return
+    const el = formRef.current.querySelector<HTMLElement>(`[data-field="${key}"]`)
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" })
+      const input = el.querySelector<HTMLElement>("input, select, textarea")
+      input?.focus({ preventScroll: true })
+    }
+  }
+
   const listingTypeOptions = [
     { value: "sale", icon: <Tag className="h-5 w-5" strokeWidth={1.8} />, title: "Kugurisha", description: "Shaka umuguzi w'ikintu" },
     { value: "rent", icon: <KeyRound className="h-5 w-5" strokeWidth={1.8} />, title: "Gukodesha", description: "Kodesha icyo ufite" },
@@ -383,7 +439,12 @@ export default function EditListing() {
   }
 
   const previewPrice = price && Number(price) > 0 ? `${Number(price).toLocaleString()} FRW` : "0 FRW"
+  const selectedCategoryName = categories.find((c) => c.id === categoryId)?.name
+  const totalImages = existingImages.length + newImages.length
+  const heroImageUrl =
+    existingImages[0]?.image_url || newPreviewUrls[0] || undefined
 
+  /* ─────────── LOADING ─────────── */
   if (loading) {
     return (
       <main className="relative min-h-screen overflow-hidden bg-[#f4f8fb] dark:bg-[#060f19]">
@@ -404,23 +465,105 @@ export default function EditListing() {
     )
   }
 
+  /* ─────────── PREVIEW CARD (shared desktop / mobile) ─────────── */
+  const previewCard = (
+    <div className="overflow-hidden rounded-[2rem] border border-slate-200/90 bg-white shadow-[0_30px_80px_-25px_rgba(16,36,54,0.28)] dark:border-white/10 dark:bg-slate-900 dark:shadow-black/60">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+        {heroImageUrl ? (
+          <img src={heroImageUrl} alt={title || "Preview"} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/60 text-slate-400 shadow-inner dark:bg-white/5">
+              <ImageIcon className="w-8 h-8" strokeWidth={1.6} />
+            </div>
+            <p className="mt-3 text-xs font-extrabold text-slate-500 dark:text-slate-400">Ifoto izagaragara hano</p>
+          </div>
+        )}
+
+        <div className="absolute left-3 right-3 top-3 flex items-center justify-between gap-2">
+          <span className="rounded-full bg-black/60 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-white backdrop-blur-md">
+            {selectedCategoryName || "Icyiciro"}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="rounded-full bg-[#102436]/85 px-2 py-0.5 text-[9px] font-extrabold text-white backdrop-blur-md">
+              {listingType === "rent" ? "Gukodesha" : "Kugurisha"}
+            </span>
+            <span className="rounded-full bg-[#FF5D00] px-2 py-0.5 text-[9px] font-black text-white shadow-sm">
+              {conditionLabelMap[condition] || "Used"}
+            </span>
+          </div>
+        </div>
+
+        {totalImages > 0 && (
+          <span className="absolute bottom-3 right-3 rounded-full bg-black/65 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md">
+            {activePreviewIndex + 1} / {totalImages}
+          </span>
+        )}
+      </div>
+
+      <div className="p-5">
+        <h3 className="text-base font-black leading-snug text-slate-900 dark:text-white">
+          {title.trim() || "Izina ry'ikintu..."}
+        </h3>
+
+        <div className="mt-2 flex items-baseline gap-2">
+          <span className="text-xl font-black tracking-tight text-[#FF5D00]">{previewPrice}</span>
+          {listingType === "rent" && <span className="text-[11px] font-bold text-slate-400">/ ukwezi</span>}
+        </div>
+
+        <div className="mt-2.5 flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+          <MapPin className="w-3.5 h-3.5 text-[#569ab5]" strokeWidth={2} />
+          <span className="truncate">{formatLocation() || "Kigali, Rwanda"}</span>
+        </div>
+
+        <p className="mt-3 line-clamp-3 rounded-2xl bg-slate-50 p-3 text-xs font-medium leading-relaxed text-slate-600 dark:bg-white/[0.04] dark:text-slate-300">
+          {description.trim() || "Ibisobanuro by'ikintu cyawe bizagaragara hano..."}
+        </p>
+
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 dark:border-white/10">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-[#102436] py-2 text-[11px] font-extrabold text-white dark:bg-white/10">
+            <Grid className="w-3 h-3" strokeWidth={2} />
+            <span>Andikira</span>
+          </div>
+          <div className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-extrabold ${
+            contactPhone && phoneNumber.trim()
+              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+              : "bg-slate-100 text-slate-400 dark:bg-white/[0.04]"
+          }`}>
+            <Phone className="w-3 h-3" strokeWidth={2.2} />
+            <span className="truncate">
+              {contactPhone && phoneNumber.trim() ? phoneNumber.trim() : "Nta telefoni"}
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-semibold text-slate-400">
+          <Shield className="w-3 h-3" strokeWidth={2} />
+          <span>Kugurisha mu mutekano ku Isoko</span>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#f4f8fb] text-[#102436] dark:bg-[#060f19] dark:text-slate-100">
-      {/* Ambient glows */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-[#FF5D00]/10 blur-[140px] dark:bg-[#FF5D00]/[0.08]" />
         <div className="absolute top-1/3 -right-40 h-[600px] w-[600px] rounded-full bg-blue-500/10 blur-[140px] dark:bg-blue-500/[0.06]" />
         <div className="absolute bottom-0 left-1/3 h-[500px] w-[500px] rounded-full bg-indigo-500/10 blur-[140px]" />
       </div>
 
-      {/* NAVBAR */}
-      <header className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/70 backdrop-blur-2xl dark:border-white/10 dark:bg-[#060f19]/70">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
-          <Link to="/" className="group flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-105">
+      {/* NAVBAR — safe-area aware */}
+      <header
+        className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/70 backdrop-blur-2xl dark:border-white/10 dark:bg-[#060f19]/70"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-3.5 lg:px-8">
+          <Link to="/" className="group flex min-w-0 items-center gap-2 sm:gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-105">
               <Tag className="w-4 h-4" strokeWidth={2} />
             </span>
-            <span className="text-sm font-black tracking-tight text-slate-900 dark:text-white">
+            <span className="min-w-0 truncate text-sm font-black tracking-tight text-slate-900 dark:text-white">
               KUGURISHA
               <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">.COM</span>
             </span>
@@ -428,17 +571,17 @@ export default function EditListing() {
 
           <Link
             to="/dashboard"
-            className="group inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3.5 py-2 text-xs font-extrabold text-slate-700 shadow-sm transition-all hover:border-[#FF5D00] hover:text-[#FF5D00] hover:shadow-[0_4px_20px_-6px_rgba(255,93,0,0.4)] dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-200"
+            className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm transition-all hover:border-[#FF5D00] hover:text-[#FF5D00] hover:shadow-[0_4px_20px_-6px_rgba(255,93,0,0.4)] dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-200"
           >
             <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" strokeWidth={2.2} />
-            <span>Dashboard</span>
+            <span className="hidden xs:inline sm:inline">Dashboard</span>
           </Link>
         </div>
       </header>
 
       {/* HERO */}
       <section className="relative overflow-hidden">
-        <div className="relative mx-auto max-w-7xl px-4 pt-10 pb-6 sm:px-6 lg:px-8">
+        <div className="relative mx-auto max-w-7xl px-4 pb-6 pt-8 sm:px-6 sm:pt-10 lg:px-8">
           <div className="max-w-3xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#FF5D00] backdrop-blur dark:border-white/10 dark:bg-white/[0.06]">
               <span className="relative flex h-2 w-2">
@@ -457,19 +600,19 @@ export default function EditListing() {
             </h1>
 
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-400 sm:text-base">
-              Vugurura amakuru, igiciro, amafoto cyangwa aho ikintu giherereye kugira ngo listing yawe ikomeze kuba nziza ku baguzi.
+              Vugurura amakuru, igiciro, amafoto cyangwa aho ikintu giherereye kugira ngo listing yawe ikomeze kuba nzima ku baguzi.
             </p>
           </div>
         </div>
       </section>
 
       {/* CONTENT */}
-      <div className="relative mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <form onSubmit={handleSave} className="space-y-5">
+      <div className="relative mx-auto max-w-7xl px-3 pb-28 sm:px-6 sm:pb-12 lg:px-8">
+        <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <form ref={formRef} onSubmit={handleSave} className="space-y-4 sm:space-y-5">
 
             {/* 1. BASIC INFO */}
-            <section className={cardCls}>
+            <section data-field="title" className={cardCls}>
               <div className={cardHeaderCls}>
                 <SectionHeader
                   icon={<FileText className="h-5 w-5" strokeWidth={1.8} />}
@@ -477,7 +620,7 @@ export default function EditListing() {
                   subtitle="Hindura amakuru y'ingenzi ya listing yawe."
                 />
               </div>
-              <div className="space-y-5 p-6 sm:p-7">
+              <div className="space-y-5 p-5 sm:p-7">
                 <div>
                   <label className={labelCls}>
                     Izina ry'ikintu <span className="ml-1 text-rose-500">*</span>
@@ -487,16 +630,22 @@ export default function EditListing() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
+                    maxLength={80}
                     placeholder="Urugero: iPhone 15 Pro"
-                    className={inputCls}
+                    className={`${inputCls} mt-2`}
                   />
+                  <div className="mt-1.5 flex justify-end">
+                    <span className={`text-[10px] font-bold ${title.length > 70 ? "text-amber-500" : "text-slate-400"}`}>
+                      {title.length}/80
+                    </span>
+                  </div>
                 </div>
 
-                <div>
+                <div data-field="category">
                   <label className={labelCls}>
                     Category <span className="ml-1 text-rose-500">*</span>
                   </label>
-                  <div className="relative">
+                  <div className="relative mt-2">
                     <select
                       value={categoryId}
                       onChange={(e) => setCategoryId(e.target.value)}
@@ -508,23 +657,24 @@ export default function EditListing() {
                         <option key={category.id} value={category.id}>{category.name}</option>
                       ))}
                     </select>
-                    <svg className="pointer-events-none absolute right-4 top-1/2 mt-1 w-4 h-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
+                    <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" strokeWidth={2} />
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between">
                     <label className={labelCls}>Ibisobanuro</label>
-                    <span className="text-[11px] font-bold text-slate-400">{description.length} characters</span>
+                    <span className={`text-[11px] font-bold ${description.length > 700 ? "text-amber-500" : "text-slate-400"}`}>
+                      {description.length}/800
+                    </span>
                   </div>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    rows={6}
+                    rows={5}
+                    maxLength={800}
                     placeholder="Sobanura neza icyo ugurisha..."
-                    className={`${inputCls} resize-none`}
+                    className={`${inputCls} mt-2 min-h-[120px] resize-none`}
                   />
                 </div>
               </div>
@@ -539,7 +689,7 @@ export default function EditListing() {
                   subtitle="Hindura uburyo listing itangwa n'igiciro."
                 />
               </div>
-              <div className="space-y-5 p-6 sm:p-7">
+              <div className="space-y-5 p-5 sm:p-7">
                 <div>
                   <label className={labelCls}>Uburyo bwo gutanga</label>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -579,16 +729,17 @@ export default function EditListing() {
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <label className={labelCls}>Igiciro (Frw)</label>
-                    <div className="relative">
+                    <div className="relative mt-2">
                       <input
                         type="number"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
                         min="0"
+                        inputMode="numeric"
                         placeholder="650000"
                         className={`${inputCls} pr-16`}
                       />
-                      <span className="pointer-events-none absolute right-4 top-1/2 mt-1 -translate-y-1/2 text-[11px] font-black text-slate-400">
+                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">
                         FRW
                       </span>
                     </div>
@@ -596,7 +747,7 @@ export default function EditListing() {
 
                   <div>
                     <label className={labelCls}>Imimerere</label>
-                    <div className="relative">
+                    <div className="relative mt-2">
                       <select
                         value={condition}
                         onChange={(e) => setCondition(e.target.value)}
@@ -606,9 +757,7 @@ export default function EditListing() {
                         <option value="used">Byakoreshejwe</option>
                         <option value="refurbished">Byavuguruwe</option>
                       </select>
-                      <svg className="pointer-events-none absolute right-4 top-1/2 mt-1 w-4 h-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                      </svg>
+                      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" strokeWidth={2} />
                     </div>
                   </div>
                 </div>
@@ -616,16 +765,22 @@ export default function EditListing() {
             </section>
 
             {/* 3. LOCATION */}
-            <section className={cardCls}>
+            <section data-field="province" className={cardCls}>
               <div className={cardHeaderCls}>
                 <SectionHeader
                   icon={<MapPin className="h-5 w-5" strokeWidth={1.8} />}
                   title="Aho giherereye"
-                  subtitle="Hindura aho ikintu giherereye."
+                  subtitle="Hindura aho ikintu giherereye — birafasha abaguzi kubona vuba."
                 />
+                {formatLocation() && (
+                  <span className="hidden shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400 sm:inline-flex">
+                    <Check className="h-3 w-3" strokeWidth={3} />
+                    Byujuje
+                  </span>
+                )}
               </div>
-              <div className="p-6 sm:p-7">
-                <div className="grid gap-4 md:grid-cols-3">
+              <div className="p-5 sm:p-7">
+                <div className="grid gap-3.5 sm:grid-cols-3">
                   <div>
                     <label className={labelCls}>
                       Province <span className="ml-1 text-rose-500">*</span>
@@ -635,7 +790,7 @@ export default function EditListing() {
                       onChange={(e) => setProvince(e.target.value)}
                       required
                       placeholder="Kigali"
-                      className={inputCls}
+                      className={`${inputCls} mt-2`}
                     />
                   </div>
                   <div>
@@ -644,7 +799,7 @@ export default function EditListing() {
                       value={district}
                       onChange={(e) => setDistrict(e.target.value)}
                       placeholder="Gasabo"
-                      className={inputCls}
+                      className={`${inputCls} mt-2`}
                     />
                   </div>
                   <div>
@@ -653,22 +808,31 @@ export default function EditListing() {
                       value={sector}
                       onChange={(e) => setSector(e.target.value)}
                       placeholder="Remera"
-                      className={inputCls}
+                      className={`${inputCls} mt-2`}
                     />
                   </div>
                 </div>
 
                 {formatLocation() && (
-                  <div className="mt-4 flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600 dark:bg-white/[0.04] dark:text-slate-300">
-                    <MapPin className="h-4 w-4 shrink-0 text-[#FF5D00]" strokeWidth={2.2} />
-                    {formatLocation()}
+                  <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-[#569ab5]/20 bg-[#569ab5]/[0.06] px-4 py-3 dark:border-[#569ab5]/25 dark:bg-[#569ab5]/10">
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#569ab5] text-white shadow-sm">
+                      <MapPin className="h-3.5 w-3.5" strokeWidth={2.4} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-[#569ab5] dark:text-[#6ec5c9]">
+                        Aho kizagaragara
+                      </p>
+                      <p className="mt-0.5 break-words text-sm font-bold text-slate-800 dark:text-slate-100">
+                        {formatLocation()}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
             </section>
 
             {/* 4. PHONE */}
-            <section className={cardCls}>
+            <section data-field="phone" className={cardCls}>
               <div className={cardHeaderCls}>
                 <SectionHeader
                   icon={<Phone className="h-5 w-5" strokeWidth={1.8} />}
@@ -687,7 +851,7 @@ export default function EditListing() {
               </div>
 
               {contactPhone && (
-                <div className="space-y-4 p-6 sm:p-7">
+                <div className="space-y-4 p-5 sm:p-7">
                   {fetchingPhones ? (
                     <p className="flex items-center gap-2 text-xs font-semibold text-slate-400">
                       <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
@@ -725,7 +889,7 @@ export default function EditListing() {
                               <select
                                 value={phoneNumber}
                                 onChange={(e) => setPhoneNumber(e.target.value)}
-                                className={`${inputCls} mt-0 cursor-pointer appearance-none pr-10`}
+                                className={`${inputCls} cursor-pointer appearance-none pr-10`}
                               >
                                 {previousNumbers.map((item, index) => (
                                   <option key={index} value={item.number}>
@@ -733,9 +897,7 @@ export default function EditListing() {
                                   </option>
                                 ))}
                               </select>
-                              <svg className="pointer-events-none absolute right-4 top-1/2 w-4 h-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                              </svg>
+                              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" strokeWidth={2} />
                             </div>
                           </div>
                         )}
@@ -769,8 +931,10 @@ export default function EditListing() {
                         type="tel"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
+                        inputMode="tel"
+                        autoComplete="tel"
                         placeholder="Urugero: +250788000000 cyangwa 0788000000"
-                        className={inputCls}
+                        className={`${inputCls} mt-2`}
                       />
                     </div>
                   )}
@@ -787,112 +951,163 @@ export default function EditListing() {
                   subtitle="Gucunga amafoto ari kuri listing yawe."
                 />
                 <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-black text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
-                  {existingImages.length + newImages.length}/5
+                  {totalImages}/5
                 </span>
               </div>
 
-              <div className="p-6 sm:p-7">
-                {existingImages.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/50 px-6 py-8 text-center dark:border-white/15 dark:bg-white/[0.02]">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-white/[0.05]">
-                      <ImageIcon className="h-6 w-6" strokeWidth={1.6} />
-                    </div>
-                    <p className="mt-3 text-sm font-bold text-slate-700 dark:text-slate-200">Nta foto iri kuri listing.</p>
-                    <p className="mt-1 text-xs font-medium text-slate-400">Ongeraho amafoto hepfo.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-                    {existingImages.map((image, index) => (
-                      <div
-                        key={image.id}
-                        className="group relative aspect-square overflow-hidden rounded-2xl border border-slate-200 shadow-sm dark:border-white/10"
-                      >
-                        <img
-                          src={image.image_url}
-                          alt={`Ifoto ${index + 1}`}
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                        />
-                        {index === 0 && (
-                          <div className="absolute left-2 top-2 flex items-center gap-1 rounded-lg bg-[#FF5D00] px-2 py-1 text-[9px] font-black uppercase tracking-wider text-white shadow-md">
-                            <Sparkles className="w-2.5 h-2.5" strokeWidth={2.5} />
-                            Main
-                          </div>
-                        )}
+              <div className="p-5 sm:p-7">
+                {/* HERO — cover image (first existing, or first new) */}
+                {heroImageUrl && (
+                  <div className="group/hero relative mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-[0_18px_40px_-20px_rgba(16,36,54,0.35)] dark:border-white/10 dark:bg-slate-800">
+                    <div className="relative aspect-[16/10] w-full">
+                      <img
+                        src={heroImageUrl}
+                        alt="Ifoto y'ibanze"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover/hero:scale-[1.03]"
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-black/20" />
+
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-[#FF5D00] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-lg ring-2 ring-white/30 backdrop-blur">
+                        <Sparkles className="h-3 w-3" strokeWidth={2.4} />
+                        Ifoto y'ibanze
+                      </span>
+
+                      {/* DELETE HERO — only when it's a committed DB image */}
+                      {existingImages[0] && (
                         <button
                           type="button"
-                          onClick={() => deleteExistingImage(image)}
-                          aria-label="Siba ifoto"
-                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-rose-600 text-white opacity-100 shadow-lg transition hover:scale-110 hover:bg-rose-700 sm:opacity-0 sm:group-hover:opacity-100"
+                          onClick={() => deleteExistingImage(existingImages[0])}
+                          aria-label="Siba ifoto y'ibanze"
+                          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                         >
-                          <X className="h-3.5 w-3.5" strokeWidth={2.5} />
+                          <Trash2 className="h-4 w-4" strokeWidth={2.2} />
                         </button>
-                      </div>
-                    ))}
+                      )}
+
+                      <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur">
+                        <ImageIcon className="h-3 w-3" strokeWidth={2} />
+                        1 / {totalImages}
+                      </span>
+                    </div>
                   </div>
                 )}
 
-                <div className="mt-6">
-                  <label
-                    htmlFor="new-listing-images"
-                    className="group flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/50 px-6 py-8 text-center transition-all hover:border-[#FF5D00] hover:bg-[#FF5D00]/[0.03] dark:border-white/15 dark:bg-white/[0.02] dark:hover:border-[#FF5D00]/60"
-                  >
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FF5D00]/10 text-[#FF5D00] shadow-sm transition group-hover:scale-110">
-                      <Plus className="h-6 w-6" strokeWidth={2.2} />
-                    </div>
-                    <h3 className="mt-3 text-sm font-black text-slate-900 dark:text-white">Ongeraho andi mafoto</h3>
-                    <p className="mt-1 text-xs font-medium text-slate-400">Amafoto yose hamwe ntarenze 5.</p>
-                    <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#102436] px-4 py-2 text-xs font-black text-white transition group-hover:bg-[#FF5D00] dark:bg-white/10">
-                      <Camera className="w-3.5 h-3.5" strokeWidth={2} />
-                      Hitamo amafoto
+                {/* THUMBS + ADD-MORE — renders whenever there's ≥1 image */}
+                {totalImages > 0 && (
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
+                    {/* Existing thumbnails (skip index 0 — that's the hero) */}
+                    {existingImages.slice(1).map((image, idx) => {
+                      const realIndex = idx + 1
+                      return (
+                        <div
+                          key={image.id}
+                          className="group/img relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition-all duration-300 hover:shadow-md dark:border-white/10 dark:bg-slate-800"
+                        >
+                          <img
+                            src={image.image_url}
+                            alt={`Ifoto ${realIndex + 1}`}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-110"
+                          />
+                          <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover/img:bg-black/25" />
+                          <span className="absolute left-1.5 top-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur">
+                            {realIndex + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => deleteExistingImage(image)}
+                            aria-label="Siba ifoto"
+                            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white opacity-0 shadow-md backdrop-blur transition-all duration-200 hover:scale-110 hover:bg-rose-600 group-hover/img:opacity-100 focus:opacity-100"
+                          >
+                            <X className="h-3 w-3" strokeWidth={2.5} />
+                          </button>
+                        </div>
+                      )
+                    })}
+
+                    {/* New (uncommitted) thumbnails */}
+                    {newImages.map((image, idx) => (
+                      <div
+                        key={`new-${idx}-${image.name}`}
+                        className="group/img relative aspect-square overflow-hidden rounded-xl border border-emerald-500/30 bg-slate-100 shadow-sm ring-2 ring-emerald-500/10 dark:bg-slate-800"
+                      >
+                        <img
+                          src={newPreviewUrls[idx]}
+                          alt={`New ${idx + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+                        <span className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] font-black uppercase text-white shadow-sm">
+                          <Check className="w-2.5 h-2.5" strokeWidth={3} />
+                          New
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeNewImage(idx)}
+                          aria-label="Kuraho ifoto"
+                          className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white shadow-md backdrop-blur transition-all hover:scale-110 hover:bg-rose-600"
+                        >
+                          <Trash2 className="h-3 w-3" strokeWidth={2.2} />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* ADD-MORE tile — ALWAYS visible while under 5 */}
+                    {totalImages < 5 && (
+                      <label className="group/add relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white transition-all duration-300 hover:border-[#FF5D00] hover:from-[#FF5D00]/[0.05] hover:to-white dark:border-white/15 dark:from-white/[0.03] dark:to-transparent dark:hover:border-[#FF5D00]/70">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF5D00]/10 text-[#FF5D00] transition-transform duration-300 group-hover/add:scale-110 group-hover/add:rotate-90">
+                          <Plus className="h-4 w-4" strokeWidth={2.2} />
+                        </span>
+                        <span className="mt-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 transition-colors group-hover/add:text-[#FF5D00] dark:text-slate-400">
+                          Ongeraho
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-400">{5 - totalImages} isigaye</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleNewImages}
+                          onClick={(e) => { (e.target as HTMLInputElement).value = "" }}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+                )}
+
+                {/* Empty-state dropzone — only when truly empty */}
+                {totalImages === 0 && (
+                  <label className="group/drop relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white p-6 text-center transition-all duration-300 hover:border-[#FF5D00] hover:from-[#FF5D00]/[0.04] hover:to-white dark:border-white/15 dark:from-white/[0.03] dark:to-transparent dark:hover:border-[#FF5D00]/70 sm:p-8">
+                    <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#FF5D00]/10 blur-3xl transition-all duration-500 group-hover/drop:bg-[#FF5D00]/20" />
+                    <span className="relative flex h-14 w-14 items-center justify-center rounded-[1.3rem] bg-gradient-to-br from-[#FF5D00] to-[#e05200] text-white shadow-[0_16px_35px_-12px_rgba(255,93,0,0.6)] transition-transform duration-300 group-hover/drop:scale-110 group-hover/drop:rotate-3">
+                      <Camera className="h-6 w-6" strokeWidth={2} />
+                      <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[#FF5D00] shadow-md ring-2 ring-[#FF5D00]/20">
+                        <Plus className="h-3 w-3" strokeWidth={2.5} />
+                      </span>
+                    </span>
+                    <span className="relative mt-3 text-sm font-black text-slate-900 dark:text-white">
+                      Ongeraho amafoto
+                    </span>
+                    <span className="relative mt-1 max-w-xs text-[11px] font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+                      Ifoto ya mbere ni yo igaragara imbere · Kugera kuri 5
                     </span>
                     <input
-                      id="new-listing-images"
                       type="file"
                       accept="image/*"
                       multiple
                       onChange={handleNewImages}
+                      onClick={(e) => { (e.target as HTMLInputElement).value = "" }}
                       className="hidden"
                     />
                   </label>
+                )}
 
-                  {newImages.length > 0 && (
-                    <div className="mt-5">
-                      <div className="mb-3 flex items-center justify-between">
-                        <p className="flex items-center gap-1.5 text-sm font-black text-slate-900 dark:text-white">
-                          <Sparkles className="w-3.5 h-3.5 text-[#FF5D00]" strokeWidth={2.2} />
-                          Amafoto mashya
-                        </p>
-                        <span className="text-[11px] font-bold text-slate-400">{newImages.length} mashya</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-                        {newImages.map((image, index) => (
-                          <div
-                            key={`${image.name}-${index}`}
-                            className="group relative aspect-square overflow-hidden rounded-2xl border border-emerald-500/30 bg-slate-50 shadow-sm ring-2 ring-emerald-500/10 dark:bg-white/[0.03]"
-                          >
-                            <img
-                              src={URL.createObjectURL(image)}
-                              alt={`New Preview ${index + 1}`}
-                              className="h-full w-full object-cover"
-                            />
-                            <span className="absolute left-2 top-2 flex items-center gap-1 rounded-lg bg-emerald-500 px-1.5 py-0.5 text-[9px] font-black uppercase text-white shadow-sm">
-                              <Check className="w-2.5 h-2.5" strokeWidth={3} />
-                              New
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removeNewImage(index)}
-                              aria-label="Kuraho ifoto"
-                              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-rose-600 text-white shadow-lg transition hover:scale-110 hover:bg-rose-700"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" strokeWidth={2.2} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {newImages.length > 0 && (
+                  <p className="mt-3 flex items-start gap-1.5 text-[10px] font-medium leading-relaxed text-emerald-600 dark:text-emerald-400">
+                    <Check className="mt-0.5 h-3 w-3 shrink-0" strokeWidth={3} />
+                    <span>
+                      Amafoto {newImages.length} mashya azongerwa kuri listing iyo ubonye "Bika Impinduka".
+                    </span>
+                  </p>
+                )}
               </div>
             </section>
 
@@ -910,41 +1125,38 @@ export default function EditListing() {
                 }`}>
                   {success ? <CheckCircle2 className="h-4 w-4" strokeWidth={2.5} /> : <AlertCircle className="h-4 w-4" strokeWidth={2.5} />}
                 </span>
-                <div>
+                <div className="min-w-0">
                   <p className="text-[10px] font-black uppercase tracking-wider">
                     {success ? "Byagenze neza" : "Hari ikibazo"}
                   </p>
-                  <p className="mt-0.5 text-sm font-medium leading-relaxed">{message}</p>
+                  <p className="mt-0.5 break-words text-sm font-medium leading-relaxed">{message}</p>
                 </div>
               </div>
             )}
 
-            {/* SUBMIT */}
+            {/* Mobile: preview toggle */}
             <button
-              type="submit"
-              disabled={saving}
-              className="group relative w-full overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] py-4 text-center text-sm font-black text-white shadow-[0_16px_38px_-10px_rgba(255,93,0,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_45px_-10px_rgba(255,93,0,0.85)] active:scale-95 disabled:opacity-50"
+              type="button"
+              onClick={() => setPreviewOpen((v) => !v)}
+              className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm font-bold text-slate-700 shadow-sm backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 lg:hidden"
             >
-              <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
-                    <span>Turimo kubika...</span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4" strokeWidth={2.2} />
-                    <span>Bika Impinduka</span>
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={2.2} />
-                  </>
-                )}
+              <span className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-[#569ab5]" strokeWidth={2} />
+                Reba uko bigenda kugaragara
               </span>
+              {previewOpen ? <ChevronUp className="w-4 h-4" strokeWidth={2} /> : <ChevronDown className="w-4 h-4" strokeWidth={2} />}
             </button>
+
+            {previewOpen && <div className="lg:hidden">{previewCard}</div>}
+
+            {/* Desktop: submit button */}
+            <div className="hidden pt-2 lg:block">
+              <SaveButton saving={saving} />
+            </div>
           </form>
 
-          {/* SIDEBAR — LIVE PREVIEW */}
-          <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
+          {/* SIDEBAR — LIVE PREVIEW (desktop) */}
+          <aside className="hidden space-y-5 lg:sticky lg:top-24 lg:block lg:self-start">
             <div className="mb-1 flex items-center justify-between px-1">
               <div className="inline-flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
@@ -961,81 +1173,7 @@ export default function EditListing() {
               </span>
             </div>
 
-            <div className="overflow-hidden rounded-[2rem] border border-slate-200/90 bg-white shadow-[0_30px_80px_-25px_rgba(16,36,54,0.28)] dark:border-white/10 dark:bg-slate-900 dark:shadow-black/60">
-              {/* Main image */}
-              <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
-                {existingImages[0]?.image_url || newImages[0] ? (
-                  <img
-                    src={existingImages[0]?.image_url || URL.createObjectURL(newImages[0])}
-                    alt={title || "Preview"}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-white/60 text-slate-400 shadow-inner dark:bg-white/5">
-                      <ImageIcon className="w-8 h-8" strokeWidth={1.6} />
-                    </div>
-                    <p className="mt-3 text-xs font-extrabold text-slate-500 dark:text-slate-400">Ifoto izagaragara hano</p>
-                  </div>
-                )}
-
-                <div className="absolute left-3 right-3 top-3 flex items-center justify-between gap-2">
-                  <span className="rounded-full bg-black/60 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-white backdrop-blur-md">
-                    {categories.find((c) => c.id === categoryId)?.name || "Icyiciro"}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="rounded-full bg-[#102436]/85 px-2 py-0.5 text-[9px] font-extrabold text-white backdrop-blur-md">
-                      {listingType === "rent" ? "Gukodesha" : "Kugurisha"}
-                    </span>
-                    <span className="rounded-full bg-[#FF5D00] px-2 py-0.5 text-[9px] font-black text-white shadow-sm">
-                      {conditionLabelMap[condition] || "Used"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-5">
-                <h3 className="text-base font-black leading-snug text-slate-900 dark:text-white">
-                  {title.trim() || "Izina ry'ikintu..."}
-                </h3>
-
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-xl font-black tracking-tight text-[#FF5D00]">{previewPrice}</span>
-                  {listingType === "rent" && <span className="text-[11px] font-bold text-slate-400">/ ukwezi</span>}
-                </div>
-
-                <div className="mt-2.5 flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
-                  <MapPin className="w-3.5 h-3.5 text-[#569ab5]" strokeWidth={2} />
-                  <span className="truncate">{formatLocation() || "Kigali, Rwanda"}</span>
-                </div>
-
-                <p className="mt-3 line-clamp-3 rounded-2xl bg-slate-50 p-3 text-xs font-medium leading-relaxed text-slate-600 dark:bg-white/[0.04] dark:text-slate-300">
-                  {description.trim() || "Ibisobanuro by'ikintu cyawe bizagaragara hano..."}
-                </p>
-
-                <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 dark:border-white/10">
-                  <div className="flex items-center justify-center gap-1.5 rounded-xl bg-[#102436] py-2 text-[11px] font-extrabold text-white dark:bg-white/10">
-                    <Grid className="w-3 h-3" strokeWidth={2} />
-                    <span>Andikira</span>
-                  </div>
-                  <div className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-extrabold ${
-                    contactPhone && phoneNumber.trim()
-                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                      : "bg-slate-100 text-slate-400 dark:bg-white/[0.04]"
-                  }`}>
-                    <Phone className="w-3 h-3" strokeWidth={2.2} />
-                    <span className="truncate">
-                      {contactPhone && phoneNumber.trim() ? phoneNumber.trim() : "Nta telefoni"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex items-center justify-center gap-1.5 text-[10px] font-semibold text-slate-400">
-                  <Shield className="w-3 h-3" strokeWidth={2} />
-                  <span>Kugurisha mu mutekano ku Isoko</span>
-                </div>
-              </div>
-            </div>
+            {previewCard}
 
             {/* Extra info card */}
             <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/60">
@@ -1046,7 +1184,7 @@ export default function EditListing() {
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <div className="rounded-xl bg-slate-50 p-2.5 dark:bg-white/[0.04]">
                   <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">Amafoto</p>
-                  <p className="mt-0.5 text-sm font-black text-slate-900 dark:text-white">{existingImages.length + newImages.length}/5</p>
+                  <p className="mt-0.5 text-sm font-black text-slate-900 dark:text-white">{totalImages}/5</p>
                 </div>
                 <div className="rounded-xl bg-slate-50 p-2.5 dark:bg-white/[0.04]">
                   <p className="text-[9px] font-black uppercase tracking-wider text-slate-400">Uburyo</p>
@@ -1061,6 +1199,56 @@ export default function EditListing() {
           </aside>
         </div>
       </div>
+
+      {/* MOBILE STICKY SAVE BAR */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/70 bg-white/85 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-2xl dark:border-white/10 dark:bg-[#060f19]/85 lg:hidden"
+      >
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Impinduka
+            </p>
+            <p className="mt-0.5 truncate text-xs font-bold text-slate-700 dark:text-slate-200">
+              {title.trim() || "Nta zirahari"}
+            </p>
+          </div>
+          <SaveButton saving={saving} compact />
+        </div>
+      </div>
     </main>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   Save button — shared between desktop form and mobile sticky bar
+   ────────────────────────────────────────────────────────────────── */
+function SaveButton({ saving, compact = false }: { saving: boolean; compact?: boolean }) {
+  return (
+    <button
+      type="submit"
+      disabled={saving}
+      className={`group relative overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] text-center text-sm font-black text-white shadow-[0_16px_38px_-10px_rgba(255,93,0,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_45px_-10px_rgba(255,93,0,0.85)] active:scale-95 disabled:opacity-50 ${
+        compact ? "shrink-0 px-5 py-3 text-xs" : "w-full py-4"
+      }`}
+    >
+      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+      <span className="relative z-10 flex items-center justify-center gap-2">
+        {saving ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
+            {!compact && <span>Turimo kubika...</span>}
+          </>
+        ) : (
+          <>
+            <Save className="h-4 w-4" strokeWidth={2.2} />
+            <span className={compact ? "hidden xs:inline sm:inline" : ""}>
+              Bika Impinduka
+            </span>
+            {!compact && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={2.2} />}
+          </>
+        )}
+      </span>
+    </button>
   )
 }

@@ -14,7 +14,6 @@
 
 /* 02. TAILWIND THEME */
 @theme {
-  /* Preserve existing emerald utilities for compatibility */
   --color-emerald-50: #f2f7f9;
   --color-emerald-100: #e1edf2;
   --color-emerald-200: #c5dce6;
@@ -31,13 +30,11 @@
   --color-blue-600: #427c94;
   --color-blue-700: #36677b;
 
-  /* Brand palette */
   --color-brand: #c66d37;
   --color-brand-hover: #a95729;
   --color-brand-light: #e6a16e;
   --color-brand-dark: #874321;
 
-  /* Geometric font stack */
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system,
     "Segoe UI", Roboto, sans-serif;
   --font-display: "Space Grotesk", "Plus Jakarta Sans", ui-sans-serif,
@@ -255,9 +252,7 @@ a {
   color: var(--selection-text);
 }
 
-/* 06. TYPOGRAPHY SYSTEM
-   NOTE: headings use `color: inherit` so they follow their parent's
-   contrast. Base text color is set on body/#root above. */
+/* 06. TYPOGRAPHY SYSTEM */
 h1,
 h2,
 h3,
@@ -422,9 +417,6 @@ h4 {
 
 /* =========================================================
    11b. DARK SURFACE CONTEXT
-   Add .kg-on-dark to any element with a DARK background.
-   Forces readable light text + inputs + borders inside it,
-   in BOTH themes (mostly matters in light mode).
    ========================================================= */
 .kg-on-dark {
   color: #f1f5f9;
@@ -467,8 +459,7 @@ h4 {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* Auto-readability for common dark Tailwind bg utilities in LIGHT mode.
-   (In dark mode the theme variables already handle this.) */
+/* Auto-readability for common dark Tailwind bg utilities in LIGHT mode. */
 :root:not(.dark):not([data-theme="dark"])
   :is(
     .bg-slate-900, .bg-slate-800, .bg-slate-950,
@@ -780,7 +771,6 @@ h4 {
   border: 1px solid var(--border);
 }
 
-/* Preserve existing emerald button contrast */
 :root.dark .kg-home a.bg-emerald-500,
 :root.dark .kg-home button.bg-emerald-500,
 :root[data-theme="dark"] .kg-home a.bg-emerald-500,
@@ -1115,16 +1105,9 @@ h4 {
 }
 
 /* =========================================================
-   27. INFINITE SCROLL (marquee for products)
-   ========================================================= */
-@keyframes infinite-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-
-/* ═══════════════════════════════════════════════════════════
    27. INFINITE SCROLL (marquee for products) — COMPLETE
-   ═══════════════════════════════════════════════════════════ */
+   (duplicate @keyframes removed below — this is the canonical one)
+   ========================================================= */
 
 @keyframes infinite-scroll {
   from { transform: translate3d(0, 0, 0); }
@@ -1140,14 +1123,12 @@ h4 {
   backface-visibility: hidden;
 }
 
-/* Pause on hover / focus / active drag */
 .animate-infinite-scroll:hover,
 .animate-infinite-scroll:focus-within,
 .animate-infinite-scroll:active {
   animation-play-state: paused;
 }
 
-/* Reduced motion — kill the animation */
 @media (prefers-reduced-motion: reduce) {
   .animate-infinite-scroll {
     animation: none;
@@ -1158,12 +1139,12 @@ h4 {
 #home-product-slider-track {
   overflow-x: auto;
   overflow-y: visible;
-  scrollbar-width: none;      /* Firefox */
-  -ms-overflow-style: none;   /* IE / Edge legacy */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 #home-product-slider-track::-webkit-scrollbar {
-  display: none;              /* Chrome / Safari */
+  display: none;
 }
 
 /* ── Edge fade mask (premium Apple-style) ──────────────── */
@@ -1192,13 +1173,12 @@ h4 {
 }
 .dark input::placeholder,
 .dark textarea::placeholder {
-  color: rgb(148 163 184); /* slate-400 */
+  color: rgb(148 163 184);
 }
-/* Prevent white-on-white when focusing light-styled inputs in dark mode */
 .dark input:focus,
 .dark textarea:focus,
 .dark select:focus {
-  background-color: rgb(15 23 42); /* slate-900 */
+  background-color: rgb(15 23 42);
   color: white;
 }
 
@@ -1233,9 +1213,7 @@ h4 {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   28. MOBILE UX HARDENING  (≤ 700px)  — append at end of file
-   Fixes: font-size zoom, safe area, touch targets, story card,
-   header condensing, slider mask, slider mask / iOS momentum.
+   28. MOBILE UX HARDENING  (≤ 700px)
    ═══════════════════════════════════════════════════════════ */
 
 @media (max-width: 700px) {
@@ -1247,12 +1225,10 @@ h4 {
   }
 
   body {
-    /* iOS zooms in on any input < 16px — lift base a touch */
     font-size: 15.5px;
     line-height: 1.6;
   }
 
-  /* Any interactive input must be ≥ 16px to suppress focus-zoom */
   input,
   textarea,
   select,
@@ -1262,28 +1238,24 @@ h4 {
 
   /* ── 28.2 Header: safe-area + smaller panel ──────────── */
   .kg-header {
-    top: env(safe-area-inset-top, 0px);
-    padding-top: 0;
+    top: 0;
+    padding-top: env(safe-area-inset-top, 0px);
   }
 
   .kg-header .kg-header-panel,
   .kg-h-panel {
-    /* Trust the container for width — just breathe less */
     padding-inline: 0.75rem;
     border-radius: 20px;
-    /* On mobile, condensing causes a jump — lock height */
     min-height: 60px;
     transition: background 0.25s ease, border-color 0.25s ease,
       box-shadow 0.25s ease;
   }
 
-  /* Disable scroll-condense on mobile — it fights the pill */
   .kg-header-scrolled .kg-header-panel,
   .kg-h-scrolled .kg-h-panel {
     min-height: 60px;
   }
 
-  /* Hide the tagline below 420px — it eats the burger row */
   .kg-h-tagline {
     display: none;
   }
@@ -1324,7 +1296,6 @@ h4 {
 
   .kg-story-step,
   .kg-story-card {
-    /* The stacking affordance is desktop-only */
     position: relative;
     top: auto;
   }
@@ -1335,7 +1306,7 @@ h4 {
     margin-bottom: 20px;
     padding: 22px;
     border-radius: 22px;
-    transform: none; /* kill the scale() stacking trick */
+    transform: none;
   }
 
   .kg-story-card:last-child {
@@ -1377,7 +1348,6 @@ h4 {
 
   /* ── 28.5 Slider: drop mask on mobile ────────────────── */
   #home-product-slider-track {
-    /* mask-image disables iOS momentum scroll on some versions */
     mask-image: none;
     -webkit-mask-image: none;
     padding-inline: 4px;
@@ -1394,7 +1364,6 @@ h4 {
   }
 
   /* ── 28.7 Section paddings — cap the desktop ones ────── */
-  /* (Not a bug, but reduces the "empty phone screen" feel) */
   .kg-story-section {
     padding-top: 3.5rem;
     padding-bottom: 3.5rem;
@@ -1461,10 +1430,539 @@ h4 {
     animation-iteration-count: 1 !important;
   }
 }
-#root, body { min-height: 100dvh; }
-.kg-story-title, .kg-story-heading { text-wrap: balance; }
+
+/* ═══════════════════════════════════════════════════════════
+   29. MOBILE FIX LAYER  (append — fixes reported bugs)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Root / dvh fallback chain */
+#root,
+body {
+  min-height: 100vh;    /* fallback */
+  min-height: 100dvh;   /* modern */
+}
+.kg-story-title,
+.kg-story-heading {
+  text-wrap: balance;
+}
 input:-webkit-autofill,
 input:-webkit-autofill:focus {
   -webkit-text-fill-color: var(--input-text);
   transition: background-color 9999s ease-out;
+}
+
+/* ── 29.1 HEADER PILL: prevent action-cluster clipping ─────
+   Root cause: flex children default to min-width:auto, so the
+   brand + nav + actions could not shrink; the pill's rounded
+   corners then visually clipped the "Sell" button. We now
+   enforce min-width:0 on shrinkable children, flex-shrink:0 on
+   the action cluster, and let the brand truncate safely.       */
+.kg-header .kg-header-panel,
+.kg-h-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Anything inside the pill that should be allowed to shrink */
+.kg-header .kg-header-panel > *,
+.kg-h-panel > * {
+  min-width: 0;
+}
+
+/* Brand cluster: may shrink but never collapse to zero */
+.kg-h-brand,
+.kg-h-brand-wrap {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.kg-h-wordmark {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Action cluster (login / sell / theme / burger): never shrink */
+.kg-h-actions,
+.kg-h-action-cluster {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+/* Nav items should never push actions off-screen */
+.kg-h-nav {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── 29.2 HEADER SCROLL-CONDENSE: fix broken class pairing ──
+   The base styles define TWO variants:
+     .kg-header-scrolled .kg-header-panel
+     .kg-h-scrolled   .kg-h-panel
+   Browsers apply whichever matches; but padding never shrank,
+   so on scroll the pill "jumped". We smooth it.              */
+.kg-header-scrolled .kg-header-panel,
+.kg-h-scrolled .kg-h-panel {
+  padding-block: 0.25rem;
+  transition:
+    background 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    min-height 0.3s ease,
+    padding 0.3s ease;
+}
+
+/* ── 29.3 SAFE-AREA for sticky header ─────────────────────
+   Correct pattern: the wrapper gets padding-top so the pill
+   sits BELOW the notch, while `top: 0` keeps sticky pinned.   */
+@supports (padding: env(safe-area-inset-top)) {
+  .kg-header {
+    top: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* ── 29.4 TABLET TIER (701–900px) ────────────────────────
+   Previously: tagline visible, wordmark clamped at 1.5vw,
+   no shrink → header overflowed on iPad mini / landscape
+   phones. Now: tagline hidden, wordmark sized, nav compact.   */
+@media (min-width: 701px) and (max-width: 900px) {
+  .kg-h-tagline {
+    display: none;
+  }
+
+  .kg-h-wordmark {
+    font-size: 18px;
+    letter-spacing: -0.05em;
+  }
+
+  .kg-h-navlink {
+    padding: 10px 9px;
+    font-size: 12px;
+  }
+
+  .kg-header .kg-header-panel,
+  .kg-h-panel {
+    padding-inline: 0.85rem;
+  }
+}
+
+/* ── 29.5 MOBILE HEADER: guarantee actions fit ───────────
+   At ≤ 700px: hide "Sell" text and the inline nav; those live
+   in the mobile menu. At ≤ 380px: also drop the "Login" label,
+   keeping only icon buttons so the wordmark + burger always fit. */
+@media (max-width: 700px) {
+  /* Inline nav is replaced by the burger menu — hide it to
+     free horizontal space for the action cluster. */
+  .kg-h-nav {
+    display: none !important;
+  }
+
+  /* Sell button: compact pill, never shrinks */
+  .kg-h-sell {
+    flex-shrink: 0;
+    padding-inline: 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* Ensure the panel never exceeds viewport */
+  .kg-header .kg-header-panel,
+  .kg-h-panel {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 380px) {
+  /* Very small: hide textual label on sell button — keep icon */
+  .kg-h-sell .kg-h-sell-label {
+    display: none;
+  }
+
+  .kg-h-wordmark {
+    font-size: 15px;
+  }
+
+  .kg-h-panel {
+    padding-inline: 0.45rem;
+    gap: 0.25rem;
+  }
+
+  .kg-h-action,
+  .kg-h-login,
+  .kg-h-sell {
+    min-width: 40px;
+    padding-inline: 8px;
+  }
+}
+
+/* ── 29.6 STORY CARD: kill the dead 24vh gap on mobile ───
+   Root cause: base rule had margin-bottom: 24vh; mobile rule
+   set margin-bottom: 20px but .kg-story-card:last-child still
+   inherited margin-bottom: 0 from base — fine — but the 24vh
+   on non-last cards was only partially overridden because of
+   selector specificity ties. Re-assert explicitly here.       */
+@media (max-width: 700px) {
+  .kg-story-card {
+    margin-bottom: 20px !important;
+  }
+  .kg-story-card:last-child {
+    margin-bottom: 0 !important;
+  }
+}
+
+/* ── 29.7 OVERFLOW GUARD: stop body-level horizontal bleed ─
+   `overflow-x: clip` + `min-width: 320px` allowed content at
+   320px to push past the pill's rounded corner. We clamp
+   everything inside the header.                               */
+.kg-header,
+.kg-header .kg-header-panel,
+.kg-h-panel {
+  overflow: hidden;
+}
+
+/* ...but the burger dropdown menu must be able to escape the
+   pill vertically on mobile. Ensure dropdowns are rendered in
+   a portal OR set overflow: visible on the dropdown itself.    */
+.kg-h-dropdown,
+.kg-h-mobile-menu {
+  overflow: visible;
+}
+
+/* ── 29.8 WORDMARK / TAGLINE COLLISION GUARD ─────────────
+   When `.kg-h-tagline` is visible (desktop), prevent it from
+   overlapping the wordmark at tight widths.                   */
+@media (max-width: 1024px) {
+  .kg-h-tagline {
+    letter-spacing: 0.1em;
+  }
+}
+
+/* ── 29.9 INPUT FOCUS: prevent layout shift on iOS ───────
+   iOS focus-zoom fires when computed font-size < 16px. We
+   already lift it, but explicitly pin `line-height` so the
+   pill doesn't jump when an input in the header gains focus.  */
+input,
+textarea,
+select,
+.kg-input {
+  line-height: 1.4;
+}
+
+/* ── 29.10 BODY: belt-and-braces against horizontal scroll ─
+   `overflow-x: clip` is correct (doesn't create scroll ctx),
+   but some WebKit versions mis-handle it. Add `max-width`.    */
+html,
+body,
+#root {
+  max-width: 100%;
+}
+
+/* ── 29.11 STORY VISUAL: prevent SVG overflow on small ───*/
+.kg-story-visual,
+.kg-story-scene {
+  max-width: 100%;
+}
+
+.kg-story-scene-svg,
+.kg-story-art {
+  max-width: 100%;
+  height: auto;
+}
+/* ═══════════════════════════════════════════════════════════
+   HOME RENT STORY — 3D scene assets
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Shared stage ── */
+.kg-scene3d__stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 180px;
+  perspective: 900px;
+}
+
+/* ── HOUSE ── */
+.kg-3d-house {
+  position: relative;
+  width: 110px;
+  height: 90px;
+  transform: rotateY(-12deg) rotateX(4deg);
+  animation: kg-scene-float 3.5s ease-in-out infinite;
+}
+.kg-3d-house__body {
+  position: absolute;
+  bottom: 0;
+  left: 10px;
+  width: 90px;
+  height: 58px;
+  background: linear-gradient(160deg, #f4f8fb 0%, #d7e5ee 100%);
+  border-radius: 4px;
+  box-shadow: 0 12px 24px -12px rgba(16, 36, 54, 0.35);
+}
+.kg-3d-house__roof {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 55px solid transparent;
+  border-right: 55px solid transparent;
+  border-bottom: 34px solid #39778f;
+  filter: drop-shadow(0 -3px 4px rgba(57, 119, 143, 0.35));
+}
+.kg-3d-house__door {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 32px;
+  background: linear-gradient(180deg, #569ab5, #39778f);
+  border-radius: 2px 2px 0 0;
+}
+.kg-3d-house__window {
+  position: absolute;
+  top: 12px;
+  width: 16px;
+  height: 16px;
+  background: #6ec5c9;
+  border: 2px solid #ffffff;
+  border-radius: 2px;
+  box-shadow: inset 0 0 4px rgba(16, 36, 54, 0.2);
+}
+.kg-3d-house__window--l { left: 12px; }
+.kg-3d-house__window--r { right: 12px; }
+.kg-3d-house__chimney {
+  position: absolute;
+  top: -4px;
+  right: 18px;
+  width: 12px;
+  height: 20px;
+  background: #874321;
+  border-radius: 2px;
+}
+
+/* ── CAMERA (teal variant) ── */
+.kg-3d-camera--teal {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  transform: rotate(-8deg) scale(0.85);
+  animation: kg-scene-float 3.5s ease-in-out infinite 0.6s;
+}
+.kg-3d-camera--teal .kg-3d-camera__body {
+  background: linear-gradient(150deg, #6ec5c9, #39778f);
+}
+
+/* ── BADGE (teal variant) ── */
+.kg-3d-badge--teal {
+  background: linear-gradient(150deg, #569ab5, #39778f) !important;
+  font-size: 18px !important;
+}
+
+/* ── CARD (teal variant) ── */
+.kg-3d-card--teal {
+  border-color: rgba(57, 119, 143, 0.25) !important;
+}
+.kg-3d-card__img--teal {
+  background: linear-gradient(160deg, #d7e5ee, #b8d4e0) !important;
+}
+.kg-3d-card__mount--teal {
+  background: linear-gradient(160deg, #39778f, #2a5d70) !important;
+}
+.kg-3d-card__sun--teal {
+  background: radial-gradient(circle, #6ec5c9, #569ab5) !important;
+}
+
+/* ── ARROW (teal) ── */
+.kg-3d-arrow--teal {
+  background: linear-gradient(135deg, #569ab5, #39778f) !important;
+}
+
+/* ── CHECK (teal) ── */
+.kg-3d-check--teal {
+  background: linear-gradient(150deg, #6ec5c9, #569ab5) !important;
+}
+
+/* ── KEY (replaces bag) ── */
+.kg-3d-key {
+  position: absolute;
+  bottom: 14px;
+  right: 18px;
+  width: 64px;
+  height: 64px;
+  animation: kg-scene-float 3.5s ease-in-out infinite;
+}
+.kg-3d-key__ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  border: 5px solid #c9a24a;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 4px 10px -3px rgba(201, 162, 74, 0.5);
+}
+.kg-3d-key__shaft {
+  position: absolute;
+  top: 12px;
+  left: 26px;
+  width: 34px;
+  height: 6px;
+  background: linear-gradient(180deg, #e0b95a, #b8923f);
+  border-radius: 2px;
+}
+.kg-3d-key__tooth {
+  position: absolute;
+  width: 6px;
+  height: 14px;
+  background: linear-gradient(180deg, #e0b95a, #b8923f);
+  border-radius: 0 0 2px 2px;
+}
+.kg-3d-key__tooth--1 { top: 18px; left: 44px; }
+.kg-3d-key__tooth--2 { top: 18px; left: 52px; height: 10px; }
+
+/* ── CHAT (landlord avatar + teal bubble) ── */
+.kg-3d-chat__avatar--landlord {
+  background: linear-gradient(150deg, #6ec5c9, #39778f) !important;
+}
+.kg-3d-chat__bubble--teal {
+  background: linear-gradient(150deg, #39778f, #2a5d70) !important;
+}
+@theme {
+  --breakpoint-xs: 30rem; /* 480px */
+}
+@theme {
+  --breakpoint-xs: 30rem; /* 480px — needed for the xs: classes */
+}
+/* ═══════════════════════════════════════════════════════════
+   30. DROPDOWN / MENU CLICK FIX
+   Undoes side-effects of §29.7 that broke the account menu.
+   ═══════════════════════════════════════════════════════════ */
+
+/* 1. DO NOT clip the pill — that was hiding absolute dropdowns.
+      Use `overflow-x: clip` on the *header section* instead. */
+.kg-header .kg-header-panel,
+.kg-h-panel {
+  overflow: visible;
+}
+
+/* 2. Belt-and-braces: the header root still prevents horizontal bleed */
+.kg-header {
+  overflow-x: clip;
+}
+
+/* 3. Any dropdown rendered inside the header must be able to escape
+      the pill vertically AND stack above page content. */
+.kg-h-dropdown,
+.kg-h-mobile-menu,
+[data-kg-dropdown] {
+  position: absolute;
+  z-index: 200;
+  overflow: visible;
+  /* Safari: backdrop-filter can suppress pointer events on abs children —
+     opting these out of the parent's blur context fixes the "dead click" */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  isolation: isolate;
+}
+
+/* 4. The button that OPENS the menu must establish a positioning
+      context so the dropdown anchors correctly, and must be above
+      neighbouring elements so its click lands. */
+.kg-h-account,
+.kg-h-account-trigger,
+.kg-h-menu-trigger {
+  position: relative;
+  z-index: 210;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* 5. When the pill uses backdrop-filter, Safari can drop pointer
+      events on absolutely-positioned children. Neutralise that
+      for the account cluster only. */
+.kg-h-actions,
+.kg-h-action-cluster {
+  position: relative;
+  z-index: 205;
+  isolation: auto;
+}
+
+/* 6. Absolutely-ensure the account menu is hoverable + clickable
+      on all devices. */
+@media (hover: hover) and (pointer: fine) {
+  .kg-h-account:hover .kg-h-dropdown,
+  .kg-h-account-trigger:hover + .kg-h-dropdown {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+}
+
+/* 7. When the menu is open (class added by React), it must be
+      above everything. */
+.kg-h-dropdown.is-open,
+.kg-h-mobile-menu.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  z-index: 250;
+}
+
+/* 8. Defensive: any focusable child in the menu must be reachable */
+.kg-h-dropdown :is(a, button),
+.kg-h-mobile-menu :is(a, button) {
+  pointer-events: auto;
+  cursor: pointer;
+}
+/* ═══════════════════════════════════════════════════════════════
+   ANALYTICS CARD — animation utilities
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes kgFlash {
+  0%   { opacity: 0; transform: translateX(-100%); }
+  40%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(100%); }
+}
+
+@keyframes kgBarPop {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes kgScanLine {
+  0%   { top: 0; opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+@keyframes kgTicker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Respect reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  [class*="kgFlash"],
+  [class*="kgBarPop"],
+  [class*="kgScanLine"],
+  [class*="kgTicker"] {
+    animation: none !important;
+  }
 }
