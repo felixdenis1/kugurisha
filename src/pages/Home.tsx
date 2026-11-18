@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { useNavigate } from "react-router-dom"
 import SliderRiseCTA from "../components/SliderRiseCTA"
-import SystemAnalyticsCard from "../components/SystemAnalyticsCard"
 import HomeStory from "../components/HomeStory"
 import HomeRentStory from "../components/HomeRentStory"  // ← new import
 import MovingStory from "../components/MovingStory"
@@ -10,6 +9,7 @@ import Header from "../components/Header"
 import { supabase } from "../services/supabase"
 import SellCTA from "../components/SellCTA"
 import HomeFooter from "../components/HomeFooter"
+import WantedFeed from "../components/WantedFeed"
 
 type Listing = {
   id: string
@@ -839,9 +839,6 @@ export default function Home() {
       </div>
 
       {/* ────────── RIGHT: LIVE ANALYTICS ────────── */}
-      <div className="min-w-0">
-        <SystemAnalyticsCard />
-      </div>
     </div>
   </div>
 </section>
@@ -897,6 +894,13 @@ export default function Home() {
             </div>
           </div>
         </div>
+        {/* ═════════ WANTED ADS — buyers posting what they need ═════════ */}
+<section className="relative mt-20 border-t border-slate-200/60 pt-14 dark:border-white/10 lg:mt-24">
+  <div className="mx-auto max-w-7xl">
+
+    <WantedFeed limit={6} />
+  </div>
+</section>
       </section>
 
       <HomeStory />

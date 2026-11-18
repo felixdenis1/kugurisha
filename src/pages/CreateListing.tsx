@@ -400,8 +400,10 @@ export default function CreateListing() {
       if (listingError) throw listingError
 
       await uploadImages(newListing.id, user.id)
-      setSuccess(true); setMessage("Byageze ku Isoko!")
-      setTimeout(() => navigate(`/home`), 1200)
+      setSuccess(true)
+      setMessage("Byageze ku Isoko! 🎉 Turimo kukujyana ku rupapuro rw'ibicuruzwa...")
+      window.scrollTo({ top: 0, behavior: "smooth" })
+      setTimeout(() => navigate(`/home`), 2000)
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : "Habaye ikibazo mu gushyiraho kwamamaza."
       console.error(errorMsg)
@@ -579,8 +581,8 @@ export default function CreateListing() {
   )
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#f4f8fb] text-[#102436] dark:bg-[#060f19] dark:text-slate-100">
-      {/* Ambient background glow */}
+    <main className="relative min-h-screen bg-[#f4f8fb] text-[#102436] dark:bg-[#060f19] dark:text-slate-100">
+      {/* Ambient background glow — confined to its own overflow-hidden layer */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-[#FF5D00]/10 blur-[120px] dark:bg-[#FF5D00]/[0.08]" />
         <div className="absolute top-1/3 -right-40 h-[500px] w-[500px] rounded-full bg-emerald-500/10 blur-[120px] dark:bg-emerald-500/[0.06]" />
@@ -600,7 +602,6 @@ export default function CreateListing() {
               <Icon.ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
               <span className="hidden sm:inline">Dashboard</span>
             </Link>
-           
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -628,18 +629,18 @@ export default function CreateListing() {
         </div>
       </header>
 
-      {/* FEEDBACK BANNER — uses sticky header height via CSS var */}
+      {/* FEEDBACK TOAST — fixed so it's always visible on any device / scroll position */}
       {message && (
-        <div className="sticky top-[calc(56px+env(safe-area-inset-top,0px))] z-40 mx-auto max-w-7xl px-3 pt-3 sm:top-[68px] sm:px-6 lg:px-8">
+        <div className="fixed inset-x-0 top-[calc(56px+env(safe-area-inset-top,0px))] z-50 mx-auto max-w-7xl px-3 pt-3 sm:top-[68px] sm:px-6 lg:px-8">
           <div
             className={`flex items-center justify-between gap-3 rounded-2xl border p-3 text-sm font-bold shadow-xl backdrop-blur-xl sm:p-3.5 ${
               success
-                ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                : "border-rose-500/30 bg-rose-500/15 text-rose-700 dark:text-rose-300"
+                ? "border-emerald-500/30 bg-emerald-500/95 text-white dark:bg-emerald-600/95"
+                : "border-rose-500/30 bg-rose-500/95 text-white dark:bg-rose-600/95"
             }`}
           >
             <div className="flex min-w-0 items-center gap-2.5">
-              <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm ${success ? "bg-emerald-500" : "bg-rose-500"}`}>
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/20 text-white">
                 {success ? <Icon.Check className="w-4 h-4" /> : <Icon.Alert className="w-4 h-4" />}
               </span>
               <span className="min-w-0 break-words">{message}</span>
@@ -647,7 +648,7 @@ export default function CreateListing() {
             <button
               type="button"
               onClick={() => setMessage("")}
-              className="shrink-0 rounded-full p-1.5 text-current opacity-70 transition hover:bg-black/10 hover:opacity-100 dark:hover:bg-white/10"
+              className="shrink-0 rounded-full p-1.5 text-current opacity-70 transition hover:bg-white/20 hover:opacity-100"
               aria-label="Funga"
             >
               <Icon.Close className="w-4 h-4" />
@@ -656,13 +657,18 @@ export default function CreateListing() {
         </div>
       )}
 
-      <div className="relative mx-auto max-w-7xl px-3 pb-28 pt-6 sm:px-6 sm:pt-8 lg:px-8 lg:pt-10 lg:pb-10">
+      <div className="relative mx-auto max-w-7xl px-3 pb-40 pt-6 sm:px-6 sm:pt-8 lg:px-8 lg:pt-10 lg:pb-10">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_460px]">
 
           {/* ════════════════════════════════════════════════════════
               LEFT: FORM
               ════════════════════════════════════════════════════════ */}
-          <form ref={formRef} onSubmit={handleSubmit} className="space-y-3 sm:space-y-3.5">
+          <form
+            ref={formRef}
+            id="create-listing-form"
+            onSubmit={handleSubmit}
+            className="space-y-3 sm:space-y-3.5"
+          >
 
             {/* 1. TITLE */}
             <div data-field="title" className={`group rounded-3xl border p-4 transition-all duration-300 sm:p-6 ${getFieldCardClasses(stepStatus.isTitleDone, stepStatus.firstIncompleteKey === "title")}`}>
@@ -941,216 +947,217 @@ export default function CreateListing() {
                 </div>
               )}
             </div>
-{/* 7. IMAGES — premium cover + grid layout */}
-<div
-  data-field="images"
-  className={`group rounded-3xl border p-4 transition-all duration-300 sm:p-6 ${getFieldCardClasses(
-    stepStatus.isImagesDone,
-    stepStatus.firstIncompleteKey === "images",
-  )}`}
->
-  {/* Header row */}
-  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-    <label className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
-      <span
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${
-          stepStatus.isImagesDone
-            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-            : "bg-[#FF5D00]/10 text-[#FF5D00]"
-        }`}
-      >
-        <Icon.Camera className="w-4 h-4" />
-      </span>
-      Amafoto y'ikintu
-      <span className="font-bold text-slate-400">
-        ({images.length}/5)
-      </span>
-    </label>
 
-    <div className="flex items-center gap-2">
-      {/* Mini progress dots — one per slot */}
-      <div className="hidden items-center gap-1 sm:flex">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <span
-            key={i}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              i < images.length
-                ? "w-6 bg-[#FF5D00]"
-                : "w-3 bg-slate-200 dark:bg-white/15"
-            }`}
-          />
-        ))}
-      </div>
-      {renderStepBadge(
-        stepStatus.isImagesDone,
-        stepStatus.firstIncompleteKey === "images",
-        Icon.Camera,
-      )}
-    </div>
-  </div>
-
-  {/* ─────────── EMPTY STATE: premium dropzone ─────────── */}
-  {images.length === 0 && (
-    <label className="group/drop relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white p-8 text-center transition-all duration-300 hover:border-[#FF5D00] hover:from-[#FF5D00]/[0.04] hover:to-white dark:border-white/15 dark:from-white/[0.03] dark:to-transparent dark:hover:border-[#FF5D00]/70 sm:p-10">
-      {/* Corner glow */}
-      <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#FF5D00]/10 blur-3xl transition-all duration-500 group-hover/drop:bg-[#FF5D00]/20" />
-      <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-[#569ab5]/10 blur-3xl" />
-
-      <span className="relative flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-gradient-to-br from-[#FF5D00] to-[#e05200] text-white shadow-[0_16px_35px_-12px_rgba(255,93,0,0.6)] transition-transform duration-300 group-hover/drop:scale-110 group-hover/drop:rotate-3">
-        <Icon.Camera className="h-7 w-7" />
-        <span className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#FF5D00] shadow-md ring-2 ring-[#FF5D00]/20">
-          <Icon.Plus className="h-3.5 w-3.5" />
-        </span>
-      </span>
-
-      <span className="relative mt-4 text-sm font-black text-slate-900 dark:text-white">
-        Kanda ushyiremo amafoto
-      </span>
-      <span className="relative mt-1 max-w-xs text-[11px] font-medium leading-relaxed text-slate-500 dark:text-slate-400">
-        Ifoto ya mbere ni yo igaragara imbere ku isoko · Kugera kuri 5
-      </span>
-
-      <span className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-slate-900/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:bg-white/5 dark:text-slate-400">
-        <Icon.Image className="h-3 w-3" />
-        JPG · PNG · WEBP
-      </span>
-
-      <input
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={handleImageSelect}
-        className="hidden"
-      />
-    </label>
-  )}
-
-  {/* ─────────── FILLED STATE: hero + grid ─────────── */}
-  {images.length > 0 && (
-    <div className="space-y-3">
-      {/* HERO — first image, big, with cover badge */}
-      <div className="group/hero relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-[0_18px_40px_-20px_rgba(16,36,54,0.35)] dark:border-white/10 dark:bg-slate-800">
-        <div className="relative aspect-[16/10] w-full">
-          <img
-            src={previewUrls[0]}
-            alt="Ifoto y'ibanze"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover/hero:scale-[1.03]"
-          />
-
-          {/* Gradient veil */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-black/20" />
-
-          {/* Top-left: cover badge */}
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-[#FF5D00] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-lg ring-2 ring-white/30 backdrop-blur">
-            <Icon.Sparkles className="h-3 w-3" />
-            Ifoto y'ibanze
-          </span>
-
-          {/* Top-right: remove */}
-          <button
-            type="button"
-            onClick={() => removeImage(0)}
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            aria-label="Siba ifoto y'ibanze"
-          >
-            <Icon.Trash className="h-4 w-4" />
-          </button>
-
-          {/* Bottom-left: index + count */}
-          <div className="absolute bottom-3 left-3 flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur">
-              <Icon.Image className="h-3 w-3" />
-              1 / {images.length}
-            </span>
-          </div>
-
-          {/* Bottom-right: change cover */}
-          <label className="absolute bottom-3 right-3 inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-slate-800 shadow-md backdrop-blur transition-all hover:bg-white hover:shadow-lg dark:bg-slate-900/95 dark:text-slate-100">
-            <Icon.Camera className="h-3 w-3" />
-            Hindura
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageSelect}
-              className="hidden"
-            />
-          </label>
-        </div>
-      </div>
-
-      {/* THUMBNAILS + ADD-MORE TILE */}
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
-        {/* Existing thumbnails (skip index 0 — it's the hero) */}
-        {previewUrls.slice(1).map((url, idx) => {
-          const realIndex = idx + 1
-          return (
+            {/* 7. IMAGES — premium cover + grid layout */}
             <div
-              key={realIndex}
-              className="group/img relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition-all duration-300 hover:shadow-md dark:border-white/10 dark:bg-slate-800"
+              data-field="images"
+              className={`group rounded-3xl border p-4 transition-all duration-300 sm:p-6 ${getFieldCardClasses(
+                stepStatus.isImagesDone,
+                stepStatus.firstIncompleteKey === "images",
+              )}`}
             >
-              <img
-                src={url}
-                alt={`Ifoto ${realIndex + 1}`}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-110"
-              />
+              {/* Header row */}
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <label className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${
+                      stepStatus.isImagesDone
+                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                        : "bg-[#FF5D00]/10 text-[#FF5D00]"
+                    }`}
+                  >
+                    <Icon.Camera className="w-4 h-4" />
+                  </span>
+                  Amafoto y'ikintu
+                  <span className="font-bold text-slate-400">
+                    ({images.length}/5)
+                  </span>
+                </label>
 
-              {/* Hover tint */}
-              <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover/img:bg-black/25" />
+                <div className="flex items-center gap-2">
+                  {/* Mini progress dots — one per slot */}
+                  <div className="hidden items-center gap-1 sm:flex">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          i < images.length
+                            ? "w-6 bg-[#FF5D00]"
+                            : "w-3 bg-slate-200 dark:bg-white/15"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  {renderStepBadge(
+                    stepStatus.isImagesDone,
+                    stepStatus.firstIncompleteKey === "images",
+                    Icon.Camera,
+                  )}
+                </div>
+              </div>
 
-              {/* Index chip */}
-              <span className="absolute left-1.5 top-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur">
-                {realIndex + 1}
-              </span>
+              {/* ─────────── EMPTY STATE: premium dropzone ─────────── */}
+              {images.length === 0 && (
+                <label className="group/drop relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white p-8 text-center transition-all duration-300 hover:border-[#FF5D00] hover:from-[#FF5D00]/[0.04] hover:to-white dark:border-white/15 dark:from-white/[0.03] dark:to-transparent dark:hover:border-[#FF5D00]/70 sm:p-10">
+                  {/* Corner glow */}
+                  <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#FF5D00]/10 blur-3xl transition-all duration-500 group-hover/drop:bg-[#FF5D00]/20" />
+                  <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-[#569ab5]/10 blur-3xl" />
 
-              {/* Remove */}
-              <button
-                type="button"
-                onClick={() => removeImage(realIndex)}
-                className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white opacity-0 shadow-md backdrop-blur transition-all duration-200 hover:scale-110 hover:bg-rose-600 group-hover/img:opacity-100 focus:opacity-100"
-                aria-label={`Siba ifoto ${realIndex + 1}`}
-              >
-                <Icon.Trash className="h-3 w-3" />
-              </button>
+                  <span className="relative flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-gradient-to-br from-[#FF5D00] to-[#e05200] text-white shadow-[0_16px_35px_-12px_rgba(255,93,0,0.6)] transition-transform duration-300 group-hover/drop:scale-110 group-hover/drop:rotate-3">
+                    <Icon.Camera className="h-7 w-7" />
+                    <span className="absolute -right-1.5 -top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#FF5D00] shadow-md ring-2 ring-[#FF5D00]/20">
+                      <Icon.Plus className="h-3.5 w-3.5" />
+                    </span>
+                  </span>
+
+                  <span className="relative mt-4 text-sm font-black text-slate-900 dark:text-white">
+                    Kanda ushyiremo amafoto
+                  </span>
+                  <span className="relative mt-1 max-w-xs text-[11px] font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+                    Ifoto ya mbere ni yo igaragara imbere ku isoko · Kugera kuri 5
+                  </span>
+
+                  <span className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-slate-900/5 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:bg-white/5 dark:text-slate-400">
+                    <Icon.Image className="h-3 w-3" />
+                    JPG · PNG · WEBP
+                  </span>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
+                </label>
+              )}
+
+              {/* ─────────── FILLED STATE: hero + grid ─────────── */}
+              {images.length > 0 && (
+                <div className="space-y-3">
+                  {/* HERO — first image, big, with cover badge */}
+                  <div className="group/hero relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-[0_18px_40px_-20px_rgba(16,36,54,0.35)] dark:border-white/10 dark:bg-slate-800">
+                    <div className="relative aspect-[16/10] w-full">
+                      <img
+                        src={previewUrls[0]}
+                        alt="Ifoto y'ibanze"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover/hero:scale-[1.03]"
+                      />
+
+                      {/* Gradient veil */}
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-black/20" />
+
+                      {/* Top-left: cover badge */}
+                      <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-[#FF5D00] px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-lg ring-2 ring-white/30 backdrop-blur">
+                        <Icon.Sparkles className="h-3 w-3" />
+                        Ifoto y'ibanze
+                      </span>
+
+                      {/* Top-right: remove */}
+                      <button
+                        type="button"
+                        onClick={() => removeImage(0)}
+                        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                        aria-label="Siba ifoto y'ibanze"
+                      >
+                        <Icon.Trash className="h-4 w-4" />
+                      </button>
+
+                      {/* Bottom-left: index + count */}
+                      <div className="absolute bottom-3 left-3 flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur">
+                          <Icon.Image className="h-3 w-3" />
+                          1 / {images.length}
+                        </span>
+                      </div>
+
+                      {/* Bottom-right: change cover */}
+                      <label className="absolute bottom-3 right-3 inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-slate-800 shadow-md backdrop-blur transition-all hover:bg-white hover:shadow-lg dark:bg-slate-900/95 dark:text-slate-100">
+                        <Icon.Camera className="h-3 w-3" />
+                        Hindura
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleImageSelect}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* THUMBNAILS + ADD-MORE TILE */}
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
+                    {/* Existing thumbnails (skip index 0 — it's the hero) */}
+                    {previewUrls.slice(1).map((url, idx) => {
+                      const realIndex = idx + 1
+                      return (
+                        <div
+                          key={realIndex}
+                          className="group/img relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition-all duration-300 hover:shadow-md dark:border-white/10 dark:bg-slate-800"
+                        >
+                          <img
+                            src={url}
+                            alt={`Ifoto ${realIndex + 1}`}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-110"
+                          />
+
+                          {/* Hover tint */}
+                          <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover/img:bg-black/25" />
+
+                          {/* Index chip */}
+                          <span className="absolute left-1.5 top-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur">
+                            {realIndex + 1}
+                          </span>
+
+                          {/* Remove */}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(realIndex)}
+                            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white opacity-0 shadow-md backdrop-blur transition-all duration-200 hover:scale-110 hover:bg-rose-600 group-hover/img:opacity-100 focus:opacity-100"
+                            aria-label={`Siba ifoto ${realIndex + 1}`}
+                          >
+                            <Icon.Trash className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )
+                    })}
+
+                    {/* Add-more tile (only if under 5) */}
+                    {images.length < 5 && (
+                      <label className="group/add relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white transition-all duration-300 hover:border-[#FF5D00] hover:from-[#FF5D00]/[0.05] hover:to-white dark:border-white/15 dark:from-white/[0.03] dark:to-transparent dark:hover:border-[#FF5D00]/70">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF5D00]/10 text-[#FF5D00] transition-transform duration-300 group-hover/add:scale-110 group-hover/add:rotate-90">
+                          <Icon.Plus className="h-4 w-4" />
+                        </span>
+                        <span className="mt-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 transition-colors group-hover/add:text-[#FF5D00] dark:text-slate-400">
+                          Ongeraho
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-400">
+                          {5 - images.length} isigaye
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleImageSelect}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Helper footer */}
+                  <p className="flex items-start gap-1.5 pt-1 text-[10px] font-medium leading-relaxed text-slate-400 dark:text-slate-500">
+                    <Icon.Alert className="mt-px h-3 w-3 shrink-0" />
+                    <span>
+                      Ifoto ya mbere ni yo ibanza kugaragara ku isoko. Kanda{" "}
+                      <strong className="text-slate-600 dark:text-slate-300">Hindura</strong>{" "}
+                      ku ifoto y'ibanze kugira ngo ushyireho izindi.
+                    </span>
+                  </p>
+                </div>
+              )}
             </div>
-          )
-        })}
-
-        {/* Add-more tile (only if under 5) */}
-        {images.length < 5 && (
-          <label className="group/add relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white transition-all duration-300 hover:border-[#FF5D00] hover:from-[#FF5D00]/[0.05] hover:to-white dark:border-white/15 dark:from-white/[0.03] dark:to-transparent dark:hover:border-[#FF5D00]/70">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF5D00]/10 text-[#FF5D00] transition-transform duration-300 group-hover/add:scale-110 group-hover/add:rotate-90">
-              <Icon.Plus className="h-4 w-4" />
-            </span>
-            <span className="mt-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 transition-colors group-hover/add:text-[#FF5D00] dark:text-slate-400">
-              Ongeraho
-            </span>
-            <span className="text-[9px] font-bold text-slate-400">
-              {5 - images.length} isigaye
-            </span>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageSelect}
-              className="hidden"
-            />
-          </label>
-        )}
-      </div>
-
-      {/* Helper footer */}
-      <p className="flex items-start gap-1.5 pt-1 text-[10px] font-medium leading-relaxed text-slate-400 dark:text-slate-500">
-        <Icon.Alert className="mt-px h-3 w-3 shrink-0" />
-        <span>
-          Ifoto ya mbere ni yo ibanza kugaragara ku isoko. Kanda{" "}
-          <strong className="text-slate-600 dark:text-slate-300">Hindura</strong>{" "}
-          ku ifoto y'ibanze kugira ngo ushyireho izindi.
-        </span>
-      </p>
-    </div>
-  )}
-</div>
 
             {/* Mobile: preview toggle */}
             <button
@@ -1172,7 +1179,7 @@ export default function CreateListing() {
               </div>
             )}
 
-            {/* PUBLISH BUTTON (in-flow, desktop) */}
+            {/* PUBLISH BUTTON (in-flow, desktop only — sticky bar handles tablet & mobile) */}
             <div className="hidden pt-2 lg:block">
               <PublishButton saving={saving} />
             </div>
@@ -1202,10 +1209,8 @@ export default function CreateListing() {
         </div>
       </div>
 
-      {/* MOBILE STICKY ACTION BAR */}
-      <div
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/70 bg-white/85 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-2xl dark:border-white/10 dark:bg-[#060f19]/85 lg:hidden"
-      >
+      {/* MOBILE / TABLET STICKY ACTION BAR — button linked to form via `form` attribute */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/70 bg-white/90 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-2xl dark:border-white/10 dark:bg-[#060f19]/90 lg:hidden">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -1218,7 +1223,7 @@ export default function CreateListing() {
               />
             </div>
           </div>
-          <PublishButton saving={saving} compact />
+          <PublishButton saving={saving} compact formId="create-listing-form" />
         </div>
       </div>
     </main>
@@ -1226,12 +1231,23 @@ export default function CreateListing() {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
-   Publish button — reused in-form and in sticky bar
+   Publish button — reused in-form (desktop) and in sticky bar (mobile/tablet)
+   `formId` links the button to the form even when it is rendered outside
+   the <form> element (fixes tablet/mobile submit not firing).
    ────────────────────────────────────────────────────────────────────────── */
-function PublishButton({ saving, compact = false }: { saving: boolean; compact?: boolean }) {
+function PublishButton({
+  saving,
+  compact = false,
+  formId,
+}: {
+  saving: boolean
+  compact?: boolean
+  formId?: string
+}) {
   return (
     <button
       type="submit"
+      form={formId}
       disabled={saving}
       className={`group relative overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] text-center text-sm font-black text-white shadow-[0_16px_38px_-10px_rgba(255,93,0,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_45px_-10px_rgba(255,93,0,0.85)] active:scale-95 disabled:opacity-50 ${
         compact ? "shrink-0 px-5 py-3 text-xs" : "w-full py-4"
