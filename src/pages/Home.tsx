@@ -9,6 +9,8 @@ import Header from "../components/Header"
 import { supabase } from "../services/supabase"
 import SellCTA from "../components/SellCTA"
 import HomeFooter from "../components/HomeFooter"
+import WantedFeed from "../components/WantedFeed"
+
 type Listing = {
   id: string
   title: string
@@ -840,6 +842,66 @@ export default function Home() {
     </div>
   </div>
 </section>
+      {/* TRUST AND SAFETY */}
+      <section className="bg-white pb-16 dark:bg-[#080f1b] sm:pb-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="relative isolate overflow-hidden rounded-[2rem] bg-[#102b3e] px-6 py-10 text-white sm:px-10 sm:py-14 lg:px-14">
+            <div className="pointer-events-none absolute -right-20 -top-32 h-96 w-96 rounded-full bg-[#569ab5]/25 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-36 left-1/3 h-80 w-80 rounded-full bg-cyan-500/10 blur-3xl" />
+
+            <div className="relative grid items-center gap-10 lg:grid-cols-[1.1fr_.9fr]">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[.24em] text-[#9bd3e7]">
+                  Umutekano n'icyizere
+                </p>
+                <h2 className="mt-4 max-w-xl text-3xl font-black leading-tight tracking-tight sm:text-4xl">
+                  Ahantu hamwe ho kugura no kugurisha.
+                  <span className="text-[#83c2dc]"> Byoroshye.</span>
+                </h2>
+                <p className="mt-5 max-w-xl text-sm leading-7 text-white/70">
+                  Erekana ibyo ufite, shakisha ibyo ukeneye kandi uganire
+                  n'abandi bakoresha. Buri gihe genzura igicuruzwa n'amakuru
+                  y'umuntu muganira mbere yo kwishyura.
+                </p>
+                <Link
+                  to="/listings"
+                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-black text-[#17394e] transition hover:-translate-y-0.5 hover:bg-[#e9f5f9]"
+                >
+                  Tangira gushakisha <Icon name="arrow-right" size={17} />
+                </Link>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-5 backdrop-blur">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-[#9bd3e7]">
+                    <Icon name="shield" size={23} />
+                  </div>
+                  <h3 className="mt-4 font-black">Gira amakenga</h3>
+                  <p className="mt-2 text-xs leading-6 text-white/60">
+                    Banza ugenzure neza igicuruzwa n'amakuru y'ugurisha.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-5 backdrop-blur">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-[#9bd3e7]">
+                    <Icon name="message" size={23} />
+                  </div>
+                  <h3 className="mt-4 font-black">Vugana neza</h3>
+                  <p className="mt-2 text-xs leading-6 text-white/60">
+                    Banza mwumvikane ku giciro n'uburyo bwo guhererekanya igicuruzwa.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* ═════════ WANTED ADS — buyers posting what they need ═════════ */}
+<section className="relative mt-20 border-t border-slate-200/60 pt-14 dark:border-white/10 lg:mt-24">
+  <div className="mx-auto max-w-7xl">
+
+    <WantedFeed limit={6} />
+  </div>
+</section>
+      </section>
 
       <HomeStory />
       <HomeRentStory />

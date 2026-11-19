@@ -31,8 +31,8 @@ import AdminUsers from "./pages/AdminUsers"
 import AdminListings from "./pages/AdminListings"
 import AdminReports from "./pages/AdminReports"
 import NotFound from "./pages/NotFound"
-import CreateWantedAd from "./components/CreateWantedAd"
-import Wanted from "./pages/wanted"
+
+
 
 /* Legal / help pages (new) */
 import Terms from "./pages/Terms"
@@ -96,8 +96,7 @@ function App() {
           <Route path="/admin/listings" element={<AdminListings />} />
           <Route path="/admin/reports" element={<AdminReports />} />
           
-<Route path="/wanted" element={<Wanted />} />
-<Route path="/wanted/new" element={<CreateWantedAd />} />
+
 
           {/* Convenience aliases (optional) */}
           <Route path="/faq" element={<Navigate to="/help" replace />} />
