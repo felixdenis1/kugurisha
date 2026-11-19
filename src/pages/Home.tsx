@@ -9,7 +9,6 @@ import Header from "../components/Header"
 import { supabase } from "../services/supabase"
 import SellCTA from "../components/SellCTA"
 import HomeFooter from "../components/HomeFooter"
-import WantedFeed from "../components/WantedFeed"
 
 type Listing = {
   id: string
@@ -894,13 +893,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-        {/* ═════════ WANTED ADS — buyers posting what they need ═════════ */}
-<section className="relative mt-20 border-t border-slate-200/60 pt-14 dark:border-white/10 lg:mt-24">
-  <div className="mx-auto max-w-7xl">
 
-    <WantedFeed limit={6} />
-  </div>
-</section>
       </section>
 
       <HomeStory />
