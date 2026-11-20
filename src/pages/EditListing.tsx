@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   AlertCircle,
-  ArrowLeft,
   Check,
   CheckCircle2,
   FileText,
@@ -99,6 +98,7 @@ export default function EditListing() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const formRef = useRef<HTMLFormElement | null>(null)
+  const submittingRef = useRef(false)
 
   const [categories, setCategories] = useState<Category[]>([])
   const [existingImages, setExistingImages] = useState<ExistingImage[]>([])
@@ -116,7 +116,6 @@ export default function EditListing() {
   const [province, setProvince] = useState("")
   const [district, setDistrict] = useState("")
   const [sector, setSector] = useState("")
-  // Track the loaded location row id so save always targets the right row
   const [locationId, setLocationId] = useState<string | null>(null)
 
   const [contactPhone, setContactPhone] = useState(true)
@@ -130,6 +129,8 @@ export default function EditListing() {
   const [message, setMessage] = useState("")
   const [success, setSuccess] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
+  // Tracks which field failed validation so we can highlight it
+  const [errorField, setErrorField] = useState<string | null>(null)
 
   useEffect(() => {
     if (id) {
@@ -138,7 +139,6 @@ export default function EditListing() {
     }
   }, [id])
 
-  /* Revoke new-image object URLs when they change (fixes memory leak in old code) */
   useEffect(() => {
     const urls = newImages.map((file) => URL.createObjectURL(file))
     setNewPreviewUrls(urls)
@@ -151,9 +151,6 @@ export default function EditListing() {
     )
   }, [existingImages.length])
 
-  /* ══════════════════════════════════════════════════════════════
-     LOAD — deterministic location fetch
-     ══════════════════════════════════════════════════════════════ */
   async function loadListing(): Promise<void> {
     try {
       setLoading(true)
@@ -188,7 +185,6 @@ export default function EditListing() {
       setPhoneNumber(listing.contact_phone_number || "")
       setLocationId(listing.location_id ?? null)
 
-      /* DETERMINISTIC LOCATION FETCH */
       if (listing.location_id) {
         const { data: loc, error: locErr } = await supabase
           .from("locations")
@@ -268,10 +264,12 @@ export default function EditListing() {
       setNewImages(files.slice(0, allowed))
       setMessage("Ushobora kugira amafoto atarenze 5 yose hamwe.")
       setSuccess(false)
+      e.target.value = ""
       return
     }
     setMessage("")
     setNewImages(files)
+    e.target.value = ""
   }
 
   async function deleteExistingImage(image: ExistingImage): Promise<void> {
@@ -330,26 +328,45 @@ export default function EditListing() {
     return [sector, district, province].filter(Boolean).join(", ")
   }
 
-  /* ══════════════════════════════════════════════════════════════
-     SAVE — deterministic location upsert
-     ══════════════════════════════════════════════════════════════ */
-  async function handleSave(e: React.FormEvent): Promise<void> {
-    e.preventDefault()
+  function scrollToField(key: string) {
+    if (!formRef.current) return
+    const el = formRef.current.querySelector<HTMLElement>(`[data-field="${key}"]`)
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" })
+      const input = el.querySelector<HTMLElement>("input, select, textarea")
+      input?.focus({ preventScroll: true })
+    }
+  }
+
+  /**
+   * MASTER SAVE — called by every button (desktop form + mobile sticky bar).
+   * Does not rely on native form submission, form= attribute, or HTML5 required.
+   * Works identically on all devices.
+   */
+  async function saveListing(): Promise<void> {
     if (!id) return
+    if (submittingRef.current || saving) return
+    submittingRef.current = true
+    setSaving(true)
+    setMessage("")
+    setSuccess(false)
+    setErrorField(null)
+
+    // Scroll to top so the toast is guaranteed visible (esp. on mobile)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+
     try {
-      setSaving(true); setMessage(""); setSuccess(false)
-      if (!title.trim()) { setMessage("Andika izina ry'ikintu."); focusField("title"); return }
-      if (!categoryId) { setMessage("Hitamo category."); focusField("category"); return }
-      if (!province.trim()) { setMessage("Andika Province."); focusField("province"); return }
+      if (!title.trim()) { setMessage("Andika izina ry'ikintu."); setErrorField("title"); scrollToField("title"); return }
+      if (!categoryId) { setMessage("Hitamo category."); setErrorField("category"); scrollToField("category"); return }
+      if (!province.trim()) { setMessage("Andika Province."); setErrorField("province"); scrollToField("province"); return }
       if (contactPhone) {
-        if (!phoneNumber.trim()) { setMessage("Nyamuneka shyiramo nimero ya telefoni yo guhamagarwa."); focusField("phone"); return }
-        if (!validatePhone(phoneNumber)) { setMessage("Nimero ya telefoni wanditse ntabwo yubahirije imiterere yemewe (+250 cyangwa 07...)."); focusField("phone"); return }
+        if (!phoneNumber.trim()) { setMessage("Shyiramo nimero ya telefoni."); setErrorField("phone"); scrollToField("phone"); return }
+        if (!validatePhone(phoneNumber)) { setMessage("Nimero wanditse ntabwo yemewe (+250 cyangwa 07...)."); setErrorField("phone"); scrollToField("phone"); return }
       }
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { navigate("/login"); return }
 
-      // Re-read location_id fresh — protects against stale state
       const { data: listingData, error: listingFetchError } = await supabase
         .from("listings")
         .select("location_id")
@@ -407,26 +424,25 @@ export default function EditListing() {
 
       await uploadNewImages()
       setSuccess(true)
-      setMessage("Kwamamaza ryawe ryavuguruwe neza!")
+      setMessage("Kwamamaza ryawe ryavuguruwe neza! 🎉")
       setNewImages([])
+      window.scrollTo({ top: 0, behavior: "smooth" })
       await loadListing()
       await loadPreviousPhones()
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : "Habaye ikibazo mu kubika impinduka."
-      console.error(errorMsg)
+      console.error("Save error:", errorMsg)
       setSuccess(false)
-      setMessage("Habaye ikibazo mu kubika impinduka.")
-    } finally { setSaving(false) }
+      setMessage("Habaye ikibazo mu kubika impinduka. Ongera ugerageze.")
+    } finally {
+      setSaving(false)
+      submittingRef.current = false
+    }
   }
 
-  function focusField(key: string) {
-    if (!formRef.current) return
-    const el = formRef.current.querySelector<HTMLElement>(`[data-field="${key}"]`)
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" })
-      const input = el.querySelector<HTMLElement>("input, select, textarea")
-      input?.focus({ preventScroll: true })
-    }
+  function handleFormSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    void saveListing()
   }
 
   const listingTypeOptions = [
@@ -444,7 +460,6 @@ export default function EditListing() {
   const heroImageUrl =
     existingImages[0]?.image_url || newPreviewUrls[0] || undefined
 
-  /* ─────────── LOADING ─────────── */
   if (loading) {
     return (
       <main className="relative min-h-screen overflow-hidden bg-[#f4f8fb] dark:bg-[#060f19]">
@@ -465,7 +480,6 @@ export default function EditListing() {
     )
   }
 
-  /* ─────────── PREVIEW CARD (shared desktop / mobile) ─────────── */
   const previewCard = (
     <div className="overflow-hidden rounded-[2rem] border border-slate-200/90 bg-white shadow-[0_30px_80px_-25px_rgba(16,36,54,0.28)] dark:border-white/10 dark:bg-slate-900 dark:shadow-black/60">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
@@ -546,40 +560,13 @@ export default function EditListing() {
   )
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#f4f8fb] text-[#102436] dark:bg-[#060f19] dark:text-slate-100">
+    <main className="relative min-h-screen bg-[#f4f8fb] text-[#102436] dark:bg-[#060f19] dark:text-slate-100">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 h-[600px] w-[600px] rounded-full bg-[#FF5D00]/10 blur-[140px] dark:bg-[#FF5D00]/[0.08]" />
         <div className="absolute top-1/3 -right-40 h-[600px] w-[600px] rounded-full bg-blue-500/10 blur-[140px] dark:bg-blue-500/[0.06]" />
         <div className="absolute bottom-0 left-1/3 h-[500px] w-[500px] rounded-full bg-indigo-500/10 blur-[140px]" />
       </div>
 
-      {/* NAVBAR — safe-area aware */}
-      <header
-        className="sticky top-0 z-30 border-b border-slate-200/60 bg-white/70 backdrop-blur-2xl dark:border-white/10 dark:bg-[#060f19]/70"
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
-      >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-3.5 lg:px-8">
-          <Link to="/" className="group flex min-w-0 items-center gap-2 sm:gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-105">
-              <Tag className="w-4 h-4" strokeWidth={2} />
-            </span>
-            <span className="min-w-0 truncate text-sm font-black tracking-tight text-slate-900 dark:text-white">
-              KUGURISHA
-              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">.COM</span>
-            </span>
-          </Link>
-
-          <Link
-            to="/dashboard"
-            className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 shadow-sm transition-all hover:border-[#FF5D00] hover:text-[#FF5D00] hover:shadow-[0_4px_20px_-6px_rgba(255,93,0,0.4)] dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-200"
-          >
-            <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" strokeWidth={2.2} />
-            <span className="hidden xs:inline sm:inline">Dashboard</span>
-          </Link>
-        </div>
-      </header>
-
-      {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="relative mx-auto max-w-7xl px-4 pb-6 pt-8 sm:px-6 sm:pt-10 lg:px-8">
           <div className="max-w-3xl">
@@ -591,25 +578,40 @@ export default function EditListing() {
               <Pencil className="w-3 h-3" strokeWidth={2.2} />
               Edit Listing
             </div>
-
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-5xl">
-              Hindura listing yawe.
-              <span className="mt-1 block bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] bg-clip-text text-transparent">
-                Gumana amakuru agezweho.
-              </span>
-            </h1>
-
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-400 sm:text-base">
-              Vugurura amakuru, igiciro, amafoto cyangwa aho ikintu giherereye kugira ngo listing yawe ikomeze kuba nzima ku baguzi.
-            </p>
           </div>
         </div>
       </section>
 
-      {/* CONTENT */}
-      <div className="relative mx-auto max-w-7xl px-3 pb-28 sm:px-6 sm:pb-12 lg:px-8">
+      {/* Fixed toast — always visible on any device / scroll position */}
+      {message && (
+        <div className="fixed inset-x-0 top-[calc(56px+env(safe-area-inset-top,0px))] z-[60] mx-auto max-w-7xl px-3 pt-3 sm:top-[68px] sm:px-6 lg:px-8">
+          <div className={`flex items-center justify-between gap-3 rounded-2xl border p-3 text-sm font-bold shadow-2xl sm:p-3.5 ${
+            success
+              ? "border-emerald-400 bg-emerald-500 text-white"
+              : "border-rose-400 bg-rose-500 text-white"
+          }`}>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/25 text-white">
+                {success ? <CheckCircle2 className="h-4 w-4" strokeWidth={2.5} /> : <AlertCircle className="h-4 w-4" strokeWidth={2.5} />}
+              </span>
+              <span className="min-w-0 break-words">{message}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMessage("")}
+              className="shrink-0 rounded-full p-1.5 text-white/90 transition hover:bg-white/20"
+              aria-label="Funga"
+            >
+              <X className="w-4 h-4" strokeWidth={2.5} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="relative mx-auto max-w-7xl px-3 pb-36 sm:px-6 sm:pb-12 lg:px-8">
         <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <form ref={formRef} onSubmit={handleSave} className="space-y-4 sm:space-y-5">
+          {/* Form — noValidate so HTML5 native validation never silently blocks */}
+          <form ref={formRef} onSubmit={handleFormSubmit} noValidate className="space-y-4 sm:space-y-5">
 
             {/* 1. BASIC INFO */}
             <section data-field="title" className={cardCls}>
@@ -628,11 +630,10 @@ export default function EditListing() {
                   <input
                     type="text"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    required
+                    onChange={(e) => { setTitle(e.target.value); if (errorField === "title") setErrorField(null) }}
                     maxLength={80}
                     placeholder="Urugero: iPhone 15 Pro"
-                    className={`${inputCls} mt-2`}
+                    className={`${inputCls} mt-2 ${errorField === "title" ? "border-rose-500 ring-4 ring-rose-500/15" : ""}`}
                   />
                   <div className="mt-1.5 flex justify-end">
                     <span className={`text-[10px] font-bold ${title.length > 70 ? "text-amber-500" : "text-slate-400"}`}>
@@ -648,9 +649,8 @@ export default function EditListing() {
                   <div className="relative mt-2">
                     <select
                       value={categoryId}
-                      onChange={(e) => setCategoryId(e.target.value)}
-                      required
-                      className={`${inputCls} cursor-pointer appearance-none pr-10`}
+                      onChange={(e) => { setCategoryId(e.target.value); if (errorField === "category") setErrorField(null) }}
+                      className={`${inputCls} cursor-pointer appearance-none pr-10 ${errorField === "category" ? "border-rose-500 ring-4 ring-rose-500/15" : ""}`}
                     >
                       <option value="">Hitamo category</option>
                       {categories.map((category) => (
@@ -783,18 +783,17 @@ export default function EditListing() {
                 <div className="grid gap-3.5 sm:grid-cols-3">
                   <div>
                     <label className={labelCls}>
-                      Province <span className="ml-1 text-rose-500">*</span>
+                      Intara <span className="ml-1 text-rose-500">*</span>
                     </label>
                     <input
                       value={province}
-                      onChange={(e) => setProvince(e.target.value)}
-                      required
+                      onChange={(e) => { setProvince(e.target.value); if (errorField === "province") setErrorField(null) }}
                       placeholder="Kigali"
-                      className={`${inputCls} mt-2`}
+                      className={`${inputCls} mt-2 ${errorField === "province" ? "border-rose-500 ring-4 ring-rose-500/15" : ""}`}
                     />
                   </div>
                   <div>
-                    <label className={labelCls}>District</label>
+                    <label className={labelCls}>Akarere</label>
                     <input
                       value={district}
                       onChange={(e) => setDistrict(e.target.value)}
@@ -803,7 +802,7 @@ export default function EditListing() {
                     />
                   </div>
                   <div>
-                    <label className={labelCls}>Sector</label>
+                    <label className={labelCls}>Umurenge</label>
                     <input
                       value={sector}
                       onChange={(e) => setSector(e.target.value)}
@@ -930,11 +929,11 @@ export default function EditListing() {
                       <input
                         type="tel"
                         value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        onChange={(e) => { setPhoneNumber(e.target.value); if (errorField === "phone") setErrorField(null) }}
                         inputMode="tel"
                         autoComplete="tel"
                         placeholder="Urugero: +250788000000 cyangwa 0788000000"
-                        className={`${inputCls} mt-2`}
+                        className={`${inputCls} mt-2 ${errorField === "phone" ? "border-rose-500 ring-4 ring-rose-500/15" : ""}`}
                       />
                     </div>
                   )}
@@ -956,7 +955,6 @@ export default function EditListing() {
               </div>
 
               <div className="p-5 sm:p-7">
-                {/* HERO — cover image (first existing, or first new) */}
                 {heroImageUrl && (
                   <div className="group/hero relative mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-[0_18px_40px_-20px_rgba(16,36,54,0.35)] dark:border-white/10 dark:bg-slate-800">
                     <div className="relative aspect-[16/10] w-full">
@@ -972,13 +970,12 @@ export default function EditListing() {
                         Ifoto y'ibanze
                       </span>
 
-                      {/* DELETE HERO — only when it's a committed DB image */}
                       {existingImages[0] && (
                         <button
                           type="button"
                           onClick={() => deleteExistingImage(existingImages[0])}
                           aria-label="Siba ifoto y'ibanze"
-                          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white shadow-lg backdrop-blur-md transition-all hover:scale-110 hover:bg-rose-600"
                         >
                           <Trash2 className="h-4 w-4" strokeWidth={2.2} />
                         </button>
@@ -992,23 +989,16 @@ export default function EditListing() {
                   </div>
                 )}
 
-                {/* THUMBS + ADD-MORE — renders whenever there's ≥1 image */}
                 {totalImages > 0 && (
                   <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
-                    {/* Existing thumbnails (skip index 0 — that's the hero) */}
                     {existingImages.slice(1).map((image, idx) => {
                       const realIndex = idx + 1
                       return (
                         <div
                           key={image.id}
-                          className="group/img relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm transition-all duration-300 hover:shadow-md dark:border-white/10 dark:bg-slate-800"
+                          className="group/img relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-sm dark:border-white/10 dark:bg-slate-800"
                         >
-                          <img
-                            src={image.image_url}
-                            alt={`Ifoto ${realIndex + 1}`}
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-110"
-                          />
-                          <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-300 group-hover/img:bg-black/25" />
+                          <img src={image.image_url} alt={`Ifoto ${realIndex + 1}`} className="h-full w-full object-cover" />
                           <span className="absolute left-1.5 top-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[9px] font-black text-white backdrop-blur">
                             {realIndex + 1}
                           </span>
@@ -1016,7 +1006,7 @@ export default function EditListing() {
                             type="button"
                             onClick={() => deleteExistingImage(image)}
                             aria-label="Siba ifoto"
-                            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white opacity-0 shadow-md backdrop-blur transition-all duration-200 hover:scale-110 hover:bg-rose-600 group-hover/img:opacity-100 focus:opacity-100"
+                            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white opacity-0 hover:bg-rose-600 group-hover/img:opacity-100 focus:opacity-100"
                           >
                             <X className="h-3 w-3" strokeWidth={2.5} />
                           </button>
@@ -1024,18 +1014,13 @@ export default function EditListing() {
                       )
                     })}
 
-                    {/* New (uncommitted) thumbnails */}
                     {newImages.map((image, idx) => (
                       <div
                         key={`new-${idx}-${image.name}`}
-                        className="group/img relative aspect-square overflow-hidden rounded-xl border border-emerald-500/30 bg-slate-100 shadow-sm ring-2 ring-emerald-500/10 dark:bg-slate-800"
+                        className="group/img relative aspect-square overflow-hidden rounded-xl border border-emerald-500/30 bg-slate-100 ring-2 ring-emerald-500/10 dark:bg-slate-800"
                       >
-                        <img
-                          src={newPreviewUrls[idx]}
-                          alt={`New ${idx + 1}`}
-                          className="h-full w-full object-cover"
-                        />
-                        <span className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] font-black uppercase text-white shadow-sm">
+                        <img src={newPreviewUrls[idx]} alt={`New ${idx + 1}`} className="h-full w-full object-cover" />
+                        <span className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] font-black uppercase text-white">
                           <Check className="w-2.5 h-2.5" strokeWidth={3} />
                           New
                         </span>
@@ -1043,22 +1028,19 @@ export default function EditListing() {
                           type="button"
                           onClick={() => removeNewImage(idx)}
                           aria-label="Kuraho ifoto"
-                          className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white shadow-md backdrop-blur transition-all hover:scale-110 hover:bg-rose-600"
+                          className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white hover:bg-rose-600"
                         >
                           <Trash2 className="h-3 w-3" strokeWidth={2.2} />
                         </button>
                       </div>
                     ))}
 
-                    {/* ADD-MORE tile — ALWAYS visible while under 5 */}
                     {totalImages < 5 && (
-                      <label className="group/add relative flex aspect-square cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white transition-all duration-300 hover:border-[#FF5D00] hover:from-[#FF5D00]/[0.05] hover:to-white dark:border-white/15 dark:from-white/[0.03] dark:to-transparent dark:hover:border-[#FF5D00]/70">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF5D00]/10 text-[#FF5D00] transition-transform duration-300 group-hover/add:scale-110 group-hover/add:rotate-90">
+                      <label className="group/add relative flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white hover:border-[#FF5D00] dark:border-white/15 dark:from-white/[0.03] dark:to-transparent">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FF5D00]/10 text-[#FF5D00]">
                           <Plus className="h-4 w-4" strokeWidth={2.2} />
                         </span>
-                        <span className="mt-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500 transition-colors group-hover/add:text-[#FF5D00] dark:text-slate-400">
-                          Ongeraho
-                        </span>
+                        <span className="mt-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500">Ongeraho</span>
                         <span className="text-[9px] font-bold text-slate-400">{5 - totalImages} isigaye</span>
                         <input
                           type="file"
@@ -1073,19 +1055,12 @@ export default function EditListing() {
                   </div>
                 )}
 
-                {/* Empty-state dropzone — only when truly empty */}
                 {totalImages === 0 && (
-                  <label className="group/drop relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white p-6 text-center transition-all duration-300 hover:border-[#FF5D00] hover:from-[#FF5D00]/[0.04] hover:to-white dark:border-white/15 dark:from-white/[0.03] dark:to-transparent dark:hover:border-[#FF5D00]/70 sm:p-8">
-                    <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-[#FF5D00]/10 blur-3xl transition-all duration-500 group-hover/drop:bg-[#FF5D00]/20" />
-                    <span className="relative flex h-14 w-14 items-center justify-center rounded-[1.3rem] bg-gradient-to-br from-[#FF5D00] to-[#e05200] text-white shadow-[0_16px_35px_-12px_rgba(255,93,0,0.6)] transition-transform duration-300 group-hover/drop:scale-110 group-hover/drop:rotate-3">
+                  <label className="group/drop relative flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-50 to-white p-6 text-center hover:border-[#FF5D00] dark:border-white/15 dark:from-white/[0.03] dark:to-transparent sm:p-8">
+                    <span className="relative flex h-14 w-14 items-center justify-center rounded-[1.3rem] bg-gradient-to-br from-[#FF5D00] to-[#e05200] text-white shadow-[0_16px_35px_-12px_rgba(255,93,0,0.6)]">
                       <Camera className="h-6 w-6" strokeWidth={2} />
-                      <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[#FF5D00] shadow-md ring-2 ring-[#FF5D00]/20">
-                        <Plus className="h-3 w-3" strokeWidth={2.5} />
-                      </span>
                     </span>
-                    <span className="relative mt-3 text-sm font-black text-slate-900 dark:text-white">
-                      Ongeraho amafoto
-                    </span>
+                    <span className="relative mt-3 text-sm font-black text-slate-900 dark:text-white">Ongeraho amafoto</span>
                     <span className="relative mt-1 max-w-xs text-[11px] font-medium leading-relaxed text-slate-500 dark:text-slate-400">
                       Ifoto ya mbere ni yo igaragara imbere · Kugera kuri 5
                     </span>
@@ -1103,36 +1078,11 @@ export default function EditListing() {
                 {newImages.length > 0 && (
                   <p className="mt-3 flex items-start gap-1.5 text-[10px] font-medium leading-relaxed text-emerald-600 dark:text-emerald-400">
                     <Check className="mt-0.5 h-3 w-3 shrink-0" strokeWidth={3} />
-                    <span>
-                      Amafoto {newImages.length} mashya azongerwa kuri listing iyo ubonye "Bika Impinduka".
-                    </span>
+                    <span>Amafoto {newImages.length} mashya azongerwa ku gicuruzwa cyawe iyo ukibona "Bika Impinduka".</span>
                   </p>
                 )}
               </div>
             </section>
-
-            {/* MESSAGE */}
-            {message && (
-              <div
-                className={`flex items-start gap-3 rounded-2xl border p-4 text-sm font-semibold ${
-                  success
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                    : "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                }`}
-              >
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white ${
-                  success ? "bg-emerald-500" : "bg-rose-500"
-                }`}>
-                  {success ? <CheckCircle2 className="h-4 w-4" strokeWidth={2.5} /> : <AlertCircle className="h-4 w-4" strokeWidth={2.5} />}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-wider">
-                    {success ? "Byagenze neza" : "Hari ikibazo"}
-                  </p>
-                  <p className="mt-0.5 break-words text-sm font-medium leading-relaxed">{message}</p>
-                </div>
-              </div>
-            )}
 
             {/* Mobile: preview toggle */}
             <button
@@ -1142,20 +1092,20 @@ export default function EditListing() {
             >
               <span className="flex items-center gap-2">
                 <Eye className="w-4 h-4 text-[#569ab5]" strokeWidth={2} />
-                Reba uko bigenda kugaragara
+                Reba uko Biribumere
               </span>
               {previewOpen ? <ChevronUp className="w-4 h-4" strokeWidth={2} /> : <ChevronDown className="w-4 h-4" strokeWidth={2} />}
             </button>
 
             {previewOpen && <div className="lg:hidden">{previewCard}</div>}
 
-            {/* Desktop: submit button */}
+            {/* Desktop: submit button (calls saveListing directly) */}
             <div className="hidden pt-2 lg:block">
-              <SaveButton saving={saving} />
+              <SaveButton saving={saving} onClick={saveListing} />
             </div>
           </form>
 
-          {/* SIDEBAR — LIVE PREVIEW (desktop) */}
+          {/* SIDEBAR — LIVE PREVIEW */}
           <aside className="hidden space-y-5 lg:sticky lg:top-24 lg:block lg:self-start">
             <div className="mb-1 flex items-center justify-between px-1">
               <div className="inline-flex items-center gap-2">
@@ -1164,7 +1114,7 @@ export default function EditListing() {
                   <span className="relative flex h-2 w-2 rounded-full bg-emerald-500" />
                 </span>
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 dark:text-slate-300">
-                  Live Preview
+                  uko Bigaragara
                 </span>
               </div>
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400">
@@ -1175,7 +1125,6 @@ export default function EditListing() {
 
             {previewCard}
 
-            {/* Extra info card */}
             <div className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/60">
               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <Bolt className="w-3.5 h-3.5 text-[#FF5D00]" strokeWidth={2.2} />
@@ -1200,10 +1149,8 @@ export default function EditListing() {
         </div>
       </div>
 
-      {/* MOBILE STICKY SAVE BAR */}
-      <div
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/70 bg-white/85 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-2xl dark:border-white/10 dark:bg-[#060f19]/85 lg:hidden"
-      >
+      {/* MOBILE STICKY SAVE BAR — button calls saveListing directly via onClick */}
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200/70 bg-white/95 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] pt-2.5 shadow-[0_-8px_30px_-10px_rgba(16,36,54,0.15)] backdrop-blur-2xl dark:border-white/10 dark:bg-[#060f19]/95 lg:hidden">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -1213,7 +1160,7 @@ export default function EditListing() {
               {title.trim() || "Nta zirahari"}
             </p>
           </div>
-          <SaveButton saving={saving} compact />
+          <SaveButton saving={saving} onClick={saveListing} compact />
         </div>
       </div>
     </main>
@@ -1221,30 +1168,40 @@ export default function EditListing() {
 }
 
 /* ──────────────────────────────────────────────────────────────────
-   Save button — shared between desktop form and mobile sticky bar
+   Save button — shared between desktop form and mobile sticky bar.
+   type="button" + onClick — no form attribute, no native submit needed.
+   Works identically on desktop, tablet, and mobile.
    ────────────────────────────────────────────────────────────────── */
-function SaveButton({ saving, compact = false }: { saving: boolean; compact?: boolean }) {
+function SaveButton({
+  saving,
+  onClick,
+  compact = false,
+}: {
+  saving: boolean
+  onClick: () => void | Promise<void>
+  compact?: boolean
+}) {
   return (
     <button
-      type="submit"
+      type="button"
+      onClick={onClick}
       disabled={saving}
-      className={`group relative overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] text-center text-sm font-black text-white shadow-[0_16px_38px_-10px_rgba(255,93,0,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_45px_-10px_rgba(255,93,0,0.85)] active:scale-95 disabled:opacity-50 ${
-        compact ? "shrink-0 px-5 py-3 text-xs" : "w-full py-4"
+      aria-busy={saving}
+      className={`group relative overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] text-center text-sm font-black text-white shadow-[0_16px_38px_-10px_rgba(255,93,0,0.65)] transition-all duration-300 active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${
+        compact ? "shrink-0 px-6 py-3.5 text-sm" : "w-full py-4"
       }`}
+      style={{ touchAction: "manipulation" }}
     >
-      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
       <span className="relative z-10 flex items-center justify-center gap-2">
         {saving ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
-            {!compact && <span>Turimo kubika...</span>}
+            <span>Turimo kubika...</span>
           </>
         ) : (
           <>
             <Save className="h-4 w-4" strokeWidth={2.2} />
-            <span className={compact ? "hidden xs:inline sm:inline" : ""}>
-              Bika Impinduka
-            </span>
+            <span>Ohereza</span>
             {!compact && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={2.2} />}
           </>
         )}

@@ -413,6 +413,47 @@ export default function Home() {
     ))
   }, [listings, search])
 
+  /* ───────────────────────────────────────────────────────────────────
+     AUTO-SLIDE — restored
+     Pauses on hover, touch, focus. Loops at the end.
+     ─────────────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    const slider = sliderRef.current
+    if (!slider || loading || filteredListings.length < 2) return
+
+    let paused = false
+    const pause = () => { paused = true }
+    const resume = () => { paused = false }
+
+    slider.addEventListener("mouseenter", pause)
+    slider.addEventListener("mouseleave", resume)
+    slider.addEventListener("touchstart", pause, { passive: true })
+    slider.addEventListener("touchend", resume, { passive: true })
+    slider.addEventListener("focusin", pause)
+    slider.addEventListener("focusout", resume)
+
+    const timer = window.setInterval(() => {
+      if (paused) return
+      const firstCard = slider.querySelector<HTMLElement>(":scope > div > a")
+      const cardWidth = firstCard ? firstCard.getBoundingClientRect().width + 16 /* gap-4 */ : 280
+      const atEnd = slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 12
+      slider.scrollTo({
+        left: atEnd ? 0 : slider.scrollLeft + cardWidth,
+        behavior: "smooth",
+      })
+    }, 4200)
+
+    return () => {
+      window.clearInterval(timer)
+      slider.removeEventListener("mouseenter", pause)
+      slider.removeEventListener("mouseleave", resume)
+      slider.removeEventListener("touchstart", pause)
+      slider.removeEventListener("touchend", resume)
+      slider.removeEventListener("focusin", pause)
+      slider.removeEventListener("focusout", resume)
+    }
+  }, [loading, filteredListings.length])
+
   return (
     <main className="min-h-screen overflow-x-clip bg-white text-slate-900 selection:bg-[#569ab5] selection:text-white dark:bg-[#080f1b] dark:text-slate-100">
       <style>{`
@@ -658,7 +699,7 @@ export default function Home() {
           {/* ═════════ INTERACTIVE MARKETPLACE STREAM ═════════ */}
           <div className="relative mt-20 grid min-h-0 items-stretch gap-8 lg:mt-24 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
 
-            {/* ────────── LEFT: PRODUCT SLIDER (mobile-first, no auto-scroll, no blur) ────────── */}
+            {/* ────────── LEFT: PRODUCT SLIDER (auto-slide, image-full cards) ────────── */}
             <div className="flex min-w-0 flex-col gap-4">
               {/* Header row: title + Reba byose */}
               <div className="flex items-center justify-between px-1">
@@ -684,7 +725,7 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Product row — user-scrollable, no auto-slide, no dark gradient, name always visible */}
+              {/* Product row — image-full cards, auto-slide + user-scrollable */}
               {loading ? (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   {[1, 2, 3].map((i) => (
@@ -700,7 +741,7 @@ export default function Home() {
               ) : filteredListings.length > 0 ? (
                 <div
                   ref={sliderRef}
-                  className="relative w-full overflow-x-auto pb-2 touch-pan-x"
+                  className="relative w-full overflow-x-auto pb-2 touch-pan-x scroll-smooth"
                   style={{ scrollbarWidth: "thin" }}
                 >
                   <div className="flex gap-4">
@@ -708,53 +749,51 @@ export default function Home() {
                       <Link
                         key={listing.id}
                         to={`/listing/${listing.id}`}
-                        className="group flex w-44 shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF5D00]/45 hover:shadow-lg dark:border-white/10 dark:bg-slate-900 sm:w-52"
+                        className="group relative flex w-44 shrink-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF5D00]/45 hover:shadow-xl dark:border-white/10 dark:bg-slate-800 sm:w-52"
                       >
-                        {/* Image */}
-                        <div className="relative aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                        {/* Image fills the whole card — 4:5 portrait */}
+                        <div className="relative aspect-[4/5] w-full overflow-hidden">
                           {images?.[listing.id] ? (
                             <img
                               src={images[listing.id]}
                               alt={listing.title}
                               loading="lazy"
                               decoding="async"
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />
                           ) : (
-                            <div className="flex h-full items-center justify-center text-slate-400">
+                            <div className="flex h-full w-full items-center justify-center text-slate-400">
                               <Icon name="shopping-bag" size={28} />
                             </div>
                           )}
 
-                          {/* Category + condition badges on image (small, opaque, readable) */}
-                          <div className="absolute left-2 right-2 top-2 flex items-center justify-between">
-                            <span className="rounded-full bg-black/70 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                          {/* Bottom gradient — only enough for text legibility */}
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/45 to-transparent" />
+
+                          {/* Top chips — category + condition */}
+                          <div className="absolute left-2 right-2 top-2 flex items-start justify-between gap-1.5">
+                            <span className="rounded-full bg-black/70 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
                               {listing.category?.name || "Ibindi"}
                             </span>
                             <span className="rounded-full bg-[#FF5D00] px-2 py-0.5 text-[9px] font-extrabold text-white shadow-sm">
                               {listing.condition || "New"}
                             </span>
                           </div>
-                        </div>
 
-                        {/* Info body — solid, always readable */}
-                        <div className="flex flex-1 flex-col gap-1.5 p-3">
-                          <h3 className="line-clamp-2 min-h-[2.5em] text-sm font-bold leading-tight text-slate-900 dark:text-white">
-                            {listing.title}
-                          </h3>
+                          {/* Bottom overlay — title, price, location on image */}
+                          <div className="absolute inset-x-0 bottom-0 p-3">
+                            <h3 className="line-clamp-2 text-sm font-bold leading-tight text-white drop-shadow-md">
+                              {listing.title}
+                            </h3>
 
-                          <p className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-                            <Icon name="map-pin" size={11} className="shrink-0 text-[#569ab5]" />
-                            <span className="truncate">{formatLocation(listing)}</span>
-                          </p>
-
-                          <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-                            <span className="text-sm font-black tracking-tight text-[#FF5D00]">
+                            <p className="mt-1 flex items-center gap-1 text-sm font-black text-[#FF7A29] drop-shadow">
                               {formatPrice(listing)}
-                            </span>
-                            <span className="text-[10px] font-bold text-slate-400">
-                              Reba →
-                            </span>
+                            </p>
+
+                            <p className="mt-0.5 flex items-center gap-1 text-[10px] font-semibold text-white/85">
+                              <Icon name="map-pin" size={10} className="shrink-0 text-[#82c4e0]" />
+                              <span className="truncate">{formatLocation(listing)}</span>
+                            </p>
                           </div>
                         </div>
                       </Link>
@@ -773,19 +812,11 @@ export default function Home() {
 
             </div>
 
-            {/* ────────── RIGHT column is intentionally empty ────────── */}
-            
-              <SliderRiseCTA />
+            {/* ────────── RIGHT column ────────── */}
+            <SliderRiseCTA />
           </div>
         </div>
       </section>
-
-      {/*
-        ⚠️ TRUST & SAFETY SECTION REMOVED
-        The previous block starting with "Umutekano n'icyizere" / "Ahantu hamwe ho kugura
-        no kugurisha" has been deleted from this file, so it no longer renders on the
-        home page. Nothing else in this file references it.
-      */}
 
       <HomeStory />
       <HomeRentStory />

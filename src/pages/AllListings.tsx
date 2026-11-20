@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import Header from "../components/Header"
 import { supabase } from "../services/supabase"
-import SellCTA from "../components/SellCTA"
-import HomeFooter from "../components/HomeFooter"
+
 
 type Listing = {
   id: string
@@ -331,16 +330,10 @@ export default function AllListings() {
                   <span className="absolute inset-0 animate-ping rounded-full bg-blue-500 opacity-75" />
                   <span className="relative flex h-2 w-2 rounded-full bg-blue-500" />
                 </span>
-                <Icon.Store className="w-3 h-3" />
-                Isoko Rusange
               </div>
               <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-4xl lg:text-5xl">
                 Ibicuruzwa <span className="bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] bg-clip-text text-transparent">byose</span>
               </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-400 sm:text-base">
-                Shakisha ibicuruzwa ku isoko rya KUGURISHA.COM. Ugerageza filtre kugira ubone byihuse.
-              </p>
-
               {search && (
                 <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#FF5D00]/30 bg-[#FF5D00]/10 px-3 py-1.5 text-xs font-bold text-[#FF5D00]">
                   <Icon.Search className="w-3 h-3" />
@@ -534,7 +527,7 @@ export default function AllListings() {
             </div>
           ) : filteredListings.length > 0 ? (
             view === "grid" ? (
-              /* GRID VIEW */
+              /* ───────── GRID VIEW — image is the card, info overlaid on the image ───────── */
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredListings.map((listing) => {
                   const liked = wishlist[listing.id]
@@ -543,31 +536,42 @@ export default function AllListings() {
                     <Link
                       key={listing.id}
                       to={`/listing/${listing.id}`}
-                      className="group relative block overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF5D00]/40 hover:shadow-xl dark:border-white/10 dark:bg-slate-900/60"
+                      className="group relative block overflow-hidden rounded-2xl border border-slate-200/70 bg-slate-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#FF5D00]/40 hover:shadow-xl dark:border-white/10 dark:bg-slate-800"
                     >
-                      {/* Image */}
-                      <div className="relative h-44 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900">
+                      {/* Image fills the whole card — 4:5 portrait, natural display */}
+                      <div className="relative aspect-[4/5] w-full overflow-hidden">
                         {images[listing.id] ? (
                           <img
                             src={images[listing.id]}
                             alt={listing.title}
-                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                           />
                         ) : (
-                          <div className="flex h-full items-center justify-center text-slate-400">
+                          <div className="flex h-full w-full items-center justify-center text-slate-400">
                             <Icon.Image className="w-10 h-10" />
                           </div>
                         )}
 
-                        {/* Top chips */}
+                        {/* Bottom gradient — only enough for text legibility, keeps image visible */}
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/45 to-transparent" />
+
+                        {/* Top-left: category + condition chips */}
                         <div className="absolute left-3 right-3 top-3 flex items-start justify-between gap-2">
-                          <span className="rounded-full bg-black/60 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-white backdrop-blur-md">
-                            {listing.category?.name || "Ibindi"}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="rounded-full bg-black/65 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-wider text-white backdrop-blur-md">
+                              {listing.category?.name || "Ibindi"}
+                            </span>
+                            {condition && (
+                              <span className="rounded-full bg-[#FF5D00] px-2 py-1 text-[9px] font-black uppercase text-white shadow-sm">
+                                {condition}
+                              </span>
+                            )}
+                          </div>
                           <button
                             type="button"
                             onClick={(e) => toggleWishlist(listing.id, e)}
-                            className={`flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md transition ${
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full backdrop-blur-md transition ${
                               liked
                                 ? "bg-rose-500 text-white shadow-md"
                                 : "bg-white/90 text-slate-600 hover:bg-white dark:bg-black/50 dark:text-white"
@@ -578,35 +582,28 @@ export default function AllListings() {
                           </button>
                         </div>
 
-                        {/* Condition badge bottom */}
-                        {condition && (
-                          <span className="absolute bottom-3 left-3 rounded-full bg-[#FF5D00] px-2 py-0.5 text-[9px] font-black uppercase text-white shadow-sm">
-                            {condition}
-                          </span>
-                        )}
-                      </div>
+                        {/* Bottom overlay — title, price, location on top of image */}
+                        <div className="absolute inset-x-0 bottom-0 p-3.5">
+                          <h3 className="line-clamp-2 text-sm font-black leading-tight text-white drop-shadow-md">
+                            {listing.title}
+                          </h3>
 
-                      {/* Body */}
-                      <div className="p-4">
-                        <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-black leading-5 text-slate-900 transition group-hover:text-[#FF5D00] dark:text-white">
-                          {listing.title}
-                        </h3>
-                        <p className="mt-2 flex items-center gap-1 text-lg font-black text-[#FF5D00]">
-                          <Icon.Tag className="w-3.5 h-3.5" />
-                          {formatPrice(listing)}
-                        </p>
-                        <p className="mt-1.5 flex items-center gap-1 truncate text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                          <Icon.Pin className="w-3 h-3 shrink-0 text-[#569ab5]" />
-                          {formatLocation(listing)}
-                        </p>
-                        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-white/10">
-                          <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
-                            <Icon.Clock className="w-2.5 h-2.5" />
-                            {new Date(listing.created_at).toLocaleDateString("rw-RW", { day: "2-digit", month: "short" })}
-                          </span>
-                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FF5D00]/10 text-[#FF5D00] transition-all group-hover:bg-[#FF5D00] group-hover:text-white">
-                            <Icon.ArrowRight className="w-3.5 h-3.5" />
-                          </span>
+                          <p className="mt-1.5 flex items-center gap-1 text-base font-black text-[#FF7A29] drop-shadow">
+                            <Icon.Tag className="w-3.5 h-3.5" />
+                            {formatPrice(listing)}
+                          </p>
+
+                          <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-white/85">
+                            <Icon.Pin className="w-3 h-3 shrink-0 text-[#82c4e0]" />
+                            <span className="truncate">{formatLocation(listing)}</span>
+                          </p>
+
+                          {/* Hover CTA (desktop only — mobile users just tap) */}
+                          <div className="mt-2 hidden items-center justify-end sm:flex">
+                            <span className="flex h-7 items-center gap-1 rounded-full bg-white/95 px-2.5 text-[10px] font-black text-[#102436] opacity-0 shadow-sm transition group-hover:opacity-100">
+                              Reba <Icon.ArrowRight className="w-3 h-3" />
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </Link>
@@ -614,7 +611,7 @@ export default function AllListings() {
                 })}
               </div>
             ) : (
-              /* LIST VIEW */
+              /* ───────── LIST VIEW — info alongside image (unchanged) ───────── */
               <div className="space-y-2.5">
                 {filteredListings.map((listing) => {
                   const liked = wishlist[listing.id]
@@ -680,11 +677,7 @@ export default function AllListings() {
                           {listing.description || "Nta bisobanuro bihari."}
                         </p>
 
-                        <div className="mt-2 flex items-center justify-between">
-                          <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
-                            <Icon.Clock className="w-2.5 h-2.5" />
-                            {new Date(listing.created_at).toLocaleDateString("rw-RW", { day: "2-digit", month: "short" })}
-                          </span>
+                        <div className="mt-2 flex items-center justify-end">
                           <span className="flex items-center gap-1 text-[10px] font-black text-[#FF5D00] transition group-hover:gap-1.5">
                             Reba
                             <Icon.ArrowRight className="w-3 h-3" />
@@ -739,8 +732,6 @@ export default function AllListings() {
         </div>
       </section>
 
-      <SellCTA />
-      <HomeFooter />
     </main>
   )
 }
