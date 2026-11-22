@@ -7,7 +7,6 @@ import {
 } from "react"
 import {
   Link,
-  NavLink,
   useLocation,
   useNavigate,
 } from "react-router-dom"
@@ -41,10 +40,12 @@ function Icon({
   name,
   size = 19,
   className,
+  strokeWidth = 1.8,
 }: {
   name: IconName
   size?: number
   className?: string
+  strokeWidth?: number
 }) {
   const paths: Record<IconName, ReactNode> = {
     search: (
@@ -116,7 +117,7 @@ function Icon({
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.8}
+      strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
@@ -127,19 +128,68 @@ function Icon({
   )
 }
 
-const navigation = [
-  { label: "Ahabanza", to: "/" },
-  { label: "Ibicuruzwa", to: "/listings" },
-  { label: "Ibyiciro", to: "/categories" },
-  { label: "Ibyo dukora", to: "/about" },
-  { label: "Uko rukora", to: "/how-it-works" },
-]
+/* ── Nav data ───────────────────────────────────────────── */
 
-const accountLinks: {
+type NavChild = {
   label: string
   to: string
+  description: string
   icon: IconName
-}[] = [
+  badge?: string
+  highlight?: boolean
+}
+
+type NavParent = {
+  label: string
+  children: NavChild[]
+}
+
+const primaryNav: NavParent[] = [
+  {
+    label: "Ibicuruzwa",
+    children: [
+      {
+        label: "Ibicuruzwa bihari",
+        to: "/listings",
+        description: "Reba ibicuruzwa byose biri ku isoko",
+        icon: "store",
+      },
+      {
+        label: "Ibyiciro",
+        to: "/categories",
+        description: "Shakisha ibicuruzwa ukurikije icyiciro",
+        icon: "arrow",
+      },
+      {
+        label: "Baza AI",
+        to: "/ai-search",
+        description: "Shakisha ibicuruzwa ukoresheje AI",
+        icon: "spark",
+        badge: "AI",
+        highlight: true,
+      },
+    ],
+  },
+  {
+    label: "Intego yacu",
+    children: [
+      {
+        label: "Ibyo dukora",
+        to: "/about",
+        description: "Menya intego n'ibyo dukora kuri KUGURISHA",
+        icon: "spark",
+      },
+      {
+        label: "Uko rukora",
+        to: "/how-it-works",
+        description: "Uburyo bwo kugura, kugurisha no kwishyura",
+        icon: "arrow",
+      },
+    ],
+  },
+]
+
+const accountLinks: { label: string; to: string; icon: IconName }[] = [
   { label: "Umwirondoro", to: "/profile", icon: "user" },
   { label: "Ibicuruzwa byanjye", to: "/dashboard", icon: "store" },
   { label: "Ibyakunzwe", to: "/favorites", icon: "heart" },
@@ -147,8 +197,7 @@ const accountLinks: {
   { label: "Imenyesha", to: "/notifications", icon: "bell" },
 ]
 
-/* ── hover intent tuning ────────────────────────────────── */
-const HOVER_OPEN_DELAY = 120
+const HOVER_OPEN_DELAY = 100
 const HOVER_CLOSE_DELAY = 180
 
 export default function Header({
@@ -164,6 +213,8 @@ export default function Header({
   const [searchOpen, setSearchOpen] = useState(false)
   const [internalSearch, setInternalSearch] = useState("")
   const [loggingOut, setLoggingOut] = useState(false)
+  const [openNav, setOpenNav] = useState<string | null>(null)
+  const [mobileExpanded, setMobileExpanded] = useState<string | null>(null)
 
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
@@ -171,8 +222,8 @@ export default function Header({
   const accountRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const navRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
-  /* hover intent timers for the account dropdown */
   const hoverOpenTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hoverCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -182,6 +233,7 @@ export default function Header({
     setMobileOpen(false)
     setAccountOpen(false)
     setSearchOpen(false)
+    setOpenNav(null)
   }
 
   function clearHoverTimers() {
@@ -218,6 +270,30 @@ export default function Header({
     }, HOVER_CLOSE_DELAY)
   }
 
+  function handleNavEnter(label: string) {
+    if (hoverCloseTimer.current) {
+      clearTimeout(hoverCloseTimer.current)
+      hoverCloseTimer.current = null
+    }
+    if (openNav === label) return
+    hoverOpenTimer.current = setTimeout(() => {
+      setOpenNav(label)
+      setAccountOpen(false)
+      setSearchOpen(false)
+      setMobileOpen(false)
+    }, HOVER_OPEN_DELAY)
+  }
+
+  function handleNavLeave() {
+    if (hoverOpenTimer.current) {
+      clearTimeout(hoverOpenTimer.current)
+      hoverOpenTimer.current = null
+    }
+    hoverCloseTimer.current = setTimeout(() => {
+      setOpenNav(null)
+    }, HOVER_CLOSE_DELAY)
+  }
+
   useEffect(() => {
     closeMenus()
   }, [location.pathname, location.search])
@@ -237,9 +313,15 @@ export default function Header({
         setAccountOpen(false)
       }
 
+      if (openNav) {
+        const el = navRefs.current[openNav]
+        if (el && !el.contains(target)) setOpenNav(null)
+      }
+
       if (headerRef.current && !headerRef.current.contains(target)) {
         setSearchOpen(false)
         setMobileOpen(false)
+        setOpenNav(null)
       }
     }
 
@@ -254,9 +336,8 @@ export default function Header({
       document.removeEventListener("mousedown", handleOutside)
       document.removeEventListener("keydown", handleEscape)
     }
-  }, [])
+  }, [openNav])
 
-  /* cleanup hover timers on unmount */
   useEffect(() => {
     return () => clearHoverTimers()
   }, [])
@@ -299,9 +380,7 @@ export default function Header({
         .eq("user_id", userId)
         .eq("is_read", false)
 
-      if (active && !error) {
-        setUnreadCount(count ?? 0)
-      }
+      if (active && !error) setUnreadCount(count ?? 0)
     }
 
     void refreshCount()
@@ -333,15 +412,11 @@ export default function Header({
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-
     const query = search.trim()
     if (!query) return
-
     closeMenus()
-
-    if (onSearchSubmit) {
-      onSearchSubmit()
-    } else if (onSearchChange) {
+    if (onSearchSubmit) onSearchSubmit()
+    else if (onSearchChange) {
       if (location.pathname !== "/") {
         navigate(`/?search=${encodeURIComponent(query)}`)
       }
@@ -352,11 +427,9 @@ export default function Header({
 
   async function logout() {
     setLoggingOut(true)
-
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-
       setUserId(null)
       setUnreadCount(0)
       closeMenus()
@@ -369,156 +442,246 @@ export default function Header({
     }
   }
 
-  const actionClass =
-    "kg-h-action relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]"
+  function isParentActive(parent: NavParent): boolean {
+    return parent.children.some((c) =>
+      c.to === "/"
+        ? location.pathname === "/"
+        : location.pathname.startsWith(c.to)
+    )
+  }
 
   return (
     <div
       ref={headerRef}
-      className={`kg-h-root sticky top-0 z-[100] w-full transition-all duration-500 ${
-        scrolled ? "py-2 shadow-xl backdrop-blur-xl bg-white/70 dark:bg-slate-950/70 border-b border-slate-200/50 dark:border-white/10" : "py-4"
-      }`}
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-        alignSelf: "stretch",
-      }}
+      className={`fixed top-0 z-[100] w-full transition-all duration-500 py-2 sm:py-3`}
+      style={{ alignSelf: "stretch" }}
     >
-      <header className="transition-all duration-300 ease-out">
-        <div className="mx-auto max-w-[1520px] px-3 sm:px-6 lg:px-8">
-          {/* ============ MAIN CAPSULE PANEL ============ */}
-          <div
-            className={`kg-h-panel relative flex items-center justify-between gap-3 rounded-full px-3.5 sm:px-6 lg:px-7 border border-white/40 bg-white/80 dark:bg-slate-900/80 dark:border-white/10 shadow-[0_12px_40px_-15px_rgba(16,36,54,0.12)] backdrop-blur-2xl ${
-              scrolled ? "min-h-[58px]" : "min-h-[72px]"
-            } transition-all duration-500 ease-out`}
+      <header>
+        {/* Container with mx-auto and max-width. */}
+        <div className="mx-auto max-w-[1520px] px-2 sm:px-4 lg:px-6">
+          
+          {/* PILL CONTAINER: rounded-full, grey bg, subtle border, shadow */}
+          <div 
+            className={`relative flex items-center justify-between gap-3 rounded-full px-3 sm:px-4 min-h-[64px] transition-all duration-500 ${
+              scrolled
+                ? "bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-3xl border border-slate-200/60 dark:border-white/10 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.15)]"
+                : "bg-transparent border-transparent"
+            }`}
           >
-            {/* BRAND */}
+            
+            {/* BRAND - Logo touches text */}
             <Link
               to="/"
               onClick={closeMenus}
-              className="kg-h-brand group flex shrink-0 items-center gap-2.5 sm:gap-3"
+              className="group flex shrink-0 items-center gap-0"
               aria-label="KUGURISHA - Ahabanza"
             >
-              <span className="kg-h-logo flex h-10 w-10 shrink-0 items-center justify-center sm:h-11 sm:w-11 rounded-2xl bg-gradient-to-br from-[var(--primary)]/15 to-[#FF5D00]/10 p-1.5 transition-transform duration-300 group-hover:scale-105">
+              <span className="flex shrink-0 items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:rotate-[-4deg]">
                 <img
                   src="/favicon.svg"
                   alt=""
-                  className="h-full w-full object-contain filter drop-shadow-sm"
+                  className="h-14 w-14 sm:h-16 sm:w-16 object-contain filter drop-shadow-sm"
                 />
               </span>
-
-              <span className="flex min-w-0 flex-col">
-                <span
-                  className={`kg-h-wordmark text-[20px] sm:text-[24px] lg:text-[27px] font-black leading-none transition-all duration-300 ${
-                    scrolled ? "sm:text-[21px] lg:text-[23px]" : ""
-                  }`}
-                  style={{
-                    fontFamily:
-                      "Instagram Sans, var(--font-display), sans-serif",
-                    letterSpacing: "-0.04em",
-                    textTransform: "none",
-                  }}
-                >
-                  kugurisha
-                  
-                </span>
+              <span 
+                className="text-[24px] sm:text-[26px] font-black leading-none tracking-[-0.04em] text-slate-900 dark:text-white -ml-1 sm:-ml-2"
+                style={{ fontFamily: '"Space Grotesk", sans-serif' }}
+              >
+                kugurisha
               </span>
             </Link>
 
-            {/* DESKTOP NAVIGATION */}
+            {/* DESKTOP NAV */}
             <nav
-              className="kg-h-nav hidden items-center gap-1 xl:flex mx-auto bg-slate-100/70 dark:bg-white/[0.04] p-1.5 rounded-full border border-slate-200/60 dark:border-white/10 backdrop-blur-md"
+              className="hidden items-center gap-1 xl:flex mx-auto"
               aria-label="Menu nyamukuru"
             >
-              {navigation.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === "/"}
-                  className={({ isActive }) =>
-                    `kg-h-navlink rounded-full px-4 py-2 text-[13px] font-bold transition-all duration-300 ${
-                      isActive
-                        ? "bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm is-active"
-                        : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5"
-                    }`
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-
-              <span
-                className="mx-1 h-4 w-px bg-slate-300 dark:bg-white/15"
-                aria-hidden="true"
-              />
-
-              <NavLink
-                to="/ai-search"
-                className={({ isActive }) =>
-                  `kg-h-navlink kg-h-ai group rounded-full px-4 py-2 text-[13px] font-extrabold flex items-center gap-2 transition-all duration-300 ${
-                    isActive
-                      ? "bg-gradient-to-r from-[#FF5D00] to-[#FF8533] text-white shadow-md shadow-[#FF5D00]/25 is-active"
-                      : "bg-[#FF5D00]/10 text-[#FF5D00] hover:bg-[#FF5D00]/20"
-                  }`
-                }
+              {/* Direct link to Home */}
+              <Link
+                to="/"
+                onClick={closeMenus}
+                className={`group relative flex items-center gap-2 rounded-full px-6 py-2.5 transition-all duration-300 ${
+                  location.pathname === "/"
+                    ? "text-slate-900 dark:text-white bg-white/50 dark:bg-white/10 shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-white/5"
+                }`}
               >
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-300 group-hover:scale-110">
-                  <Icon name="spark" size={13} />
+                <span 
+                  className="text-[16px] font-extrabold tracking-[-0.02em]"
+                  style={{ fontFamily: '"Outfit", "Space Grotesk", sans-serif' }}
+                >
+                  Ahabanza
                 </span>
-                Baza AI
-              </NavLink>
+              </Link>
+
+              {/* Dropdown Parents */}
+              {primaryNav.map((parent) => {
+                const isOpen = openNav === parent.label
+                const parentActive = isParentActive(parent)
+
+                return (
+                  <div
+                    key={parent.label}
+                    ref={(el) => {
+                      navRefs.current[parent.label] = el
+                    }}
+                    className="relative"
+                    style={{ zIndex: isOpen ? 300 : 1 }}
+                    onMouseEnter={() => handleNavEnter(parent.label)}
+                    onMouseLeave={handleNavLeave}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearHoverTimers()
+                        setOpenNav(isOpen ? null : parent.label)
+                      }}
+                      className={`group relative flex items-center gap-2 rounded-full px-6 py-2.5 transition-all duration-300 cursor-pointer ${
+                        parentActive || isOpen
+                          ? "text-slate-900 dark:text-white bg-white/50 dark:bg-white/10 shadow-sm"
+                          : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-white/5"
+                      }`}
+                      aria-haspopup="menu"
+                      aria-expanded={isOpen}
+                    >
+                      <span 
+                        className="text-[16px] font-extrabold tracking-[-0.02em]"
+                        style={{ fontFamily: '"Outfit", "Space Grotesk", sans-serif' }}
+                      >
+                        {parent.label}
+                      </span>
+                      <Icon
+                        name="chevron"
+                        size={14}
+                        strokeWidth={3}
+                        className={`transition-transform duration-300 opacity-60 ${
+                          isOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {/* DROPDOWN */}
+                    {isOpen && (
+                      <div
+                        role="menu"
+                        className="absolute left-1/2 top-[calc(100%+16px)] w-[340px] -translate-x-1/2 rounded-[28px] p-3 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.2)] border border-slate-200/60 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200"
+                        style={{
+                          position: "absolute",
+                          zIndex: 9999,
+                          visibility: "visible",
+                          opacity: 1,
+                          overflow: "visible",
+                        }}
+                        onMouseEnter={() => {
+                          if (hoverCloseTimer.current) {
+                            clearTimeout(hoverCloseTimer.current)
+                            hoverCloseTimer.current = null
+                          }
+                        }}
+                      >
+                        <span aria-hidden="true" className="absolute -top-5 left-0 right-0 h-5" />
+                        {parent.children.map((child) => {
+                          const childActive =
+                            child.to === "/"
+                              ? location.pathname === "/"
+                              : location.pathname.startsWith(child.to)
+                          return (
+                            <Link
+                              key={child.to}
+                              to={child.to}
+                              onClick={closeMenus}
+                              className={`group/item flex items-start gap-4 rounded-[20px] p-3.5 transition-all duration-200 ${
+                                childActive
+                                  ? "bg-[#FF5D00]/8 dark:bg-[#FF5D00]/10"
+                                  : "hover:bg-slate-50 dark:hover:bg-white/5"
+                              }`}
+                            >
+                              <span
+                                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover/item:scale-110 ${
+                                  child.highlight
+                                    ? "bg-gradient-to-br from-[#FF5D00] to-[#FF8533] text-white shadow-lg shadow-[#FF5D00]/30"
+                                    : childActive
+                                    ? "bg-[#FF5D00]/15 text-[#FF5D00]"
+                                    : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400"
+                                }`}
+                              >
+                                <Icon name={child.icon} size={20} strokeWidth={2.5} />
+                              </span>
+                              <span className="min-w-0 flex-1 pt-0.5">
+                                <span
+                                  className={`flex items-center gap-2 text-[15px] font-bold ${
+                                    child.highlight
+                                      ? "text-[#FF5D00]"
+                                      : "text-slate-900 dark:text-white"
+                                  }`}
+                                >
+                                  {child.label}
+                                  {child.badge && (
+                                    <span className="rounded-full bg-[#FF5D00] px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
+                                      {child.badge}
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="mt-1 block text-[12px] font-medium leading-snug text-slate-500 dark:text-slate-400">
+                                  {child.description}
+                                </span>
+                              </span>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </nav>
 
             {/* ACTIONS */}
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-              {/* Search toggle */}
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 pr-1 sm:pr-2">
+              {/* SEARCH */}
               <button
                 type="button"
-                className={`${actionClass} relative h-10 w-10 rounded-2xl bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15`}
+                className="group relative flex h-11 w-11 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95"
                 onClick={() => {
-                  setSearchOpen((previous) => !previous)
+                  setSearchOpen((p) => !p)
                   setAccountOpen(false)
                   setMobileOpen(false)
+                  setOpenNav(null)
                 }}
                 aria-label={searchOpen ? "Funga ishakisha" : "Shakisha"}
                 aria-expanded={searchOpen}
-                title="Shakisha"
               >
-                <Icon name={searchOpen ? "close" : "search"} size={18} />
+                <Icon name={searchOpen ? "close" : "search"} size={22} strokeWidth={2.2} />
               </button>
 
-              {/* Theme toggle */}
+              {/* THEME */}
               <button
                 type="button"
-                className={`${actionClass} hidden h-10 w-10 items-center justify-center rounded-2xl bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15 sm:flex`}
+                className="group hidden h-11 w-11 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95 sm:flex"
                 onClick={toggleTheme}
-                aria-label={
-                  theme === "dark" ? "Koresha light mode" : "Koresha dark mode"
-                }
-                title={theme === "dark" ? "Light mode" : "Dark mode"}
+                aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
               >
-                <Icon name={theme === "dark" ? "sun" : "moon"} size={18} />
+                <Icon name={theme === "dark" ? "sun" : "moon"} size={22} strokeWidth={2.2} />
               </button>
 
-              {/* Notifications */}
+              {/* NOTIFICATIONS */}
               {userId && (
                 <Link
                   to="/notifications"
                   onClick={closeMenus}
-                  className={`${actionClass} relative flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15`}
+                  className="group relative flex h-11 w-11 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95"
                   aria-label={`Imenyesha: ${unreadCount} utarasoma`}
                 >
-                  <Icon name="bell" size={18} />
+                  <Icon name="bell" size={22} strokeWidth={2.2} />
                   {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex min-h-[19px] min-w-[19px] items-center justify-center rounded-full bg-[#FF5D00] px-1 text-[10px] font-black text-white ring-2 ring-white dark:ring-slate-900 shadow-md">
+                    <span className="absolute right-1 top-1 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#FF5D00] px-1 text-[10px] font-black text-white ring-2 ring-white dark:ring-slate-950 shadow-lg animate-pulse">
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
                 </Link>
               )}
 
-              {/* Account / Login — hover-intent dropdown */}
+              {/* ACCOUNT */}
               {userId ? (
                 <div
                   ref={accountRef}
@@ -528,81 +691,77 @@ export default function Header({
                 >
                   <button
                     type="button"
-                    className={`${actionClass} group flex h-10 items-center gap-2 rounded-2xl bg-slate-100/80 dark:bg-white/[0.06] px-3 lg:px-3.5 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15 ${
-                      accountOpen ? "ring-2 ring-[#FF5D00]/50" : ""
+                    className={`group flex h-11 items-center gap-2 rounded-full px-2.5 pr-4 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 ${
+                      accountOpen ? "bg-white/60 dark:bg-white/10" : ""
                     }`}
                     onClick={() => {
                       clearHoverTimers()
-                      setAccountOpen((previous) => !previous)
+                      setAccountOpen((p) => !p)
                       setSearchOpen(false)
                       setMobileOpen(false)
+                      setOpenNav(null)
                     }}
                     aria-expanded={accountOpen}
                     aria-haspopup="menu"
                     aria-label="Fungura konti"
                   >
-                    <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-white dark:bg-white/10 text-[#FF5D00] shadow-sm transition-transform duration-300 group-hover:scale-110">
-                      <Icon name="user" size={15} />
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm transition-transform duration-300 group-hover:scale-105">
+                      <Icon name="user" size={16} strokeWidth={2.5} />
                     </span>
-                    <span className="hidden text-xs font-bold lg:inline">
+                    <span className="hidden text-[13px] font-bold tracking-tight text-slate-700 dark:text-slate-200 lg:inline">
                       Konti
                     </span>
                     <Icon
                       name="chevron"
-                      size={13}
-                      className={`transition-transform duration-300 text-slate-400 ${
-                        accountOpen ? "rotate-180" : ""
-                      }`}
+                      size={14}
+                      strokeWidth={3}
+                      className={`text-slate-400 transition-transform duration-300 ${accountOpen ? "rotate-180" : ""}`}
                     />
                   </button>
 
                   {accountOpen && (
                     <div
                       role="menu"
-                      className="kg-h-dropdown kg-account-menu absolute right-0 top-[calc(100%+12px)] z-[110] w-64 rounded-[2rem] p-3 shadow-2xl border border-slate-200/80 dark:border-white/15 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200"
+                      className="absolute right-0 top-[calc(100%+16px)] w-72 rounded-[24px] p-2.5 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.2)] border border-slate-200/60 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200"
+                      style={{ zIndex: 9999, visibility: "visible", opacity: 1 }}
                     >
-                      {/* invisible bridge */}
-                      <span
-                        aria-hidden="true"
-                        className="absolute -top-3 left-0 right-0 h-3"
-                      />
+                      <span aria-hidden="true" className="absolute -top-5 left-0 right-0 h-5" />
 
-                      <p className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      <p className="px-3.5 py-3 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
                         Konti yanjye
                       </p>
 
-                      <div className="space-y-1 mt-1">
+                      <div className="space-y-1">
                         {accountLinks.map((item) => (
                           <Link
                             key={item.to}
                             to={item.to}
                             onClick={closeMenus}
-                            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 transition-all hover:bg-slate-100 dark:hover:bg-white/10 hover:text-[#FF5D00]"
+                            className="group/menu flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-bold text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-white/5"
                           >
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400">
-                              <Icon name={item.icon} size={16} />
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100/80 dark:bg-white/5 text-slate-500 transition-all duration-200 group-hover/menu:bg-[#FF5D00]/10 group-hover/menu:text-[#FF5D00]">
+                              <Icon name={item.icon} size={16} strokeWidth={2.2} />
                             </span>
                             {item.label}
-                            {item.to === "/notifications" &&
-                              unreadCount > 0 && (
-                                <span className="ml-auto rounded-full bg-[#FF5D00] px-2.5 py-0.5 text-[10px] font-black text-white shadow-sm">
-                                  {unreadCount}
-                                </span>
-                              )}
+                            {item.to === "/notifications" && unreadCount > 0 && (
+                              <span className="ml-auto rounded-full bg-[#FF5D00] px-2.5 py-0.5 text-[10px] font-black text-white">
+                                {unreadCount}
+                              </span>
+                            )}
                           </Link>
                         ))}
                       </div>
 
-                      <div className="my-2 h-[1px] bg-slate-200/80 dark:bg-white/10" />
+                      <div className="my-2 h-[1px] bg-slate-200/60 dark:bg-white/5" />
 
                       <button
                         type="button"
                         onClick={() => void logout()}
                         disabled={loggingOut}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-bold text-red-500 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50"
                       >
                         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
-                          <Icon name="logout" size={16} />
+                          <Icon name="logout" size={16} strokeWidth={2.2} />
                         </span>
                         {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
                       </button>
@@ -613,180 +772,174 @@ export default function Header({
                 <Link
                   to="/login"
                   onClick={closeMenus}
-                  className="hidden h-10 items-center rounded-2xl px-5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-all sm:inline-flex"
+                  className="hidden h-11 items-center rounded-full px-5 text-[14px] font-bold text-slate-700 dark:text-slate-200 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 sm:inline-flex"
                 >
                   Injira
                 </Link>
               )}
 
-              {/* Sell CTA — the hero action */}
+              {/* SELL CTA */}
               <Link
                 to="/create-listing"
                 onClick={closeMenus}
-                className="group relative hidden h-11 items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7522] to-[#FF5D00] px-5 text-xs font-black text-white shadow-lg shadow-[#FF5D00]/30 transition-all duration-300 hover:scale-[1.03] hover:shadow-xl hover:shadow-[#FF5D00]/40 active:scale-95 sm:flex lg:px-6"
+                className="group relative hidden h-11 items-center gap-2 overflow-hidden rounded-full bg-slate-900 px-5 text-[14px] font-black tracking-tight text-white shadow-[0_8px_20px_-6px_rgba(15,23,42,0.4)] transition-all duration-300 hover:bg-[#FF5D00] hover:scale-[1.02] hover:shadow-[0_12px_24px_-8px_rgba(255,93,0,0.5)] active:scale-95 sm:flex"
               >
-                <span className="pointer-events-none absolute inset-0 -translate-x-full bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.35)_50%,transparent_65%)] transition-transform duration-700 group-hover:translate-x-full" />
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-300 group-hover:rotate-90">
-                  <Icon name="plus" size={13} />
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-500 group-hover:rotate-90">
+                  <Icon name="plus" size={13} strokeWidth={3} />
                 </span>
-                <span className="whitespace-nowrap tracking-tight">Gurisha</span>
+                <span className="whitespace-nowrap">Gurisha</span>
               </Link>
 
-              {/* Mobile menu toggle */}
+              {/* MOBILE MENU */}
               <button
                 type="button"
                 onClick={() => {
-                  setMobileOpen((previous) => !previous)
+                  setMobileOpen((p) => !p)
                   setSearchOpen(false)
                   setAccountOpen(false)
+                  setOpenNav(null)
                 }}
-                className={`${actionClass} flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/15 xl:hidden`}
+                className="flex h-11 w-11 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 active:scale-95 xl:hidden"
                 aria-label={mobileOpen ? "Funga menu" : "Fungura menu"}
                 aria-expanded={mobileOpen}
               >
-                <Icon name={mobileOpen ? "close" : "menu"} size={20} />
+                <Icon name={mobileOpen ? "close" : "menu"} size={24} strokeWidth={2.5} />
               </button>
             </div>
           </div>
 
-          {/* ============ SEARCH PANEL ============ */}
+          {/* SEARCH PANEL */}
           {searchOpen && (
             <form
               onSubmit={submitSearch}
               role="search"
-              className="kg-h-dropdown mx-auto mt-3 flex max-w-2xl items-center gap-2 rounded-full p-2.5 pl-5 shadow-2xl border border-slate-200/80 dark:border-white/15 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl animate-in slide-in-from-top-3 duration-300"
+              className="absolute left-1/2 top-full mt-2 flex w-full max-w-2xl -translate-x-1/2 items-center gap-2 rounded-full p-2 pl-6 shadow-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 animate-in slide-in-from-top-4 duration-300 z-[150]"
             >
-              <span className="text-[#FF5D00]">
-                <Icon name="search" size={19} />
+              <span className="text-slate-400">
+                <Icon name="search" size={22} strokeWidth={2.2} />
               </span>
-
               <input
                 ref={searchInputRef}
                 type="search"
                 value={search}
                 onChange={(event) => updateSearch(event.target.value)}
                 placeholder="Urashaka iki? iPhone, inzu, laptop..."
-                className="kg-h-input min-w-0 flex-1 bg-transparent px-2 py-1.5 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 outline-none"
+                className="min-w-0 flex-1 bg-transparent px-2 py-3 text-[15px] font-bold text-slate-900 dark:text-white placeholder:text-slate-400 outline-none"
               />
-
               <button
                 type="submit"
-                className="rounded-full bg-gradient-to-r from-[#FF5D00] to-[#FF8533] px-6 py-2.5 text-xs font-black text-white shadow-md shadow-[#FF5D00]/30 transition-all hover:scale-105 active:scale-95"
+                className="rounded-full bg-[#FF5D00] px-8 py-3 text-[14px] font-black text-white shadow-md transition-all duration-200 hover:bg-[#FF8533] hover:scale-105"
               >
                 Shakisha
               </button>
             </form>
           )}
 
-          {/* ============ MOBILE / TABLET MENU ============ */}
+          {/* MOBILE MENU */}
           {mobileOpen && (
-            <div className="kg-h-dropdown mt-3 max-h-[calc(100dvh-100px)] overflow-y-auto rounded-[2rem] p-4 xl:hidden shadow-2xl border border-slate-200/80 dark:border-white/15 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl animate-in slide-in-from-top-4 duration-300">
-              <nav className="grid gap-1.5" aria-label="Menu ya telefoni">
-                {navigation.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.to === "/"}
-                    onClick={closeMenus}
-                    className={({ isActive }) =>
-                      `kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm font-bold transition-all ${
-                        isActive
-                          ? "bg-[#FF5D00]/10 text-[#FF5D00]"
-                          : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
-                      }`
-                    }
-                  >
-                    <span>{item.label}</span>
-                    <Icon name="arrow" size={16} className="text-slate-400" />
-                  </NavLink>
-                ))}
-
-                <NavLink
-                  to="/ai-search"
+            <div className="absolute left-2 right-2 sm:left-4 sm:right-4 top-full mt-2 max-h-[calc(100dvh-100px)] overflow-y-auto rounded-3xl p-4 xl:hidden shadow-2xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl animate-in slide-in-from-top-4 duration-300 z-[150]">
+              <nav className="grid gap-1" aria-label="Menu ya telefoni">
+                {/* Mobile Home Link */}
+                <Link
+                  to="/"
                   onClick={closeMenus}
-                  className={({ isActive }) =>
-                    `kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm font-extrabold transition-all ${
-                      isActive
-                        ? "bg-gradient-to-r from-[#FF5D00] to-[#FF8533] text-white shadow-md"
-                        : "bg-[#FF5D00]/10 text-[#FF5D00]"
-                    }`
-                  }
+                  className={`flex w-full items-center rounded-2xl px-4 py-4 text-[16px] font-extrabold transition-all ${
+                    location.pathname === "/"
+                      ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
+                      : "text-slate-600 dark:text-slate-300"
+                  }`}
                 >
-                  <span className="flex items-center gap-2.5">
-                    <Icon name="spark" size={17} />
-                    Baza AI
-                  </span>
-                  <Icon name="arrow" size={16} />
-                </NavLink>
+                  Ahabanza
+                </Link>
 
-                {userId && (
-                  <>
-                    <div className="my-2 h-[1px] bg-slate-200/80 dark:bg-white/10" />
-                    {accountLinks.map((item) => (
-                      <Link
-                        key={item.to}
-                        to={item.to}
-                        onClick={closeMenus}
-                        className="kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
+                {primaryNav.map((parent) => {
+                  const isExpanded = mobileExpanded === parent.label
+                  const parentActive = isParentActive(parent)
+
+                  return (
+                    <div key={parent.label}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMobileExpanded(isExpanded ? null : parent.label)
+                        }
+                        className={`flex w-full items-center justify-between rounded-2xl px-4 py-4 text-[16px] font-extrabold transition-all ${
+                          parentActive || isExpanded
+                            ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
+                            : "text-slate-600 dark:text-slate-300"
+                        }`}
+                        aria-expanded={isExpanded}
                       >
-                        <span className="flex items-center gap-3">
-                          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">
-                            <Icon name={item.icon} size={16} />
-                          </span>
-                          {item.label}
-                        </span>
-                        <Icon name="arrow" size={16} className="text-slate-400" />
-                      </Link>
-                    ))}
-                  </>
-                )}
+                        <span>{parent.label}</span>
+                        <Icon
+                          name="chevron"
+                          size={18}
+                          strokeWidth={2.5}
+                          className={`transition-transform duration-300 opacity-50 ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
 
-                <div className="my-2 h-[1px] bg-slate-200/80 dark:bg-white/10" />
+                      {isExpanded && (
+                        <div className="mt-1 ml-4 space-y-1 border-l-2 border-slate-200 dark:border-white/10 pl-3 animate-in slide-in-from-top-2 duration-200">
+                          {parent.children.map((child) => (
+                            <Link
+                              key={child.to}
+                              to={child.to}
+                              onClick={closeMenus}
+                              className={`flex items-start gap-3 rounded-xl p-3 transition-all ${
+                                location.pathname.startsWith(child.to)
+                                  ? "bg-slate-100/50 dark:bg-white/5"
+                                  : ""
+                              }`}
+                            >
+                              <span
+                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                                  child.highlight
+                                    ? "bg-gradient-to-br from-[#FF5D00] to-[#FF8533] text-white"
+                                    : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-sm border border-slate-100 dark:border-white/5"
+                                }`}
+                              >
+                                <Icon name={child.icon} size={16} strokeWidth={2.2} />
+                              </span>
+                              <span className="min-w-0 flex-1 pt-0.5">
+                                <span
+                                  className={`flex items-center gap-2 text-[14px] font-bold ${
+                                    child.highlight
+                                      ? "text-[#FF5D00]"
+                                      : "text-slate-900 dark:text-white"
+                                  }`}
+                                >
+                                  {child.label}
+                                  {child.badge && (
+                                    <span className="rounded-full bg-[#FF5D00] px-1.5 py-0.5 text-[9px] font-black text-white">
+                                      {child.badge}
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="mt-0.5 block text-[11px] font-medium leading-snug text-slate-500 dark:text-slate-400">
+                                  {child.description}
+                                </span>
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
 
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  className="kg-h-mobilelink rounded-2xl px-4 py-3 flex items-center justify-between text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 sm:hidden"
-                >
-                  <span className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">
-                      <Icon
-                        name={theme === "dark" ? "sun" : "moon"}
-                        size={17}
-                      />
-                    </span>
-                    {theme === "dark" ? "Light mode" : "Dark mode"}
-                  </span>
-                </button>
+                <div className="my-3 h-[1px] bg-slate-100 dark:bg-white/5" />
 
                 <Link
                   to="/create-listing"
                   onClick={closeMenus}
-                  className="group mt-2 flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#FF5D00] to-[#FF8533] px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-[#FF5D00]/30"
+                  className="mt-1 flex items-center justify-center gap-2 rounded-full bg-[#FF5D00] px-5 py-4 text-[15px] font-black text-white shadow-lg shadow-[#FF5D00]/30"
                 >
-                  <Icon name="plus" size={18} />
+                  <Icon name="plus" size={20} strokeWidth={2.5} />
                   Gurisha ikintu
                 </Link>
-
-                {!userId ? (
-                  <Link
-                    to="/login"
-                    onClick={closeMenus}
-                    className="mt-1.5 justify-center rounded-2xl py-3 text-center text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 sm:hidden"
-                  >
-                    Injira mu konti
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => void logout()}
-                    disabled={loggingOut}
-                    className="mt-1.5 flex items-center justify-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold text-red-500 transition-colors hover:bg-red-500/10 disabled:opacity-50"
-                  >
-                    <Icon name="logout" size={17} />
-                    {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
-                  </button>
-                )}
               </nav>
             </div>
           )}

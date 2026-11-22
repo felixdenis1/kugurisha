@@ -525,7 +525,8 @@ export default function Home() {
         <Header searchValue={search} onSearchChange={setSearch} />
       )}
 
-      <section className="relative isolate overflow-hidden bg-[#f5f9fb] dark:bg-[#07111c]">
+      {/* ═════════ ADDED pt-28 sm:pt-36 HERE TO CLEAR THE FIXED HEADER ═════════ */}
+      <section className="relative isolate overflow-hidden bg-[#f5f9fb] pt-28 sm:pt-36 dark:bg-[#07111c]">
         {/* ═════════ CINEMATIC AMBIENT MESH & ARCHITECTURAL GRID ═════════ */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -right-32 -top-36 h-[620px] w-[620px] rounded-full bg-[radial-gradient(circle,rgba(86,154,181,0.22)_0%,transparent_70%)] blur-3xl dark:bg-[radial-gradient(circle,rgba(86,154,181,0.25)_0%,transparent_70%)]" />
@@ -541,7 +542,7 @@ export default function Home() {
           />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 sm:pb-24 sm:pt-14 lg:pb-28 lg:pt-16">
+        <div className="relative mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 sm:pb-24 sm:pt-10 lg:pb-28 lg:pt-12">
           {/* ═════════ MAIN HERO GRID ═════════ */}
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <div className="kug-reveal relative z-10">
