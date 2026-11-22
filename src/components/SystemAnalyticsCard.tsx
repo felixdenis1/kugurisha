@@ -1,31 +1,51 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { supabase } from "../services/supabase"
+
+type DailyBucket = {
+  key: string
+  label: string
+  count: number
+  cumulative: number
+}
+
+type CategorySlice = {
+  name: string
+  count: number
+  pct: number
+}
 
 type Stats = {
   activeListings: number
   totalUsers: number
   newToday: number
   newThisWeek: number
-  conversations: number
   deletedListings: number
-  dailyBuckets: { label: string; count: number }[]
-  categoryShare: { name: string; count: number; pct: number }[]
+  dailyBuckets: DailyBucket[]
+  categoryShare: CategorySlice[]
   loading: boolean
+  refreshing: boolean
   error: string | null
   lastUpdated: number
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
+const CHART_COLORS = ["#22d3ee", "#569ab5", "#39778f", "#FF7A29"]
 
 function dayKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`
+}
+
+function parseDayKey(key: string) {
+  const [y, m, day] = key.split("-").map(Number)
+  return new Date(y, (m || 1) - 1, day || 1)
 }
 
 function shortDay(d: Date) {
   return d.toLocaleDateString("en-US", { weekday: "short" })
 }
 
-/* Human-readable "X ago" */
 function timeAgo(ts: number, now: number): string {
   if (!ts) return ""
   const diff = Math.max(0, Math.floor((now - ts) / 1000))
@@ -43,521 +63,652 @@ export default function SystemAnalyticsCard() {
     totalUsers: 0,
     newToday: 0,
     newThisWeek: 0,
-    conversations: 0,
     deletedListings: 0,
     dailyBuckets: [],
     categoryShare: [],
     loading: true,
+    refreshing: false,
     error: null,
     lastUpdated: 0,
   })
 
-  /* Ticks every second so "updated 3s ago" stays fresh */
-  const [nowTick, setNowTick] = useState(Date.now())
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const [hoveredBarIdx, setHoveredBarIdx] = useState<number | null>(null)
+  const [hoveredCatIdx, setHoveredCatIdx] = useState<number | null>(null)
+  const [nowTick, setNowTick] = useState(() => Date.now())
 
-  async function loadStats() {
+  const listingsChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const profilesChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
+  const loadStats = useCallback(async (manual = false) => {
+    setStats((prev) => ({
+      ...prev,
+      loading: prev.lastUpdated === 0,
+      refreshing: manual,
+      error: null,
+    }))
+
     try {
       const now = new Date()
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
       const weekAgo = new Date(now.getTime() - 7 * DAY_MS)
 
-      /* 1. Active listings */
-      const { count: activeListings, error: e1 } = await supabase
-        .from("listings")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "active")
-        .is("deleted_at", null)
-      if (e1) throw e1
+      const [
+        activeRes,
+        usersRes,
+        todayRes,
+        weekCountRes,
+        soldRes,
+        weekRowsRes,
+        catRowsRes,
+      ] = await Promise.all([
+        supabase
+          .from("listings")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "active")
+          .is("deleted_at", null),
+        supabase.from("profiles").select("*", { count: "exact", head: true }),
+        supabase
+          .from("listings")
+          .select("*", { count: "exact", head: true })
+          .gte("created_at", startOfDay.toISOString())
+          .is("deleted_at", null),
+        supabase
+          .from("listings")
+          .select("*", { count: "exact", head: true })
+          .gte("created_at", weekAgo.toISOString())
+          .is("deleted_at", null),
+        supabase
+          .from("listings")
+          .select("*", { count: "exact", head: true })
+          .or("status.eq.sold,deleted_at.not.is.null"),
+        supabase
+          .from("listings")
+          .select("created_at")
+          .gte("created_at", weekAgo.toISOString())
+          .is("deleted_at", null),
+        supabase
+          .from("listings")
+          .select("categories(name)")
+          .eq("status", "active")
+          .is("deleted_at", null)
+          .limit(500),
+      ])
 
-      /* 2. Total users */
-      const { count: totalUsers } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-
-      /* 3. New listings today */
-      const { count: newToday } = await supabase
-        .from("listings")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", startOfDay.toISOString())
-        .is("deleted_at", null)
-
-      /* 4. New listings this week */
-      const { count: newThisWeek } = await supabase
-        .from("listings")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", weekAgo.toISOString())
-        .is("deleted_at", null)
-
-      /* 5. Conversations — COUNT ONLY */
-      const { count: conversations } = await supabase
-        .from("conversations")
-        .select("*", { count: "exact", head: true })
-
-      /* 6. Deleted / sold */
-      const { count: deletedListings } = await supabase
-        .from("listings")
-        .select("*", { count: "exact", head: true })
-        .or("status.eq.sold,deleted_at.not.is.null")
-
-      /* 7. Daily buckets — last 7 days */
-      const { data: weekRows } = await supabase
-        .from("listings")
-        .select("created_at")
-        .gte("created_at", weekAgo.toISOString())
-        .is("deleted_at", null)
+      if (activeRes.error) throw activeRes.error
+      if (usersRes.error) throw usersRes.error
 
       const bucketMap = new Map<string, number>()
       for (let i = 6; i >= 0; i--) {
         const d = new Date(now.getTime() - i * DAY_MS)
         bucketMap.set(dayKey(d), 0)
       }
-      ;(weekRows || []).forEach((row: { created_at: string }) => {
-        const k = dayKey(new Date(row.created_at))
-        if (bucketMap.has(k)) bucketMap.set(k, (bucketMap.get(k) || 0) + 1)
-      })
-      const dailyBuckets = Array.from(bucketMap.entries()).map(([k, count]) => ({
-        label: shortDay(new Date(k)),
-        count,
-      }))
 
-      /* 8. Category share — top 4 */
-      const { data: catRows } = await supabase
-        .from("listings")
-        .select("categories(name)")
-        .eq("status", "active")
-        .is("deleted_at", null)
-        .limit(500)
+      ;(weekRowsRes.data || []).forEach((row: { created_at: string }) => {
+        const k = dayKey(new Date(row.created_at))
+        if (bucketMap.has(k)) {
+          bucketMap.set(k, (bucketMap.get(k) || 0) + 1)
+        }
+      })
+
+      let runningSum = 0
+      const dailyBuckets: DailyBucket[] = Array.from(bucketMap.entries()).map(
+        ([key, count]) => {
+          runningSum += count
+          return {
+            key,
+            label: shortDay(parseDayKey(key)),
+            count,
+            cumulative: runningSum,
+          }
+        },
+      )
 
       const catMap = new Map<string, number>()
-      ;(catRows || []).forEach((row: any) => {
+      ;(catRowsRes.data || []).forEach((row: any) => {
         const name =
           (Array.isArray(row.categories)
             ? row.categories[0]?.name
             : row.categories?.name) || "Ibindi"
         catMap.set(name, (catMap.get(name) || 0) + 1)
       })
-      const totalCat = Array.from(catMap.values()).reduce((a, b) => a + b, 0) || 1
-      const categoryShare = Array.from(catMap.entries())
+
+      const sortedCats = Array.from(catMap.entries())
         .sort((a, b) => b[1] - a[1])
         .slice(0, 4)
-        .map(([name, count]) => ({
-          name,
-          count,
-          pct: Math.round((count / totalCat) * 100),
-        }))
+
+      const topTotal = sortedCats.reduce((sum, [, c]) => sum + c, 0) || 1
+      const categoryShare: CategorySlice[] = sortedCats.map(([name, count]) => ({
+        name,
+        count,
+        pct: Math.round((count / topTotal) * 100),
+      }))
 
       setStats({
-        activeListings: activeListings || 0,
-        totalUsers: totalUsers || 0,
-        newToday: newToday || 0,
-        newThisWeek: newThisWeek || 0,
-        conversations: conversations || 0,
-        deletedListings: deletedListings || 0,
+        activeListings: activeRes.count ?? 0,
+        totalUsers: usersRes.count ?? 0,
+        newToday: todayRes.count ?? 0,
+        newThisWeek: weekCountRes.count ?? 0,
+        deletedListings: soldRes.count ?? 0,
         dailyBuckets,
         categoryShare,
         loading: false,
+        refreshing: false,
         error: null,
         lastUpdated: Date.now(),
       })
     } catch (err: unknown) {
       console.error("Analytics load failed:", err)
-      setStats((s) => ({
-        ...s,
+      setStats((prev) => ({
+        ...prev,
         loading: false,
-        error: err instanceof Error ? err.message : "Failed to load",
+        refreshing: false,
+        error: err instanceof Error ? err.message : "Failed to load analytics",
       }))
-    }
-  }
-
-  useEffect(() => {
-    void loadStats()
-
-    const channel = supabase
-      .channel("analytics-listings")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "listings" },
-        () => { void loadStats() },
-      )
-      .subscribe()
-
-    channelRef.current = channel
-
-    const interval = setInterval(() => void loadStats(), 60_000)
-    const tickInterval = setInterval(() => setNowTick(Date.now()), 1_000)
-
-    return () => {
-      clearInterval(interval)
-      clearInterval(tickInterval)
-      if (channelRef.current) supabase.removeChannel(channelRef.current)
     }
   }, [])
 
-  const maxDaily = Math.max(1, ...stats.dailyBuckets.map((b) => b.count))
-  const categoryColors = ["#39778f", "#569ab5", "#6ec5c9", "#FF7A29"]
+  useEffect(() => {
+    void loadStats(false)
 
-  /* Chart data → SVG path (area chart) */
-  const chartW = 300
-  const chartH = 90
-  const pts = stats.dailyBuckets.map((b, i) => {
-    const x = (i / Math.max(1, stats.dailyBuckets.length - 1)) * chartW
-    const y = chartH - (b.count / maxDaily) * (chartH - 10) - 5
+    const listingsCh = supabase
+      .channel("analytics-listings-stream")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "listings" },
+        () => {
+          void loadStats(false)
+        },
+      )
+      .subscribe()
+
+    const profilesCh = supabase
+      .channel("analytics-profiles-stream")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles" },
+        () => {
+          void loadStats(false)
+        },
+      )
+      .subscribe()
+
+    listingsChannelRef.current = listingsCh
+    profilesChannelRef.current = profilesCh
+
+    const pollInterval = setInterval(() => void loadStats(false), 60_000)
+    const tickInterval = setInterval(() => setNowTick(Date.now()), 1_000)
+
+    return () => {
+      clearInterval(pollInterval)
+      clearInterval(tickInterval)
+      if (listingsChannelRef.current) {
+        void supabase.removeChannel(listingsChannelRef.current)
+      }
+      if (profilesChannelRef.current) {
+        void supabase.removeChannel(profilesChannelRef.current)
+      }
+    }
+  }, [loadStats])
+
+  /* ── Chart Calculations ── */
+  const maxDaily = Math.max(1, ...stats.dailyBuckets.map((b) => b.count))
+  const maxCumulative = Math.max(
+    1,
+    ...stats.dailyBuckets.map((b) => b.cumulative),
+  )
+
+  const selectedDay =
+    hoveredBarIdx !== null && stats.dailyBuckets[hoveredBarIdx]
+      ? stats.dailyBuckets[hoveredBarIdx]
+      : stats.dailyBuckets[stats.dailyBuckets.length - 1] || null
+
+  const lineW = 180
+  const lineH = 76
+  const linePoints = stats.dailyBuckets.map((b, i) => {
+    const x =
+      stats.dailyBuckets.length <= 1
+        ? lineW / 2
+        : 8 + (i / (stats.dailyBuckets.length - 1)) * (lineW - 16)
+    const y =
+      lineH - 10 - (b.cumulative / maxCumulative) * (lineH - 20)
     return { x, y, ...b }
   })
-  const linePath = pts.length > 0
-    ? pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ")
-    : ""
-  const areaPath = pts.length > 0
-    ? `${linePath} L${chartW},${chartH} L0,${chartH} Z`
-    : ""
+
+  const indexPolyline = linePoints
+    .map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+    .join(" ")
+
+  const indexAreaPath =
+    linePoints.length > 0
+      ? `M${linePoints[0].x.toFixed(1)},${lineH - 8} ` +
+        linePoints
+          .map((p) => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`)
+          .join(" ") +
+        ` L${linePoints[linePoints.length - 1].x.toFixed(1)},${lineH - 8} Z`
+      : ""
+
+  const barMetrics = [
+    {
+      label: "Active Listings",
+      value: stats.activeListings,
+      color: "#22d3ee",
+    },
+    {
+      label: "DB Users",
+      value: stats.totalUsers,
+      color: "#569ab5",
+    },
+    {
+      label: "New Today",
+      value: stats.newToday,
+      color: "#FF7A29",
+    },
+    {
+      label: "Sold / Removed",
+      value: stats.deletedListings,
+      color: "#39778f",
+    },
+  ]
+  const maxBarMetric = Math.max(1, ...barMetrics.map((m) => m.value))
+
+  const totalCatCount = stats.categoryShare.reduce((s, c) => s + c.count, 0)
+  const activeCat =
+    hoveredCatIdx !== null && stats.categoryShare[hoveredCatIdx]
+      ? {
+          ...stats.categoryShare[hoveredCatIdx],
+          color: CHART_COLORS[hoveredCatIdx % CHART_COLORS.length],
+        }
+      : null
 
   return (
-    <div className="relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/85 shadow-[0_24px_60px_-20px_rgba(16,36,54,0.15)] backdrop-blur-2xl dark:border-white/[0.1] dark:bg-[#0a1524]/80 dark:shadow-black/60">
-
-      {/* Ambient glows */}
-      <div className="pointer-events-none absolute -left-16 -top-16 h-56 w-56 rounded-full bg-[#569ab5]/25 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-16 -right-16 h-56 w-56 rounded-full bg-[#FF5D00]/15 blur-3xl" />
-
-      {/* Grid texture overlay (very subtle) */}
+    <div className="relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[#f3f4f6] antialiased shadow-[0_24px_60px_-20px_rgba(16,36,54,0.16)] dark:border-cyan-400/15 dark:bg-[#07111c] dark:shadow-black/70">
+      {/* Smooth ambient glow */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.025] dark:opacity-[0.05]"
+        className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full"
         style={{
-          backgroundImage:
-            "linear-gradient(rgba(57,119,143,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(57,119,143,.5) 1px,transparent 1px)",
-          backgroundSize: "32px 32px",
-          maskImage: "radial-gradient(ellipse at top left, black 20%, transparent 70%)",
-          WebkitMaskImage: "radial-gradient(ellipse at top left, black 20%, transparent 70%)",
+          background:
+            "radial-gradient(circle at center, rgba(34,211,238,0.14) 0%, rgba(86,154,181,0.04) 48%, transparent 72%)",
+        }}
+      />
+      <div
+        className="pointer-events-none absolute -bottom-24 -left-24 h-60 w-60 rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle at center, rgba(255,122,41,0.10) 0%, transparent 70%)",
         }}
       />
 
-      <div className="relative z-10 flex flex-col p-5 sm:p-6">
+      {/* Subtle telemetry grid */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.035] dark:opacity-[0.06]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(34,211,238,.45) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,.45) 1px,transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      />
 
-        {/* ───────── HEADER ───────── */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            {/* Animated gradient ring around pulsing dot */}
-            <div className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center">
-              <span className="absolute inset-0 animate-[spin_8s_linear_infinite] rounded-full bg-[conic-gradient(from_0deg,#39778f,#569ab5,#6ec5c9,#FF5D00,#39778f)] opacity-60 blur-[2px]" />
-              <span className="absolute inset-[2px] rounded-full bg-white dark:bg-[#0a1524]" />
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inset-0 animate-ping rounded-full bg-[#569ab5] opacity-75" />
-                <span className="relative flex h-2 w-2 rounded-full bg-[#569ab5]" />
-              </span>
-            </div>
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#39778f] dark:text-[#6ec5c9]">
-                  Uko Ruhagaze
-                </p>
-                <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-emerald-600 ring-1 ring-emerald-500/25 dark:text-emerald-400">
-                  Live
-                </span>
-              </div>
-            </div>
+      <div className="relative z-10 flex flex-col p-4 sm:p-5">
+        {/* ───────── TOP BAR ───────── */}
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200/90 pb-3 dark:border-cyan-400/15">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inset-0 animate-ping rounded-full bg-cyan-400 opacity-75" />
+              <span className="relative flex h-2 w-2 rounded-full bg-cyan-400" />
+            </span>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#39778f] dark:text-cyan-300">
+              Uko Ruhagaze
+            </p>
+            <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wider text-cyan-700 ring-1 ring-cyan-500/25 dark:text-cyan-300">
+              Live
+            </span>
           </div>
 
-          {/* Refresh button */}
           <button
             type="button"
-            onClick={() => void loadStats()}
+            onClick={() => void loadStats(true)}
+            disabled={stats.refreshing}
             aria-label="Refresh analytics"
-            className="group flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white/70 text-slate-500 shadow-sm transition-all hover:-rotate-12 hover:border-[#FF5D00]/40 hover:text-[#FF5D00] dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-400"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-300/80 bg-white/80 text-slate-600 transition-colors hover:border-cyan-400/60 hover:text-cyan-600 disabled:opacity-50 dark:border-cyan-400/20 dark:bg-[#0b1b2b] dark:text-cyan-200"
           >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12a7.5 7.5 0 0013.06 5.1m1.44-5.1a7.5 7.5 0 00-13.06-5.1M4.5 4.5V9h4.5M19.5 19.5V15H15" />
+            <svg
+              className={`h-3.5 w-3.5 ${stats.refreshing ? "animate-spin" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.5 12a7.5 7.5 0 0013.06 5.1m1.44-5.1a7.5 7.5 0 00-13.06-5.1M4.5 4.5V9h4.5M19.5 19.5V15H15"
+              />
             </svg>
           </button>
         </div>
 
-        {/* ───────── KPI ROW (4 tiles) ───────── */}
-        <div className="mt-5 grid grid-cols-2 gap-2 sm:gap-2.5">
-          <KpiTile
-            icon="📦"
+        {stats.error && (
+          <div className="mt-3 flex items-center justify-between gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-[10px] font-bold text-rose-700 dark:text-rose-300">
+            <span className="truncate">{stats.error}</span>
+            <button
+              type="button"
+              onClick={() => void loadStats(true)}
+              className="rounded bg-rose-600 px-2 py-0.5 text-[9px] text-white"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* ───────── PRIMARY KPI STRIP (Listings + DB Users + Today + Sold) ───────── */}
+        <div className="mt-3.5 grid grid-cols-2 gap-2">
+          <StatBox
             label="Ibicuruzwa biriho"
-            value={stats.loading ? "" : stats.activeListings.toLocaleString()}
-            tint="#39778f"
-            loading={stats.loading}
-            trend={stats.newThisWeek > 0 ? `+${stats.newThisWeek} this week` : undefined}
+            sub="Available listings"
+            value={stats.loading ? "—" : stats.activeListings.toLocaleString()}
+            accentColor="#22d3ee"
           />
-          <KpiTile
-            icon="👥"
+          <StatBox
             label="Abakoresha"
-            value={stats.loading ? "" : stats.totalUsers.toLocaleString()}
-            tint="#569ab5"
-            loading={stats.loading}
+            sub="Users in database"
+            value={stats.loading ? "—" : stats.totalUsers.toLocaleString()}
+            accentColor="#569ab5"
           />
-          <KpiTile
-            icon="🆕"
+          <StatBox
             label="Bishya uyu munsi"
-            value={stats.loading ? "" : `+${stats.newToday}`}
-            tint="#FF7A29"
-            loading={stats.loading}
-            accent
+            sub="Added today"
+            value={stats.loading ? "—" : `+${stats.newToday}`}
+            accentColor="#FF7A29"
           />
-          <KpiTile
-            icon="💬"
-            label="Ibiganiro"
-            value={stats.loading ? "" : stats.conversations.toLocaleString()}
-            tint="#6ec5c9"
-            loading={stats.loading}
+          <StatBox
+            label="Byagurishijwe"
+            sub="Sold / removed"
+            value={stats.loading ? "—" : stats.deletedListings.toLocaleString()}
+            accentColor="#39778f"
           />
         </div>
 
-        {/* ───────── SOLD (wide hero KPI) ───────── */}
-        <div className="mt-2.5">
-          <div className="group relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/[0.08] to-emerald-500/[0.02] p-3.5 transition-all hover:border-emerald-500/40 dark:border-emerald-500/30 dark:from-emerald-500/[0.12] dark:to-emerald-500/[0.03]">
-            <div className="pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full bg-emerald-500/20 blur-2xl transition-opacity group-hover:opacity-80" />
-
-            <div className="relative flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 ring-1 ring-emerald-500/25 dark:text-emerald-400">
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-emerald-600/80 dark:text-emerald-400/80">
-                    Byagurishijwe
-                  </p>
-                  <p className="text-[10px] font-medium text-emerald-700/60 dark:text-emerald-300/60">
-                    Ibyasibwe cyangwa byaguzwe
-                  </p>
-                </div>
-              </div>
-
-              {stats.loading ? (
-                <div className="h-7 w-14 animate-pulse rounded-lg bg-emerald-500/20" />
-              ) : (
-                <p className="text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
-                  {stats.deletedListings.toLocaleString()}
-                </p>
-              )}
+        {/* ───────── TOP DIAGRAM ROW: COLUMN BARS + CUMULATIVE LINE ───────── */}
+        <div className="mt-3.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          {/* Daily Column Chart */}
+          <div
+            className="rounded-xl border border-slate-200/90 bg-white/80 p-3 dark:border-cyan-400/15 dark:bg-[#091624]"
+            onMouseLeave={() => setHoveredBarIdx(null)}
+          >
+            <div className="flex items-baseline justify-between">
+              <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 dark:text-cyan-300/80">
+                Daily Posts (7d)
+              </span>
+              <span className="text-[10px] font-black tabular-nums text-cyan-600 dark:text-cyan-300">
+                {selectedDay ? `${selectedDay.label}: ${selectedDay.count}` : "0"}
+              </span>
             </div>
-          </div>
-        </div>
 
-        {/* ───────── 7-DAY AREA CHART ───────── */}
-        <div className="mt-6">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                Ibicuruzwa bishya
-              </p>
-              <p className="mt-0.5 text-[10px] font-bold text-slate-400 dark:text-slate-500">
-                Iminsi 7 ishize
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-lg font-black leading-none tracking-tight text-slate-900 dark:text-white">
-                {stats.newThisWeek}
-              </p>
-              <p className="mt-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                byose
-              </p>
-            </div>
-          </div>
-
-          {stats.loading ? (
-            <div className="mt-3 h-[90px] animate-pulse rounded-xl bg-slate-100 dark:bg-white/[0.04]" />
-          ) : stats.dailyBuckets.length > 0 ? (
-            <div className="relative mt-3">
-              <svg
-                viewBox={`0 0 ${chartW} ${chartH}`}
-                preserveAspectRatio="none"
-                className="h-[90px] w-full overflow-visible"
-              >
-                <defs>
-                  <linearGradient id="kgAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#569ab5" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="#569ab5" stopOpacity="0" />
-                  </linearGradient>
-                  <linearGradient id="kgLineGrad" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#39778f" />
-                    <stop offset="60%" stopColor="#569ab5" />
-                    <stop offset="100%" stopColor="#FF7A29" />
-                  </linearGradient>
-                </defs>
-
-                {/* Grid lines */}
-                {[0, 0.5, 1].map((f) => (
-                  <line
-                    key={f}
-                    x1="0"
-                    x2={chartW}
-                    y1={chartH * f}
-                    y2={chartH * f}
-                    stroke="currentColor"
-                    strokeWidth="0.5"
-                    className="text-slate-200/60 dark:text-white/10"
-                    strokeDasharray="2 3"
-                  />
-                ))}
-
-                {/* Area fill */}
-                {areaPath && (
-                  <path
-                    d={areaPath}
-                    fill="url(#kgAreaGrad)"
-                    style={{ transition: "d 700ms cubic-bezier(0.16,1,0.3,1)" }}
-                  />
-                )}
-
-                {/* Line */}
-                {linePath && (
-                  <path
-                    d={linePath}
-                    fill="none"
-                    stroke="url(#kgLineGrad)"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ transition: "d 700ms cubic-bezier(0.16,1,0.3,1)" }}
-                  />
-                )}
-
-                {/* Data points (with tooltip title) */}
-                {pts.map((p, i) => {
-                  const isToday = i === pts.length - 1
-                  return (
-                    <g key={i}>
-                      <circle
-                        cx={p.x}
-                        cy={p.y}
-                        r={isToday ? 4 : 2.5}
-                        fill={isToday ? "#FF7A29" : "#569ab5"}
-                        stroke="white"
-                        strokeWidth={isToday ? 2 : 1}
-                        className="dark:stroke-[#0a1524]"
+            {stats.loading ? (
+              <div className="mt-2 h-[76px] animate-pulse rounded bg-slate-200 dark:bg-white/10" />
+            ) : (
+              <div className="mt-2">
+                <div className="flex h-[64px] items-end gap-1.5 border-b border-l border-slate-300/80 pl-1.5 pt-1 dark:border-cyan-400/25">
+                  {stats.dailyBuckets.map((b, i) => {
+                    const heightPct = Math.max(8, (b.count / maxDaily) * 100)
+                    const isHovered = hoveredBarIdx === i
+                    return (
+                      <button
+                        key={b.key}
+                        type="button"
+                        onMouseEnter={() => setHoveredBarIdx(i)}
+                        onClick={() => setHoveredBarIdx(i)}
+                        className="group flex h-full flex-1 items-end"
+                        title={`${b.label}: ${b.count}`}
                       >
-                        <title>{`${p.label}: ${p.count}`}</title>
-                      </circle>
-                      {isToday && (
-                        <circle cx={p.x} cy={p.y} r="8" fill="#FF7A29" opacity="0.2" className="animate-ping" />
-                      )}
-                    </g>
-                  )
-                })}
-              </svg>
-
-              {/* Day labels */}
-              <div className="mt-1.5 flex justify-between px-0.5">
-                {stats.dailyBuckets.map((b, i) => {
-                  const isToday = i === stats.dailyBuckets.length - 1
-                  return (
-                    <span
-                      key={i}
-                      className={`text-[9px] font-bold ${
-                        isToday ? "text-[#FF5D00]" : "text-slate-400 dark:text-slate-500"
-                      }`}
-                    >
-                      {b.label}
-                    </span>
-                  )
-                })}
+                        <span
+                          className="w-full rounded-t-[2px] transition-all duration-200"
+                          style={{
+                            height: `${heightPct}%`,
+                            backgroundColor: isHovered ? "#FF7A29" : "#22d3ee",
+                            opacity:
+                              hoveredBarIdx === null || isHovered ? 0.92 : 0.45,
+                          }}
+                        />
+                      </button>
+                    )
+                  })}
+                </div>
+                <div className="mt-1 flex justify-between pl-1.5 text-[8px] font-bold text-slate-400 dark:text-slate-400">
+                  {stats.dailyBuckets.map((b) => (
+                    <span key={b.key}>{b.label.slice(0, 2)}</span>
+                  ))}
+                </div>
               </div>
+            )}
+          </div>
+
+          {/* 7-Day Index Line Chart */}
+          <div className="rounded-xl border border-slate-200/90 bg-white/80 p-3 dark:border-cyan-400/15 dark:bg-[#091624]">
+            <div className="flex items-baseline justify-between">
+              <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 dark:text-cyan-300/80">
+                7d Volume Index
+              </span>
+              <span className="text-[10px] font-black tabular-nums text-slate-900 dark:text-white">
+                {stats.newThisWeek}
+              </span>
             </div>
-          ) : (
-            <div className="mt-3 flex h-[90px] items-center justify-center rounded-xl border border-dashed border-slate-200 text-xs text-slate-400 dark:border-white/10">
-              Nta makuru arahari
-            </div>
-          )}
+
+            {stats.loading ? (
+              <div className="mt-2 h-[76px] animate-pulse rounded bg-slate-200 dark:bg-white/10" />
+            ) : (
+              <div className="mt-2">
+                <svg
+                  viewBox={`0 0 ${lineW} ${lineH}`}
+                  className="h-[76px] w-full overflow-visible"
+                  role="img"
+                  aria-label="7-day cumulative listings line chart"
+                >
+                  <defs>
+                    <linearGradient id="kgCyanFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.28" />
+                      <stop offset="100%" stopColor="#22d3ee" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <line
+                    x1="8"
+                    x2={lineW - 4}
+                    y1={lineH - 8}
+                    y2={lineH - 8}
+                    stroke="currentColor"
+                    strokeWidth="0.8"
+                    className="text-slate-300 dark:text-cyan-400/25"
+                  />
+                  <line
+                    x1="8"
+                    x2="8"
+                    y1="6"
+                    y2={lineH - 8}
+                    stroke="currentColor"
+                    strokeWidth="0.8"
+                    className="text-slate-300 dark:text-cyan-400/25"
+                  />
+                  {indexAreaPath && (
+                    <path d={indexAreaPath} fill="url(#kgCyanFill)" />
+                  )}
+                  {indexPolyline && (
+                    <polyline
+                      fill="none"
+                      stroke="#22d3ee"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      points={indexPolyline}
+                    />
+                  )}
+                  {linePoints.map((p, i) => (
+                    <circle
+                      key={p.key}
+                      cx={p.x}
+                      cy={p.y}
+                      r={i === linePoints.length - 1 ? 2.8 : 1.8}
+                      fill={i === linePoints.length - 1 ? "#FF7A29" : "#22d3ee"}
+                    />
+                  ))}
+                </svg>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* ───────── CATEGORY DONUT + LEGEND ───────── */}
-        <div className="mt-5 border-t border-slate-200/70 pt-4 dark:border-white/10">
+        {/* ───────── MIDDLE DIAGRAM: HORIZONTAL TELEMETRY BARS ───────── */}
+        <div className="mt-2.5 rounded-xl border border-slate-200/90 bg-white/80 p-3 dark:border-cyan-400/15 dark:bg-[#091624]">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 dark:text-cyan-300/80">
+              Platform Metrics Comparison
+            </span>
+            <span className="text-[9px] font-bold text-slate-400">Live Counts</span>
+          </div>
+
+          <div className="space-y-2">
+            {barMetrics.map((m) => {
+              const widthPct = Math.max(4, (m.value / maxBarMetric) * 100)
+              return (
+                <div key={m.label} className="space-y-0.5">
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="font-bold text-slate-700 dark:text-slate-200">
+                      {m.label}
+                    </span>
+                    <span className="font-black tabular-nums text-slate-900 dark:text-cyan-200">
+                      {stats.loading ? "—" : m.value.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-sm bg-slate-200/80 dark:bg-cyan-950">
+                    <div
+                      className="h-full rounded-sm transition-all duration-500"
+                      style={{
+                        width: `${stats.loading ? 15 : widthPct}%`,
+                        backgroundColor: m.color,
+                      }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* ───────── BOTTOM DIAGRAM: CATEGORY PIE / DONUT BREAKDOWN ───────── */}
+        <div className="mt-2.5 rounded-xl border border-slate-200/90 bg-white/80 p-3 dark:border-cyan-400/15 dark:bg-[#091624]">
           <div className="flex items-center justify-between">
-            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+            <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 dark:text-cyan-300/80">
               Ibicuruzwa ku byiciro
-            </p>
-            <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500">
-              Top {stats.categoryShare.length || 0}
-            </p>
+            </span>
+            <span className="text-[9px] font-bold text-slate-400">
+              {activeCat ? `${activeCat.count} items` : `Top ${stats.categoryShare.length}`}
+            </span>
           </div>
 
           {stats.categoryShare.length > 0 ? (
-            <div className="mt-3 flex items-center gap-4">
-              {/* Donut */}
-              <div className="relative h-20 w-20 shrink-0">
-                <svg viewBox="0 0 40 40" className="h-full w-full -rotate-90">
-                  <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="5" className="text-slate-200 dark:text-white/10" />
+            <div
+              className="mt-2.5 flex items-center gap-3.5"
+              onMouseLeave={() => setHoveredCatIdx(null)}
+            >
+              <div className="relative h-16 w-16 shrink-0">
+                <svg
+                  viewBox="0 0 36 36"
+                  className="h-full w-full -rotate-90"
+                  role="img"
+                  aria-label="Category share chart"
+                >
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="13"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    className="text-slate-200 dark:text-white/10"
+                  />
                   {(() => {
-                    const total = stats.categoryShare.reduce((s, c) => s + c.count, 0) || 1
-                    const C = 2 * Math.PI * 16
-                    let off = 0
-                    return stats.categoryShare.map((c, i) => {
-                      const len = (c.count / total) * C
+                    const denom = totalCatCount || 1
+                    const r = 13
+                    const c = 2 * Math.PI * r
+                    let offset = 0
+                    return stats.categoryShare.map((slice, idx) => {
+                      const len = (slice.count / denom) * c
+                      const selected = hoveredCatIdx === idx
                       const el = (
                         <circle
-                          key={i}
-                          cx="20"
-                          cy="20"
-                          r="16"
+                          key={slice.name}
+                          cx="18"
+                          cy="18"
+                          r={r}
                           fill="none"
-                          stroke={categoryColors[i % categoryColors.length]}
-                          strokeWidth="5"
-                          strokeDasharray={`${len} ${C - len}`}
-                          strokeDashoffset={-off}
-                          strokeLinecap="round"
-                          style={{ transition: "stroke-dasharray 700ms ease, stroke-dashoffset 700ms ease" }}
+                          stroke={CHART_COLORS[idx % CHART_COLORS.length]}
+                          strokeWidth={selected ? 6.2 : 5}
+                          strokeDasharray={`${len} ${c - len}`}
+                          strokeDashoffset={-offset}
+                          className="cursor-pointer transition-all duration-200"
+                          opacity={hoveredCatIdx === null || selected ? 1 : 0.45}
+                          onMouseEnter={() => setHoveredCatIdx(idx)}
+                          onClick={() =>
+                            setHoveredCatIdx((prev) => (prev === idx ? null : idx))
+                          }
                         />
                       )
-                      off += len
+                      offset += len
                       return el
                     })
                   })()}
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-sm font-black leading-none text-slate-900 dark:text-white">
-                    {stats.categoryShare.reduce((s, c) => s + c.count, 0)}
-                  </p>
-                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-400">
-                    byose
-                  </p>
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-[9px] font-black tabular-nums text-slate-900 dark:text-white">
+                  {activeCat ? `${activeCat.pct}%` : totalCatCount}
                 </div>
               </div>
 
-              {/* Legend */}
-              <div className="min-w-0 flex-1 space-y-1.5">
-                {stats.categoryShare.map((c, i) => (
-                  <div key={c.name} className="group flex items-center gap-2">
-                    <span
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ background: categoryColors[i % categoryColors.length] }}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-[11px] font-bold text-slate-700 dark:text-slate-200">
-                      {c.name}
-                    </span>
-                    <span className="text-[10px] font-black text-slate-500 dark:text-slate-400">
-                      {c.pct}%
-                    </span>
-                  </div>
-                ))}
+              <div className="min-w-0 flex-1 grid grid-cols-2 gap-1.5">
+                {stats.categoryShare.map((slice, idx) => {
+                  const color = CHART_COLORS[idx % CHART_COLORS.length]
+                  const selected = hoveredCatIdx === idx
+                  return (
+                    <button
+                      key={slice.name}
+                      type="button"
+                      onMouseEnter={() => setHoveredCatIdx(idx)}
+                      onClick={() =>
+                        setHoveredCatIdx((prev) => (prev === idx ? null : idx))
+                      }
+                      className={`flex items-center gap-1.5 rounded px-1.5 py-1 text-left transition-colors ${
+                        selected
+                          ? "bg-slate-200/80 dark:bg-cyan-400/15"
+                          : "hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className="truncate text-[10px] font-bold text-slate-700 dark:text-slate-200">
+                        {slice.name}
+                      </span>
+                      <span className="ml-auto text-[9px] font-black tabular-nums text-slate-500 dark:text-cyan-300/80">
+                        {slice.pct}%
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           ) : (
-            <p className="mt-3 text-xs text-slate-400">Nta makuru arahari</p>
+            <p className="mt-2 text-xs text-slate-400">Nta makuru arahari</p>
           )}
         </div>
 
         {/* ───────── FOOTER ───────── */}
-        <div className="mt-5 flex items-center justify-between border-t border-slate-200/70 pt-3 dark:border-white/10">
-          <div className="flex items-center gap-1.5">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500 opacity-75" />
-              <span className="relative flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            </span>
-            <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Live
-            </span>
-            <span className="h-2 w-px bg-slate-300 dark:bg-white/15" />
-            <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500">
-              {stats.lastUpdated ? `updated ${timeAgo(stats.lastUpdated, nowTick)}` : "loading…"}
-            </span>
-          </div>
-          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-            Auto-update
+        <div className="mt-3 flex items-center justify-between border-t border-slate-200/90 pt-2.5 text-[9px] font-bold text-slate-500 dark:border-cyan-400/15 dark:text-slate-400">
+          <span className="tabular-nums">
+            {stats.lastUpdated
+              ? `Updated ${timeAgo(stats.lastUpdated, nowTick)}`
+              : "Syncing..."}
+          </span>
+          <span className="uppercase tracking-wider text-cyan-700 dark:text-cyan-300">
+            Real-time DB
           </span>
         </div>
       </div>
@@ -565,61 +716,34 @@ export default function SystemAnalyticsCard() {
   )
 }
 
-/* ──────────────────────────────────────────────────────────────────
-   KPI TILE — compact, tinted, sparkline-ready
-   ────────────────────────────────────────────────────────────────── */
-function KpiTile({
-  icon,
+function StatBox({
   label,
+  sub,
   value,
-  tint,
-  accent = false,
-  loading = false,
-  trend,
+  accentColor,
 }: {
-  icon: string
   label: string
+  sub: string
   value: string
-  tint: string
-  accent?: boolean
-  loading?: boolean
-  trend?: string
+  accentColor: string
 }) {
   return (
-    <div
-      className={`group relative overflow-hidden rounded-2xl border p-3 transition-all duration-300 ${
-        accent
-          ? "border-[#FF5D00]/30 bg-gradient-to-br from-[#FF5D00]/[0.08] to-[#FF5D00]/[0.02] hover:border-[#FF5D00]/50 hover:shadow-[0_8px_24px_-10px_rgba(255,93,0,0.4)]"
-          : "border-slate-200/70 bg-white/60 hover:border-slate-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
-      }`}
-    >
-      <div
-        className="pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40"
-        style={{ background: tint }}
-      />
-
-      <div className="relative flex items-center justify-between">
-        <span className="text-base leading-none">{icon}</span>
-        <span className="h-1.5 w-1.5 rounded-full" style={{ background: tint }} />
+    <div className="rounded-xl border border-slate-200/90 bg-white/85 px-3 py-2 dark:border-cyan-400/15 dark:bg-[#091624]">
+      <div className="flex items-center justify-between gap-1">
+        <span className="truncate text-[9px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300">
+          {label}
+        </span>
+        <span
+          className="h-1.5 w-1.5 shrink-0 rounded-full"
+          style={{ backgroundColor: accentColor }}
+        />
       </div>
-
-      <p className="relative mt-2 text-[9px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-        {label}
+      <p className="truncate text-[8px] font-medium text-slate-400 dark:text-slate-500">
+        {sub}
       </p>
-
-      {loading ? (
-        <div className="mt-1 h-5 w-12 animate-pulse rounded bg-slate-200 dark:bg-white/10" />
-      ) : (
-        <p className="relative mt-0.5 text-lg font-black leading-tight text-slate-900 dark:text-white">
-          {value}
-        </p>
-      )}
-
-      {trend && !loading && (
-        <p className="relative mt-0.5 text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
-          ↑ {trend}
-        </p>
-      )}
+      <p className="mt-1 text-base font-black tabular-nums leading-tight text-slate-900 dark:text-white">
+        {value}
+      </p>
     </div>
   )
 }

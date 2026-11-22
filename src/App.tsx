@@ -33,7 +33,7 @@ import AdminListings from "./pages/AdminListings"
 import AdminReports from "./pages/AdminReports"
 import AdminAnalytics from "./pages/AdminAnalytics"
 import AdminConversations from "./pages/AdminConversations"
-
+import SystemAnalyticsCard from "./components/SystemAnalyticsCard"
 import AdminActivityLog from "./pages/AdminActivityLog"
 import AdminNotifications from "./pages/AdminNotifications"
 import NotFound from "./pages/NotFound"
@@ -94,7 +94,7 @@ function App() {
 
           {/* AI search */}
           <Route path="/ai-search" element={<AISearch />} />
-
+<Route path="/SystemAnalyticsCard" element={<SystemAnalyticsCard />} />
           {/* Admin Routes */}
   <Route path="/admin" element={<AdminLayout />}>
     <Route index element={<AdminDashboard />} />
