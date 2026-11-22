@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { supabase } from "../services/supabase"
 
 type Category = {
@@ -44,10 +44,7 @@ function AdminCategories() {
     setError("")
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         navigate("/login")
         return
@@ -82,7 +79,6 @@ function AdminCategories() {
       .order("created_at", { ascending: true })
 
     if (error) throw error
-
     setCategories((data || []) as Category[])
   }
 
@@ -104,7 +100,6 @@ function AdminCategories() {
 
   function openEdit(category: Category) {
     setEditingCategory(category)
-
     setName(category.name)
     setSlug(category.slug)
     setDescription(category.description || "")
@@ -112,13 +107,11 @@ function AdminCategories() {
     setParentId(category.parent_id || "")
     setSortOrder(String(category.sort_order))
     setIsActive(category.is_active)
-
     setShowForm(true)
   }
 
   function closeForm() {
     if (saving) return
-
     setShowForm(false)
     resetForm()
   }
@@ -134,7 +127,6 @@ function AdminCategories() {
 
   async function saveCategory(e: React.FormEvent) {
     e.preventDefault()
-
     if (!name.trim()) {
       setError("Andika izina rya category.")
       return
@@ -159,18 +151,15 @@ function AdminCategories() {
           .from("categories")
           .update(payload)
           .eq("id", editingCategory.id)
-
         if (error) throw error
       } else {
         const { error } = await supabase
           .from("categories")
           .insert(payload)
-
         if (error) throw error
       }
 
       await loadCategories()
-
       setShowForm(false)
       resetForm()
     } catch (err: any) {
@@ -182,12 +171,9 @@ function AdminCategories() {
 
   async function toggleCategory(category: Category) {
     setError("")
-
     const { error } = await supabase
       .from("categories")
-      .update({
-        is_active: !category.is_active,
-      })
+      .update({ is_active: !category.is_active })
       .eq("id", category.id)
 
     if (error) {
@@ -206,13 +192,11 @@ function AdminCategories() {
 
   async function deleteCategory(category: Category) {
     const confirmed = window.confirm(
-      `Urashaka gusiba category "${category.name}"?`
+      `Urashaka gusiba category "${category.name}"?\n\nNiba ifite listings cyangwa sub-categories, gusiba bizananirwa.`
     )
-
     if (!confirmed) return
 
     setError("")
-
     const { error } = await supabase
       .from("categories")
       .delete()
@@ -225,23 +209,16 @@ function AdminCategories() {
       return
     }
 
-    setCategories((current) =>
-      current.filter((item) => item.id !== category.id)
-    )
+    setCategories((current) => current.filter((item) => item.id !== category.id))
   }
 
   const parentName = (parentId: string | null) => {
     if (!parentId) return "Main category"
-
-    return (
-      categories.find((category) => category.id === parentId)?.name ||
-      "Unknown parent"
-    )
+    return categories.find((category) => category.id === parentId)?.name || "Unknown parent"
   }
 
   const filteredCategories = useMemo(() => {
     const query = search.trim().toLowerCase()
-
     return categories.filter((category) => {
       const matchesFilter =
         filter === "all" ||
@@ -263,547 +240,304 @@ function AdminCategories() {
   const parentCount = categories.filter((item) => !item.parent_id).length
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-slate-200 bg-white lg:block">
-        <div className="flex h-full flex-col">
-          <div className="border-b border-slate-200 px-6 py-5">
-            <Link to="/" className="text-xl font-black tracking-tight">
-              KUGURISHA<span className="text-blue-600">.COM</span>
-            </Link>
-
-            <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Admin Center
-            </p>
-          </div>
-
-          <nav className="flex-1 space-y-1 p-4">
-            <Link
-              to="/admin"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
-            >
-              📊 Overview
-            </Link>
-
-            <Link
-              to="/admin/users"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
-            >
-              👥 Users
-            </Link>
-
-            <Link
-              to="/admin/listings"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
-            >
-              🏷️ Listings
-            </Link>
-
-            <Link
-              to="/admin/reports"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
-            >
-              🚩 Reports
-            </Link>
-
-            <Link
-              to="/admin/categories"
-              className="flex items-center gap-3 rounded-xl bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700"
-            >
-              🗂️ Categories
-            </Link>
-
-            <div className="mt-6 border-t border-slate-100 pt-4">
-              <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Management
-              </p>
-
-              <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-400">
-                💬 Messages
-              </button>
-
-              <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-400">
-                🔔 Notifications
-              </button>
-
-              <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-400">
-                📈 Analytics
-              </button>
-
-              <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-400">
-                🧾 Activity Log
-              </button>
-            </div>
-          </nav>
-
-          <div className="border-t border-slate-200 p-4">
-            <Link
-              to="/"
-              className="block rounded-xl px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-100"
-            >
-              ← Back to marketplace
-            </Link>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <main className="lg:pl-64">
-        {/* Header */}
-        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
-          <div className="flex min-h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
-                Admin Center
-              </p>
-
-              <h1 className="text-lg font-black sm:text-xl">
-                Category Management
-              </h1>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Link
-                to="/admin"
-                className="hidden rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:block"
-              >
-                Overview
-              </Link>
-
-              <button
-                onClick={openCreate}
-                className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
-              >
-                + Add category
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-          {/* Intro */}
-          <section className="mb-6 rounded-3xl bg-slate-900 p-6 text-white shadow-sm sm:p-8">
-            <div className="max-w-3xl">
-              <p className="mb-2 text-sm font-bold text-blue-300">
-                🗂️ CATEGORY MANAGEMENT
-              </p>
-
-              <h2 className="text-2xl font-black tracking-tight sm:text-3xl">
-                Tegura categories za marketplace
-              </h2>
-
-              <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
-                Genzura amazina, hierarchy, order n’uko categories
-                zigaragara ku isoko.
-              </p>
-            </div>
-          </section>
-
-          {/* Error */}
-          {error && (
-            <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              <span className="text-lg">⚠️</span>
-
-              <div className="flex-1">
-                <p className="font-bold">Habaye ikibazo</p>
-                <p className="mt-1">{error}</p>
-              </div>
-
-              <button
-                onClick={() => setError("")}
-                className="font-bold text-red-500 hover:text-red-700"
-              >
-                ×
-              </button>
-            </div>
-          )}
-
-          {/* Stats */}
-          <section className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Total
-              </p>
-              <p className="mt-2 text-3xl font-black">{categories.length}</p>
-              <p className="mt-1 text-sm text-slate-500">Categories zose</p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Active
-              </p>
-              <p className="mt-2 text-3xl font-black text-emerald-600">
-                {activeCount}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Zigaragara ku isoko
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Inactive
-              </p>
-              <p className="mt-2 text-3xl font-black text-slate-500">
-                {inactiveCount}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Zidahari ku isoko
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Main categories
-              </p>
-              <p className="mt-2 text-3xl font-black text-blue-600">
-                {parentCount}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Root categories
-              </p>
-            </div>
-          </section>
-
-          {/* Toolbar */}
-          <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="relative flex-1">
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                  🔎
-                </span>
-
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Shakisha category..."
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-100"
-                />
-              </div>
-
-              <div className="flex gap-2 overflow-x-auto">
-                {[
-                  ["all", "All"],
-                  ["active", "Active"],
-                  ["inactive", "Inactive"],
-                ].map(([value, label]) => (
-                  <button
-                    key={value}
-                    onClick={() =>
-                      setFilter(value as "all" | "active" | "inactive")
-                    }
-                    className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-bold transition ${
-                      filter === value
-                        ? "bg-slate-900 text-white"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* Loading */}
-          {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map((item) => (
-                <div
-                  key={item}
-                  className="animate-pulse rounded-2xl border border-slate-200 bg-white p-5"
-                >
-                  <div className="h-5 w-1/3 rounded bg-slate-200" />
-                  <div className="mt-3 h-4 w-2/3 rounded bg-slate-100" />
-                  <div className="mt-5 h-10 w-full rounded-xl bg-slate-100" />
-                </div>
-              ))}
-            </div>
-          ) : filteredCategories.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-3xl">
-                🗂️
-              </div>
-
-              <h3 className="mt-5 text-lg font-black">
-                Nta categories zabonetse
-              </h3>
-
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-                Gerageza guhindura search/filter cyangwa wongere category
-                nshya.
-              </p>
-
-              <button
-                onClick={openCreate}
-                className="mt-6 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white hover:bg-blue-700"
-              >
-                + Add category
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredCategories.map((category) => (
-                <article
-                  key={category.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-md sm:p-5"
-                >
-                  <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                    <div className="flex min-w-0 items-start gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-2xl">
-                        {category.icon || "🗂️"}
-                      </div>
-
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-base font-black text-slate-900">
-                            {category.name}
-                          </h3>
-
-                          <span
-                            className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                              category.is_active
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-slate-100 text-slate-500"
-                            }`}
-                          >
-                            {category.is_active ? "ACTIVE" : "INACTIVE"}
-                          </span>
-                        </div>
-
-                        <p className="mt-1 text-xs font-medium text-slate-400">
-                          /{category.slug}
-                        </p>
-
-                        {category.description && (
-                          <p className="mt-2 line-clamp-2 text-sm text-slate-600">
-                            {category.description}
-                          </p>
-                        )}
-
-                        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-slate-500">
-                          <span>
-                            Parent:{" "}
-                            <strong className="text-slate-700">
-                              {parentName(category.parent_id)}
-                            </strong>
-                          </span>
-
-                          <span>
-                            Order:{" "}
-                            <strong className="text-slate-700">
-                              {category.sort_order}
-                            </strong>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 xl:shrink-0">
-                      <button
-                        onClick={() => toggleCategory(category)}
-                        className={`rounded-xl px-3.5 py-2.5 text-sm font-bold transition ${
-                          category.is_active
-                            ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                            : "bg-emerald-600 text-white hover:bg-emerald-700"
-                        }`}
-                      >
-                        {category.is_active ? "Deactivate" : "Activate"}
-                      </button>
-
-                      <button
-                        onClick={() => openEdit(category)}
-                        className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-700"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => deleteCategory(category)}
-                        className="rounded-xl border border-red-200 px-3.5 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-
-          <p className="mt-5 text-center text-xs font-medium text-slate-400">
-            Showing {filteredCategories.length} of {categories.length}{" "}
-            categories
+    <div className="space-y-6">
+      {/* PAGE HEADER (No sidebar here, handled by AdminLayout) */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Category Management
+          </h1>
+          <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
+            Genzura amazina, hierarchy, n'uko categories zigaragara ku isoko.
           </p>
         </div>
-      </main>
+        <button
+          onClick={openCreate}
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#10b981] px-5 py-3 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#059669] hover:shadow-md"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Add Category
+        </button>
+      </div>
 
-      {/* Form Modal */}
+      {/* ERROR BANNER */}
+      {error && (
+        <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400">
+          <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <div className="flex-1">
+            <p className="font-bold">Habaye ikibazo</p>
+            <p className="mt-1">{error}</p>
+          </div>
+          <button onClick={() => setError("")} className="font-bold opacity-70 hover:opacity-100">
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* STATS GRID */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-slate-200/80 bg-white/60 p-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]">
+          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Categories</p>
+          <p className="mt-2 text-3xl font-black text-slate-900 dark:text-white">{categories.length}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200/80 bg-white/60 p-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]">
+          <p className="text-[10px] font-black uppercase tracking-wider text-[#059669]">Active</p>
+          <p className="mt-2 text-3xl font-black text-[#059669] dark:text-[#34d399]">{activeCount}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200/80 bg-white/60 p-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]">
+          <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Inactive</p>
+          <p className="mt-2 text-3xl font-black text-slate-500 dark:text-slate-300">{inactiveCount}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200/80 bg-white/60 p-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]">
+          <p className="text-[10px] font-black uppercase tracking-wider text-[#475569]">Main Categories</p>
+          <p className="mt-2 text-3xl font-black text-[#475569] dark:text-slate-200">{parentCount}</p>
+        </div>
+      </div>
+
+      {/* TOOLBAR */}
+      <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/[0.03]">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative flex-1">
+            <svg className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Shakisha category..."
+              className="w-full rounded-xl border border-slate-200/80 bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm font-semibold outline-none transition focus:border-[#10b981] focus:bg-white focus:ring-4 focus:ring-[#10b981]/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
+            />
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto rounded-xl bg-slate-100/80 p-1 dark:bg-white/5">
+            {[["all", "All"], ["active", "Active"], ["inactive", "Inactive"]].map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => setFilter(value as "all" | "active" | "inactive")}
+                className={`whitespace-nowrap rounded-lg px-4 py-1.5 text-xs font-bold transition ${
+                  filter === value
+                    ? "bg-white text-slate-900 shadow-sm dark:bg-[#10b981] dark:text-white"
+                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* LIST */}
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((item) => (
+            <div key={item} className="h-28 animate-pulse rounded-2xl border border-slate-200 bg-white/50 dark:border-white/10 dark:bg-white/5" />
+          ))}
+        </div>
+      ) : filteredCategories.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-slate-300 bg-white/50 px-6 py-16 text-center dark:border-white/10 dark:bg-white/[0.02]">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-3xl dark:bg-white/5">
+            🗂️
+          </div>
+          <h3 className="mt-5 text-lg font-black text-slate-900 dark:text-white">Nta categories zabonetse</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">Gerageza guhindura search/filter cyangwa wongere category nshya.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredCategories.map((category) => (
+            <article key={category.id} className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/80 p-4 shadow-sm backdrop-blur-sm transition-all hover:border-[#10b981]/30 hover:shadow-md dark:border-white/10 dark:bg-slate-900/60 sm:p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                
+                {/* Info */}
+                <div className="flex min-w-0 items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-white text-2xl shadow-sm ring-1 ring-slate-200/50 dark:from-white/10 dark:to-white/5 dark:ring-white/10">
+                    {category.icon || "🗂️"}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-base font-black text-slate-900 dark:text-white">{category.name}</h3>
+                      <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black tracking-wide ${
+                        category.is_active
+                          ? "bg-[#10b981]/10 text-[#059669] ring-1 ring-[#10b981]/20 dark:text-[#34d399]"
+                          : "bg-slate-100 text-slate-500 ring-1 ring-slate-200 dark:bg-white/5 dark:text-slate-400 dark:ring-white/10"
+                      }`}>
+                        {category.is_active ? "ACTIVE" : "INACTIVE"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs font-semibold text-slate-400">/{category.slug}</p>
+                    {category.description && (
+                      <p className="mt-2 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">{category.description}</p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                      <span>Parent: <span className="text-slate-800 dark:text-slate-200">{parentName(category.parent_id)}</span></span>
+                      <span className="hidden sm:inline text-slate-300 dark:text-white/20">•</span>
+                      <span>Order: <span className="text-slate-800 dark:text-slate-200">{category.sort_order}</span></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-wrap items-center gap-2 lg:shrink-0">
+                  <button
+                    onClick={() => toggleCategory(category)}
+                    className={`rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                      category.is_active
+                        ? "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+                        : "bg-[#10b981] text-white hover:bg-[#059669]"
+                    }`}
+                  >
+                    {category.is_active ? "Deactivate" : "Activate"}
+                  </button>
+                  <button
+                    onClick={() => openEdit(category)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => deleteCategory(category)}
+                    className="flex h-8 w-8 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-500 transition hover:bg-rose-100 hover:text-rose-600 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-400"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      <p className="mt-4 text-center text-xs font-bold text-slate-400">
+        Showing {filteredCategories.length} of {categories.length} categories
+      </p>
+
+      {/* FORM MODAL */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4 sm:px-6">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white shadow-2xl dark:bg-[#0f1716] sm:rounded-3xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/90 px-6 py-4 backdrop-blur-md dark:border-white/10 dark:bg-[#0f1716]/90">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#10b981]">
                   Category
                 </p>
-
-                <h2 className="text-lg font-black">
-                  {editingCategory ? "Edit category" : "Add category"}
+                <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                  {editingCategory ? "Edit Category" : "Add Category"}
                 </h2>
               </div>
-
               <button
                 onClick={closeForm}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-500 hover:bg-slate-200"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-white/10"
               >
-                ×
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
-            <form onSubmit={saveCategory} className="space-y-5 p-5 sm:p-6">
+            <form onSubmit={saveCategory} className="space-y-5 p-6">
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">
-                  Category name
-                </label>
-
+                <label className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">Category Name</label>
                 <input
                   value={name}
                   onChange={(e) => {
                     setName(e.target.value)
-
-                    if (!editingCategory) {
-                      setSlug(makeSlug(e.target.value))
-                    }
+                    if (!editingCategory) setSlug(makeSlug(e.target.value))
                   }}
                   placeholder="Urugero: Electronics"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-semibold outline-none focus:border-[#10b981] focus:bg-white focus:ring-4 focus:ring-[#10b981]/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">
-                  Slug
-                </label>
-
+                <label className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">Slug</label>
                 <input
                   value={slug}
                   onChange={(e) => setSlug(makeSlug(e.target.value))}
                   placeholder="electronics"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-semibold outline-none focus:border-[#10b981] focus:bg-white focus:ring-4 focus:ring-[#10b981]/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
                 />
-
-                <p className="mt-1.5 text-xs text-slate-400">
-                  Slug ikoreshwa mu URL/search. Example: electronics.
-                </p>
+                <p className="mt-1.5 text-[11px] text-slate-400">Ikoreshwa mu URL/search. Urugero: electronics.</p>
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Icon
-                  </label>
-
+                  <label className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">Icon (Emoji)</label>
                   <input
                     value={icon}
                     onChange={(e) => setIcon(e.target.value)}
                     placeholder="📱"
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-semibold outline-none focus:border-[#10b981] focus:bg-white focus:ring-4 focus:ring-[#10b981]/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
                   />
                 </div>
-
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Sort order
-                  </label>
-
+                  <label className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">Sort Order</label>
                   <input
                     type="number"
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-semibold outline-none focus:border-[#10b981] focus:bg-white focus:ring-4 focus:ring-[#10b981]/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">
-                  Parent category
-                </label>
-
+                <label className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">Parent Category</label>
                 <select
                   value={parentId}
                   onChange={(e) => setParentId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-semibold outline-none focus:border-[#10b981] focus:bg-white focus:ring-4 focus:ring-[#10b981]/10 dark:border-white/10 dark:bg-[#0f1716] dark:text-white"
                 >
                   <option value="">Main category</option>
-
-                  {categories
-                    .filter(
-                      (category) =>
-                        category.id !== editingCategory?.id
-                    )
-                    .map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
+                  {categories.filter((c) => c.id !== editingCategory?.id).map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-bold text-slate-700">
-                  Description
-                </label>
-
+                <label className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
+                  rows={3}
                   placeholder="Sobanura ibyo iyi category ikubiyemo..."
-                  className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm font-medium outline-none focus:border-[#10b981] focus:bg-white focus:ring-4 focus:ring-[#10b981]/10 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
                 />
               </div>
 
-              <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.02] dark:hover:bg-white/[0.05]">
                 <div>
-                  <p className="text-sm font-bold text-slate-800">
-                    Category active
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-500">
-                    Iyo iri active, category ishobora kugaragara ku isoko.
-                  </p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Category Active</p>
+                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Iyo iri active, category ishobora kugaragara ku isoko.</p>
                 </div>
-
                 <input
                   type="checkbox"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="h-5 w-5 accent-blue-600"
+                  className="h-5 w-5 accent-[#10b981]"
                 />
               </label>
 
-              <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+              <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 dark:border-white/10 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={closeForm}
                   disabled={saving}
-                  className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5"
                 >
                   Cancel
                 </button>
-
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-xl bg-[#10b981] px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#059669] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving
-                    ? "Saving..."
-                    : editingCategory
-                      ? "Save changes"
-                      : "Create category"}
+                  {saving ? "Saving..." : editingCategory ? "Save Changes" : "Create Category"}
                 </button>
               </div>
             </form>

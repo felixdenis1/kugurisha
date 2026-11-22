@@ -1,0 +1,37 @@
+import { useEffect } from "react"
+import { useLocation } from "react-router-dom"
+import { supabase } from "../services/supabase"
+
+export function usePageTracker() {
+  const location = useLocation()
+
+  useEffect(() => {
+    async function track() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+
+        // Session id — unique per browser tab
+        let sessionId = sessionStorage.getItem("pv_session")
+        if (!sessionId) {
+          sessionId = crypto.randomUUID()
+          sessionStorage.setItem("pv_session", sessionId)
+        }
+
+        await supabase.from("page_views").insert({
+          path: location.pathname,
+          user_id: user?.id || null,
+          session_id: sessionId,
+          user_agent: navigator.userAgent,
+          referrer: document.referrer || null,
+        })
+      } catch (err) {
+        // Silent fail — never break the app for analytics
+        console.warn("Page view tracking failed:", err)
+      }
+    }
+
+    // Small delay to avoid double-counting on fast navigations
+    const t = setTimeout(track, 300)
+    return () => clearTimeout(t)
+  }, [location.pathname])
+}

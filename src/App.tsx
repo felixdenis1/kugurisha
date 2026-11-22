@@ -26,10 +26,16 @@ import Notifications from "./pages/Notifications"
 import Messages from "./pages/Messages"
 import MessagesInbox from "./pages/MessagesInbox"
 import AISearch from "./pages/AISearch"
+import AdminLayout from "./layouts/AdminLayout"
 import AdminDashboard from "./pages/AdminDashboard"
 import AdminUsers from "./pages/AdminUsers"
 import AdminListings from "./pages/AdminListings"
 import AdminReports from "./pages/AdminReports"
+import AdminAnalytics from "./pages/AdminAnalytics"
+import AdminConversations from "./pages/AdminConversations"
+
+import AdminActivityLog from "./pages/AdminActivityLog"
+import AdminNotifications from "./pages/AdminNotifications"
 import NotFound from "./pages/NotFound"
 
 
@@ -89,13 +95,18 @@ function App() {
           {/* AI search */}
           <Route path="/ai-search" element={<AISearch />} />
 
-          {/* Admin */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/categories" element={<AdminCategories />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/listings" element={<AdminListings />} />
-          <Route path="/admin/reports" element={<AdminReports />} />
-          
+          {/* Admin Routes */}
+  <Route path="/admin" element={<AdminLayout />}>
+    <Route index element={<AdminDashboard />} />
+    <Route path="users" element={<AdminUsers />} />
+    <Route path="listings" element={<AdminListings />} />
+    <Route path="categories" element={<AdminCategories />} />
+    <Route path="reports" element={<AdminReports />} />
+    <Route path="/admin/conversations" element={<AdminConversations />} />
+    <Route path="analytics" element={<AdminAnalytics />} />
+    <Route path="activity-log" element={<AdminActivityLog />} />
+    <Route path="notifications" element={<AdminNotifications />} />
+  </Route>
 
 
           {/* Convenience aliases (optional) */}
