@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { useNavigate } from "react-router-dom"
 
@@ -197,7 +197,7 @@ export default function Home() {
   })
 
   const [userId, setUserId] = useState<string | null>(null)
-  const sliderRef = useRef<HTMLDivElement | null>(null)
+  const [currentSlide, setCurrentSlide] = useState(0)
 
   const [showSellHeadline, setShowSellHeadline] = useState(true)
 
@@ -414,45 +414,27 @@ export default function Home() {
   }, [listings, search])
 
   /* ───────────────────────────────────────────────────────────────────
-     AUTO-SLIDE — restored
-     Pauses on hover, touch, focus. Loops at the end.
+     HERO SLIDER LOGIC
+     Auto-slides every 4 seconds. Manual controls included.
      ─────────────────────────────────────────────────────────────────── */
+  const nextSlide = useCallback(() => {
+    if (filteredListings.length === 0) return;
+    setCurrentSlide((prev) => (prev + 1) % filteredListings.length);
+  }, [filteredListings.length]);
+
+  const prevSlide = useCallback(() => {
+    if (filteredListings.length === 0) return;
+    setCurrentSlide((prev) => (prev - 1 + filteredListings.length) % filteredListings.length);
+  }, [filteredListings.length]);
+
   useEffect(() => {
-    const slider = sliderRef.current
-    if (!slider || loading || filteredListings.length < 2) return
+    if (loading || filteredListings.length < 2) return;
+    const timer = window.setInterval(nextSlide, 4000);
+    return () => window.clearInterval(timer);
+  }, [loading, filteredListings.length, nextSlide]);
 
-    let paused = false
-    const pause = () => { paused = true }
-    const resume = () => { paused = false }
-
-    slider.addEventListener("mouseenter", pause)
-    slider.addEventListener("mouseleave", resume)
-    slider.addEventListener("touchstart", pause, { passive: true })
-    slider.addEventListener("touchend", resume, { passive: true })
-    slider.addEventListener("focusin", pause)
-    slider.addEventListener("focusout", resume)
-
-    const timer = window.setInterval(() => {
-      if (paused) return
-      const firstCard = slider.querySelector<HTMLElement>(":scope > div > a")
-      const cardWidth = firstCard ? firstCard.getBoundingClientRect().width + 16 /* gap-4 */ : 280
-      const atEnd = slider.scrollLeft + slider.clientWidth >= slider.scrollWidth - 12
-      slider.scrollTo({
-        left: atEnd ? 0 : slider.scrollLeft + cardWidth,
-        behavior: "smooth",
-      })
-    }, 4200)
-
-    return () => {
-      window.clearInterval(timer)
-      slider.removeEventListener("mouseenter", pause)
-      slider.removeEventListener("mouseleave", resume)
-      slider.removeEventListener("touchstart", pause)
-      slider.removeEventListener("touchend", resume)
-      slider.removeEventListener("focusin", pause)
-      slider.removeEventListener("focusout", resume)
-    }
-  }, [loading, filteredListings.length])
+  const currentListing = filteredListings[currentSlide];
+  const currentImage = currentListing ? images[currentListing.id] : null;
 
   return (
     <main className="min-h-screen overflow-x-clip bg-white text-slate-900 selection:bg-[#569ab5] selection:text-white dark:bg-[#080f1b] dark:text-slate-100">
@@ -732,180 +714,196 @@ export default function Home() {
       </div>
     </div>
 
-    {/* ═════════ INTERACTIVE MARKETPLACE STREAM ═════════ */}
+    {/* ═════════ INTERACTIVE MARKETPLACE STREAM (UPDATED HERO SLIDER) ═════════ */}
     <div className="relative mt-20 grid min-h-0 items-stretch gap-8 lg:mt-24 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
-      {/* ────────── LEFT: PRODUCT SLIDER (auto-slide, image-full cards) ────────── */}
-<div className="flex min-w-0 flex-col gap-4">
-  {/* Header row: title + Reba byose */}
-  <div className="flex items-center justify-between px-1">
-    <div className="flex items-center gap-2.5">
-      <span className="relative flex h-2.5 w-2.5">
-        <span className="absolute inset-0 animate-ping rounded-full bg-[#39778f] opacity-75 dark:bg-[#83c2dc]" />
-        <span className="relative flex h-2.5 w-2.5 rounded-full bg-[#39778f] dark:bg-[#83c2dc]" />
-      </span>
-      <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
-        Ibyashyizweho vuba
-      </h3>
-    </div>
-
-    <button
-      type="button"
-      onClick={() => navigate("/Listings")}
-      className="group inline-flex items-center gap-1.5 rounded-full bg-[#102436] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#39778f] hover:shadow-md hover:shadow-[#39778f]/25 active:scale-95 dark:bg-white/10 dark:hover:bg-[#569ab5]"
-    >
-      <span>Reba byose</span>
-      <svg
-        className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2.2}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-        />
-      </svg>
-    </button>
-  </div>
-
-  {/* Product row — image-full cards, auto-slide + user-scrollable */}
-  {loading ? (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-      {[1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="overflow-hidden rounded-2xl border border-slate-200/70 bg-[#f3f4f6]/80 dark:border-white/10 dark:bg-white/[0.03]"
-        >
-          <div className="kug-shimmer h-40" />
-          <div className="space-y-2 p-3.5">
-            <div className="kug-shimmer h-3 w-3/4 rounded" />
-            <div className="kug-shimmer h-3 w-1/2 rounded" />
+      {/* ────────── LEFT: HERO LISTING SLIDER ────────── */}
+      <div className="flex min-w-0 flex-col gap-6">
+        {/* Header row: title + Reba byose */}
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inset-0 animate-ping rounded-full bg-[#39778f] opacity-75 dark:bg-[#83c2dc]" />
+              <span className="relative flex h-2.5 w-2.5 rounded-full bg-[#39778f] dark:bg-[#83c2dc]" />
+            </span>
+            <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
+              Ibyashyizweho vuba
+            </h3>
           </div>
-        </div>
-      ))}
-    </div>
-  ) : filteredListings.length > 0 ? (
-    <div
-      ref={sliderRef}
-      className="relative w-full touch-pan-x overflow-x-auto pb-2 scroll-smooth"
-      style={{ scrollbarWidth: "thin" }}
-    >
-      <div className="flex gap-4">
-        {filteredListings.slice(0, 12).map((listing) => (
-          <Link
-            key={listing.id}
-            to={`/listing/${listing.id}`}
-            className="group relative flex w-44 shrink-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-[#f3f4f6] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#569ab5]/55 hover:shadow-xl dark:border-white/10 dark:bg-slate-800 sm:w-52"
+
+          <button
+            type="button"
+            onClick={() => navigate("/Listings")}
+            className="group inline-flex items-center gap-1.5 rounded-full bg-[#102436] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#39778f] hover:shadow-md hover:shadow-[#39778f]/25 active:scale-95 dark:bg-white/10 dark:hover:bg-[#569ab5]"
           >
-            {/* Image fills the whole card — 4:5 portrait */}
-            <div className="relative aspect-[4/5] w-full overflow-hidden">
-              {images?.[listing.id] ? (
+            <span>Reba byose</span>
+            <svg
+              className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* ────────── THE NEW HERO LISTING SLIDER ────────── */}
+        {loading ? (
+          <div className="relative overflow-hidden rounded-[2rem] bg-slate-900/10 dark:bg-white/5 min-h-[350px] sm:min-h-[400px] flex items-center justify-center">
+            <div className="kug-shimmer h-full w-full absolute inset-0 opacity-20" />
+            <p className="relative z-10 text-sm font-bold text-slate-500">Turashakisha ibicuruzwa...</p>
+          </div>
+        ) : filteredListings.length > 0 && currentListing ? (
+          <div className="group relative overflow-hidden rounded-[2rem] bg-slate-900 shadow-2xl min-h-[350px] sm:min-h-[420px] flex items-center justify-center border border-slate-200/50 dark:border-white/10">
+            {/* Background Image with smooth transition */}
+            <div className="absolute inset-0 z-0">
+              {currentImage ? (
                 <img
-                  src={images[listing.id]}
-                  alt={listing.title}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  key={currentListing.id}
+                  src={currentImage}
+                  alt={currentListing.title}
+                  className="h-full w-full object-cover opacity-80 animate-[fadeIn_0.5s_ease-out]"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-slate-400">
-                  <Icon name="shopping-bag" size={28} />
-                </div>
+                <div className="h-full w-full bg-slate-800" />
               )}
-
-              {/* Bottom gradient — only enough for text legibility */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/45 to-transparent" />
-
-              {/* Top chips — category + condition */}
-              <div className="absolute left-2 right-2 top-2 flex items-start justify-between gap-1.5">
-                <span className="rounded-full bg-black/70 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
-                  {listing.category?.name || "Ibindi"}
-                </span>
-                <span className="rounded-full bg-[#39778f] px-2 py-0.5 text-[9px] font-extrabold text-white shadow-sm">
-                  {listing.condition || "New"}
-                </span>
-              </div>
-
-              {/* Bottom overlay — title, price (kept orange), location on image */}
-              <div className="absolute inset-x-0 bottom-0 p-3">
-                <h3 className="line-clamp-2 text-sm font-bold leading-tight text-white drop-shadow-md">
-                  {listing.title}
-                </h3>
-
-                <p className="mt-1 flex items-center gap-1 text-sm font-black text-[#FF7A29] drop-shadow">
-                  {formatPrice(listing)}
-                </p>
-
-                <p className="mt-0.5 flex items-center gap-1 text-[10px] font-semibold text-white/85">
-                  <Icon
-                    name="map-pin"
-                    size={10}
-                    className="shrink-0 text-[#82c4e0]"
-                  />
-                  <span className="truncate">{formatLocation(listing)}</span>
-                </p>
-              </div>
+              {/* Cinematic Overlays */}
+              <div className="absolute inset-0 bg-black/40" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
             </div>
+
+            {/* Navigation Arrows */}
+            <button
+              onClick={prevSlide}
+              className="absolute left-4 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition-all hover:bg-black/60 hover:scale-110 active:scale-95 border border-white/10"
+              aria-label="Previous listing"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <button
+              onClick={nextSlide}
+              className="absolute right-4 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition-all hover:bg-black/60 hover:scale-110 active:scale-95 border border-white/10"
+              aria-label="Next listing"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+
+            {/* Content Area */}
+            <div key={currentListing.id} className="relative z-10 flex flex-col items-center text-center px-8 sm:px-16 animate-[slideUp_0.6s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full max-w-2xl">
+              
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white backdrop-blur-md mb-4">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#FF5D00] animate-pulse" />
+                {currentListing.category?.name || "GENERAL"}
+              </div>
+
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-black leading-tight tracking-tight text-white mb-2 drop-shadow-lg line-clamp-2">
+                {currentListing.title}
+              </h2>
+
+              <p className="text-xl sm:text-3xl font-black text-[#FF7A29] mb-3 drop-shadow-md">
+                {formatPrice(currentListing)}
+              </p>
+
+              <div className="flex items-center gap-2 text-xs font-semibold text-white/90 mb-8 bg-black/30 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10">
+                <Icon name="map-pin" size={14} className="text-[#82c4e0]" />
+                <span>{formatLocation(currentListing)}</span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  onClick={() => navigate(`/listing/${currentListing.id}`)}
+                  className="flex items-center gap-2 rounded-full bg-[#FF5D00] px-6 py-3 text-sm font-extrabold text-white shadow-lg transition-all hover:bg-[#e05200] hover:scale-105 active:scale-95"
+                >
+                  Reba byose
+                  <Icon name="arrow-right" size={16} />
+                </button>
+                <button
+                  onClick={() => navigate("/create-listing")}
+                  className="flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-extrabold text-white backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105 active:scale-95"
+                >
+                  <Icon name="plus" size={16} />
+                  Gurisha ubu
+                </button>
+              </div>
+
+            </div>
+            
+            {/* Progress Indicators (Dots) */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+               {filteredListings.slice(0, 5).map((_, idx) => (
+                 <button
+                   key={idx}
+                   onClick={() => setCurrentSlide(idx)}
+                   className={`h-1.5 rounded-full transition-all duration-300 ${
+                     idx === currentSlide 
+                       ? "w-6 bg-[#FF5D00]" 
+                       : "w-1.5 bg-white/40 hover:bg-white/70"
+                   }`}
+                   aria-label={`Go to slide ${idx + 1}`}
+                 />
+               ))}
+            </div>
+
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-slate-300 bg-[#f3f4f6]/70 p-8 py-14 text-center dark:border-white/10 dark:bg-white/[0.02] min-h-[350px] flex flex-col justify-center">
+            <Icon name="search" size={36} className="mx-auto mb-3 text-slate-400" />
+            <h4 className="font-bold text-slate-800 dark:text-slate-200">
+              Nta bintu bibonetse
+            </h4>
+            <p className="mt-1 text-xs text-slate-500">
+              Nta bicuruzwa biri ku isoko ubu.
+            </p>
+          </div>
+        )}
+
+        {/* ────────── SELLER INVITE CONTENT ────────── */}
+        <div className="relative mt-4 flex min-h-[152px] flex-col justify-between px-1 sm:flex-row sm:items-center sm:gap-6">
+          <div className="max-w-xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#39778f]/25 bg-[#39778f]/10 px-3 py-1 dark:border-[#83c2dc]/25 dark:bg-[#569ab5]/15">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#39778f] dark:bg-[#83c2dc]" />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#39778f] dark:text-[#83c2dc]">
+                Tangira kugurisha
+              </span>
+            </div>
+
+            <h4 className="mt-3 text-xl font-black leading-snug tracking-tight text-[#102436] dark:text-white sm:text-2xl">
+              Haraburiki ngo nawe{" "}
+              <span className="relative inline-block pb-2 text-[#39778f] dark:text-[#83c2dc]">
+                werekane icyo ufite uhure nabagikeneye?
+                <span className="absolute bottom-0 left-0 h-[4px] w-32 rounded-full bg-gradient-to-r from-[#39778f] via-[#569ab5] to-transparent dark:from-[#83c2dc] dark:via-[#569ab5]" />
+              </span>
+            </h4>
+
+            <p className="mt-3 text-sm font-medium leading-7 text-slate-600 dark:text-slate-300 sm:text-base sm:leading-7">
+              Gerageza gusura ururubuga buri munsi maze urebe ibindi bicuruzwa biba
+              byashyizweho, harigihe wabona icyo ushaka kuri make, ndetse igihe nawe
+              haricyo utagikeneye cyerekana kigurwe.
+            </p>
+          </div>
+
+          <Link
+            to="/create-listing"
+            className="group mt-5 inline-flex shrink-0 items-center justify-center gap-2.5 self-start rounded-full bg-gradient-to-r from-[#102436] via-[#28586d] to-[#39778f] px-5 py-3 text-xs font-extrabold tracking-tight text-white shadow-[0_12px_28px_-8px_rgba(16,36,54,0.45)] ring-1 ring-white/20 transition-all duration-300 hover:-translate-y-0.5 hover:from-[#28586d] hover:to-[#569ab5] hover:shadow-[0_18px_36px_-8px_rgba(57,119,143,0.55)] sm:mt-0 sm:self-center"
+          >
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/15 transition-transform duration-300 group-hover:rotate-90">
+              <Icon name="plus" size={11} />
+            </span>
+            <span>Shyiraho igicuruzwa</span>
+            <Icon
+              name="arrow-right"
+              size={13}
+              className="transition-transform duration-300 group-hover:translate-x-1"
+            />
           </Link>
-        ))}
+        </div>
       </div>
-    </div>
-  ) : (
-    <div className="rounded-3xl border border-dashed border-slate-300 bg-[#f3f4f6]/70 p-8 py-14 text-center dark:border-white/10 dark:bg-white/[0.02]">
-      <Icon name="search" size={36} className="mx-auto mb-3 text-slate-400" />
-      <h4 className="font-bold text-slate-800 dark:text-slate-200">
-        Nta bintu bibonetse
-      </h4>
-      <p className="mt-1 text-xs text-slate-500">
-        Nta bicuruzwa biri ku isoko ubu.
-      </p>
-    </div>
-  )}
-
-  {/* ────────── SELLER INVITE CONTENT (no div background, ~4cm below products) ────────── */}
-  <div className="relative mt-[3.5rem] flex min-h-[152px] flex-col justify-between px-1 sm:flex-row sm:items-center sm:gap-6">
-    <div className="max-w-xl">
-      <div className="inline-flex items-center gap-2 rounded-full border border-[#39778f]/25 bg-[#39778f]/10 px-3 py-1 dark:border-[#83c2dc]/25 dark:bg-[#569ab5]/15">
-        <span className="h-1.5 w-1.5 rounded-full bg-[#39778f] dark:bg-[#83c2dc]" />
-        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#39778f] dark:text-[#83c2dc]">
-          Tangira kugurisha
-        </span>
-      </div>
-
-      <h4 className="mt-3 text-xl font-black leading-snug tracking-tight text-[#102436] dark:text-white sm:text-2xl">
-        Haraburiki ngo nawe{" "}
-        <span className="relative inline-block pb-2 text-[#39778f] dark:text-[#83c2dc]">
-          werekane icyo ufite uhure nabagikeneye?
-          {/* Designed underline on last heading line */}
-          <span className="absolute bottom-0 left-0 h-[4px] w-32 rounded-full bg-gradient-to-r from-[#39778f] via-[#569ab5] to-transparent dark:from-[#83c2dc] dark:via-[#569ab5]" />
-        </span>
-      </h4>
-
-      <p className="mt-3 text-sm font-medium leading-7 text-slate-600 dark:text-slate-300 sm:text-base sm:leading-7">
-        Gerageza gusura ururubuga buri munsi maze urebe ibindi bicuruzwa biba
-        byashyizweho, harigihe wabona icyo ushaka kuri make, ndetse igihe nawe
-        haricyo utagikeneye cyerekana kigurwe.
-      </p>
-    </div>
-
-    <Link
-      to="/create-listing"
-      className="group mt-5 inline-flex shrink-0 items-center justify-center gap-2.5 self-start rounded-full bg-gradient-to-r from-[#102436] via-[#28586d] to-[#39778f] px-5 py-3 text-xs font-extrabold tracking-tight text-white shadow-[0_12px_28px_-8px_rgba(16,36,54,0.45)] ring-1 ring-white/20 transition-all duration-300 hover:-translate-y-0.5 hover:from-[#28586d] hover:to-[#569ab5] hover:shadow-[0_18px_36px_-8px_rgba(57,119,143,0.55)] sm:mt-0 sm:self-center"
-    >
-      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/15 transition-transform duration-300 group-hover:rotate-90">
-        <Icon name="plus" size={11} />
-      </span>
-      <span>Shyiraho igicuruzwa</span>
-      <Icon
-        name="arrow-right"
-        size={13}
-        className="transition-transform duration-300 group-hover:translate-x-1"
-      />
-    </Link>
-  </div>
-</div>
 
       {/* ────────── RIGHT column ────────── */}
       <SystemAnalyticsCard />

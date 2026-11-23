@@ -453,19 +453,19 @@ export default function Header({
   return (
     <div
       ref={headerRef}
-      className={`fixed top-0 z-[100] w-full transition-all duration-500 py-2 sm:py-3`}
+      className={`fixed top-0 z-[100] w-full transition-all duration-500 py-3 sm:py-4`}
       style={{ alignSelf: "stretch" }}
     >
       <header>
         {/* Container with mx-auto and max-width. */}
         <div className="mx-auto max-w-[1520px] px-2 sm:px-4 lg:px-6">
           
-          {/* PILL CONTAINER: rounded-full, grey bg, subtle border, shadow */}
+          {/* PILL CONTAINER: Increased height, consistent gray bg, subtle border */}
           <div 
-            className={`relative flex items-center justify-between gap-3 rounded-full px-3 sm:px-4 min-h-[64px] transition-all duration-500 ${
+            className={`relative flex items-center justify-between gap-3 rounded-full px-4 sm:px-5 min-h-[76px] sm:min-h-[84px] transition-all duration-500 ${
               scrolled
-                ? "bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-3xl border border-slate-200/60 dark:border-white/10 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.15)]"
-                : "bg-transparent border-transparent"
+                ? "bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur-3xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.2)]"
+                : "bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-white/5 shadow-sm"
             }`}
           >
             
@@ -480,11 +480,11 @@ export default function Header({
                 <img
                   src="/favicon.svg"
                   alt=""
-                  className="h-14 w-14 sm:h-16 sm:w-16 object-contain filter drop-shadow-sm"
+                  className="h-16 w-16 sm:h-20 sm:w-20 object-contain filter drop-shadow-sm"
                 />
               </span>
               <span 
-                className="text-[24px] sm:text-[26px] font-black leading-none tracking-[-0.04em] text-slate-900 dark:text-white -ml-1 sm:-ml-2"
+                className="text-[26px] sm:text-[30px] font-black leading-none tracking-[-0.04em] text-slate-900 dark:text-white -ml-1 sm:-ml-2"
                 style={{ fontFamily: '"Space Grotesk", sans-serif' }}
               >
                 kugurisha
@@ -500,14 +500,14 @@ export default function Header({
               <Link
                 to="/"
                 onClick={closeMenus}
-                className={`group relative flex items-center gap-2 rounded-full px-6 py-2.5 transition-all duration-300 ${
+                className={`group relative flex items-center gap-2 rounded-full px-6 py-3 transition-all duration-300 ${
                   location.pathname === "/"
-                    ? "text-slate-900 dark:text-white bg-white/50 dark:bg-white/10 shadow-sm"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-white/5"
+                    ? "text-slate-900 dark:text-white bg-white/70 dark:bg-white/10 shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5"
                 }`}
               >
                 <span 
-                  className="text-[16px] font-extrabold tracking-[-0.02em]"
+                  className="text-[17px] font-extrabold tracking-[-0.02em]"
                   style={{ fontFamily: '"Outfit", "Space Grotesk", sans-serif' }}
                 >
                   Ahabanza
@@ -536,16 +536,16 @@ export default function Header({
                         clearHoverTimers()
                         setOpenNav(isOpen ? null : parent.label)
                       }}
-                      className={`group relative flex items-center gap-2 rounded-full px-6 py-2.5 transition-all duration-300 cursor-pointer ${
+                      className={`group relative flex items-center gap-2 rounded-full px-6 py-3 transition-all duration-300 cursor-pointer ${
                         parentActive || isOpen
-                          ? "text-slate-900 dark:text-white bg-white/50 dark:bg-white/10 shadow-sm"
-                          : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/40 dark:hover:bg-white/5"
+                          ? "text-slate-900 dark:text-white bg-white/70 dark:bg-white/10 shadow-sm"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5"
                       }`}
                       aria-haspopup="menu"
                       aria-expanded={isOpen}
                     >
                       <span 
-                        className="text-[16px] font-extrabold tracking-[-0.02em]"
+                        className="text-[17px] font-extrabold tracking-[-0.02em]"
                         style={{ fontFamily: '"Outfit", "Space Grotesk", sans-serif' }}
                       >
                         {parent.label}
@@ -637,11 +637,11 @@ export default function Header({
             </nav>
 
             {/* ACTIONS */}
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 pr-1 sm:pr-2">
+            <div className="flex shrink-0 items-center gap-1 sm:gap-2 pr-1 sm:pr-2">
               {/* SEARCH */}
               <button
                 type="button"
-                className="group relative flex h-11 w-11 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95"
+                className="group relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95"
                 onClick={() => {
                   setSearchOpen((p) => !p)
                   setAccountOpen(false)
@@ -651,13 +651,13 @@ export default function Header({
                 aria-label={searchOpen ? "Funga ishakisha" : "Shakisha"}
                 aria-expanded={searchOpen}
               >
-                <Icon name={searchOpen ? "close" : "search"} size={22} strokeWidth={2.2} />
+                <Icon name={searchOpen ? "close" : "search"} size={24} strokeWidth={2.2} />
               </button>
 
-              {/* THEME */}
+              {/* THEME (Now visible on mobile) */}
               <button
                 type="button"
-                className="group hidden h-11 w-11 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95 sm:flex"
+                className="group flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95"
                 onClick={toggleTheme}
                 aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
               >
@@ -669,7 +669,7 @@ export default function Header({
                 <Link
                   to="/notifications"
                   onClick={closeMenus}
-                  className="group relative flex h-11 w-11 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95"
+                  className="group relative hidden sm:flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95"
                   aria-label={`Imenyesha: ${unreadCount} utarasoma`}
                 >
                   <Icon name="bell" size={22} strokeWidth={2.2} />
@@ -691,7 +691,7 @@ export default function Header({
                 >
                   <button
                     type="button"
-                    className={`group flex h-11 items-center gap-2 rounded-full px-2.5 pr-4 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 ${
+                    className={`group flex h-11 sm:h-12 items-center gap-2 rounded-full px-2.5 pr-4 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 ${
                       accountOpen ? "bg-white/60 dark:bg-white/10" : ""
                     }`}
                     onClick={() => {
@@ -708,7 +708,7 @@ export default function Header({
                     <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm transition-transform duration-300 group-hover:scale-105">
                       <Icon name="user" size={16} strokeWidth={2.5} />
                     </span>
-                    <span className="hidden text-[13px] font-bold tracking-tight text-slate-700 dark:text-slate-200 lg:inline">
+                    <span className="hidden text-[14px] font-bold tracking-tight text-slate-700 dark:text-slate-200 lg:inline">
                       Konti
                     </span>
                     <Icon
@@ -772,7 +772,7 @@ export default function Header({
                 <Link
                   to="/login"
                   onClick={closeMenus}
-                  className="hidden h-11 items-center rounded-full px-5 text-[14px] font-bold text-slate-700 dark:text-slate-200 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 sm:inline-flex"
+                  className="hidden h-11 sm:h-12 items-center rounded-full px-5 text-[14px] font-bold text-slate-700 dark:text-slate-200 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 sm:inline-flex"
                 >
                   Injira
                 </Link>
@@ -782,7 +782,7 @@ export default function Header({
               <Link
                 to="/create-listing"
                 onClick={closeMenus}
-                className="group relative hidden h-11 items-center gap-2 overflow-hidden rounded-full bg-slate-900 px-5 text-[14px] font-black tracking-tight text-white shadow-[0_8px_20px_-6px_rgba(15,23,42,0.4)] transition-all duration-300 hover:bg-[#FF5D00] hover:scale-[1.02] hover:shadow-[0_12px_24px_-8px_rgba(255,93,0,0.5)] active:scale-95 sm:flex"
+                className="group relative hidden h-11 sm:h-12 items-center gap-2 overflow-hidden rounded-full bg-slate-900 px-6 text-[15px] font-black tracking-tight text-white shadow-[0_8px_20px_-6px_rgba(15,23,42,0.4)] transition-all duration-300 hover:bg-[#FF5D00] hover:scale-[1.02] hover:shadow-[0_12px_24px_-8px_rgba(255,93,0,0.5)] active:scale-95 sm:flex"
               >
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-500 group-hover:rotate-90">
                   <Icon name="plus" size={13} strokeWidth={3} />
@@ -790,7 +790,7 @@ export default function Header({
                 <span className="whitespace-nowrap">Gurisha</span>
               </Link>
 
-              {/* MOBILE MENU */}
+              {/* MOBILE MENU TOGGLE (Always visible on mobile) */}
               <button
                 type="button"
                 onClick={() => {
@@ -799,40 +799,42 @@ export default function Header({
                   setAccountOpen(false)
                   setOpenNav(null)
                 }}
-                className="flex h-11 w-11 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 active:scale-95 xl:hidden"
+                className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 active:scale-95 xl:hidden"
                 aria-label={mobileOpen ? "Funga menu" : "Fungura menu"}
                 aria-expanded={mobileOpen}
               >
-                <Icon name={mobileOpen ? "close" : "menu"} size={24} strokeWidth={2.5} />
+                <Icon name={mobileOpen ? "close" : "menu"} size={26} strokeWidth={2.5} />
               </button>
             </div>
           </div>
 
-          {/* SEARCH PANEL */}
+          {/* SEARCH PANEL - NEW DESIGN MATCHING IMAGE */}
           {searchOpen && (
-            <form
-              onSubmit={submitSearch}
-              role="search"
-              className="absolute left-1/2 top-full mt-2 flex w-full max-w-2xl -translate-x-1/2 items-center gap-2 rounded-full p-2 pl-6 shadow-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-slate-900 animate-in slide-in-from-top-4 duration-300 z-[150]"
-            >
-              <span className="text-slate-400">
-                <Icon name="search" size={22} strokeWidth={2.2} />
-              </span>
-              <input
-                ref={searchInputRef}
-                type="search"
-                value={search}
-                onChange={(event) => updateSearch(event.target.value)}
-                placeholder="Urashaka iki? iPhone, inzu, laptop..."
-                className="min-w-0 flex-1 bg-transparent px-2 py-3 text-[15px] font-bold text-slate-900 dark:text-white placeholder:text-slate-400 outline-none"
-              />
-              <button
-                type="submit"
-                className="rounded-full bg-[#FF5D00] px-8 py-3 text-[14px] font-black text-white shadow-md transition-all duration-200 hover:bg-[#FF8533] hover:scale-105"
+            <div className="absolute left-0 right-0 top-full mt-3 flex justify-center px-4 animate-in slide-in-from-top-4 duration-300 z-[150]">
+              <form
+                onSubmit={submitSearch}
+                role="search"
+                className="flex w-full max-w-3xl items-center gap-3 rounded-full border-2 border-[#FF5D00]/40 bg-[#e2e8f0] px-6 py-2 shadow-[0_20px_40px_-15px_rgba(255,93,0,0.3)] transition-all duration-300 focus-within:border-[#FF5D00] focus-within:bg-slate-100 dark:bg-slate-800 dark:border-[#FF5D00]/50 dark:focus-within:bg-slate-900"
               >
-                Shakisha
-              </button>
-            </form>
+                <span className="text-slate-500 dark:text-slate-400">
+                  <Icon name="search" size={24} strokeWidth={2.5} />
+                </span>
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  value={search}
+                  onChange={(event) => updateSearch(event.target.value)}
+                  placeholder="What are you looking for?"
+                  className="min-w-0 flex-1 bg-transparent py-3 text-[17px] font-medium text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 outline-none"
+                />
+                <button
+                  type="submit"
+                  className="rounded-full bg-[#FF5D00] px-8 py-3 text-[15px] font-black text-white shadow-md transition-all duration-200 hover:bg-[#FF8533] hover:scale-105 active:scale-95"
+                >
+                  Shakisha
+                </button>
+              </form>
+            </div>
           )}
 
           {/* MOBILE MENU */}
@@ -843,7 +845,7 @@ export default function Header({
                 <Link
                   to="/"
                   onClick={closeMenus}
-                  className={`flex w-full items-center rounded-2xl px-4 py-4 text-[16px] font-extrabold transition-all ${
+                  className={`flex w-full items-center rounded-2xl px-4 py-4 text-[17px] font-extrabold transition-all ${
                     location.pathname === "/"
                       ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
                       : "text-slate-600 dark:text-slate-300"
@@ -863,7 +865,7 @@ export default function Header({
                         onClick={() =>
                           setMobileExpanded(isExpanded ? null : parent.label)
                         }
-                        className={`flex w-full items-center justify-between rounded-2xl px-4 py-4 text-[16px] font-extrabold transition-all ${
+                        className={`flex w-full items-center justify-between rounded-2xl px-4 py-4 text-[17px] font-extrabold transition-all ${
                           parentActive || isExpanded
                             ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
                             : "text-slate-600 dark:text-slate-300"
@@ -905,7 +907,7 @@ export default function Header({
                               </span>
                               <span className="min-w-0 flex-1 pt-0.5">
                                 <span
-                                  className={`flex items-center gap-2 text-[14px] font-bold ${
+                                  className={`flex items-center gap-2 text-[15px] font-bold ${
                                     child.highlight
                                       ? "text-[#FF5D00]"
                                       : "text-slate-900 dark:text-white"
@@ -918,7 +920,7 @@ export default function Header({
                                     </span>
                                   )}
                                 </span>
-                                <span className="mt-0.5 block text-[11px] font-medium leading-snug text-slate-500 dark:text-slate-400">
+                                <span className="mt-0.5 block text-[12px] font-medium leading-snug text-slate-500 dark:text-slate-400">
                                   {child.description}
                                 </span>
                               </span>
@@ -935,7 +937,7 @@ export default function Header({
                 <Link
                   to="/create-listing"
                   onClick={closeMenus}
-                  className="mt-1 flex items-center justify-center gap-2 rounded-full bg-[#FF5D00] px-5 py-4 text-[15px] font-black text-white shadow-lg shadow-[#FF5D00]/30"
+                  className="mt-1 flex items-center justify-center gap-2 rounded-full bg-[#FF5D00] px-5 py-4 text-[16px] font-black text-white shadow-lg shadow-[#FF5D00]/30"
                 >
                   <Icon name="plus" size={20} strokeWidth={2.5} />
                   Gurisha ikintu
