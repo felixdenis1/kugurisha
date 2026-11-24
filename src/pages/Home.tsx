@@ -863,45 +863,51 @@ export default function Home() {
           </div>
         )}
 
-        {/* ────────── SELLER INVITE CONTENT ────────── */}
-        <div className="relative mt-4 flex min-h-[152px] flex-col justify-between px-1 sm:flex-row sm:items-center sm:gap-6">
-          <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#39778f]/25 bg-[#39778f]/10 px-3 py-1 dark:border-[#83c2dc]/25 dark:bg-[#569ab5]/15">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#39778f] dark:bg-[#83c2dc]" />
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#39778f] dark:text-[#83c2dc]">
-                Tangira kugurisha
-              </span>
-            </div>
-
-            <h4 className="mt-3 text-xl font-black leading-snug tracking-tight text-[#102436] dark:text-white sm:text-2xl">
-              Haraburiki ngo nawe{" "}
-              <span className="relative inline-block pb-2 text-[#39778f] dark:text-[#83c2dc]">
-                werekane icyo ufite uhure nabagikeneye?
-                <span className="absolute bottom-0 left-0 h-[4px] w-32 rounded-full bg-gradient-to-r from-[#39778f] via-[#569ab5] to-transparent dark:from-[#83c2dc] dark:via-[#569ab5]" />
-              </span>
-            </h4>
-
-            <p className="mt-3 text-sm font-medium leading-7 text-slate-600 dark:text-slate-300 sm:text-base sm:leading-7">
-              Gerageza gusura ururubuga buri munsi maze urebe ibindi bicuruzwa biba
-              byashyizweho, harigihe wabona icyo ushaka kuri make, ndetse igihe nawe
-              haricyo utagikeneye cyerekana kigurwe.
-            </p>
-          </div>
-
-          <Link
-            to="/create-listing"
-            className="group mt-5 inline-flex shrink-0 items-center justify-center gap-2.5 self-start rounded-full bg-gradient-to-r from-[#102436] via-[#28586d] to-[#39778f] px-5 py-3 text-xs font-extrabold tracking-tight text-white shadow-[0_12px_28px_-8px_rgba(16,36,54,0.45)] ring-1 ring-white/20 transition-all duration-300 hover:-translate-y-0.5 hover:from-[#28586d] hover:to-[#569ab5] hover:shadow-[0_18px_36px_-8px_rgba(57,119,143,0.55)] sm:mt-0 sm:self-center"
+             {/* Always-visible auth CTA */}
+        <div className="mt-20 flex w-full flex-col items-center justify-center gap-4 sm:flex-row px-4">
+          
+          {/* Button 1: Injara (Login) - Modern Classic Blue */}
+          <button
+            onClick={() => navigate("/login")}
+            className="group relative flex w-full max-w-[280px] items-center justify-center rounded-full bg-[#2563eb] py-3 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-[1.02] hover:bg-[#1d4ed8] active:scale-[0.98] sm:w-auto sm:flex-1"
           >
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/15 transition-transform duration-300 group-hover:rotate-90">
-              <Icon name="plus" size={11} />
+            <span className="tracking-wide">Injira</span>
+            {/* Absolute icon on the right */}
+            <span className="absolute right-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-400/40 text-white transition-transform duration-300 group-hover:translate-x-1">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                strokeWidth={2.5} 
+                stroke="currentColor" 
+                className="h-4 w-4"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
             </span>
-            <span>Shyiraho igicuruzwa</span>
-            <Icon
-              name="arrow-right"
-              size={13}
-              className="transition-transform duration-300 group-hover:translate-x-1"
-            />
-          </Link>
+          </button>
+
+          {/* Button 2: Kora konti (Register) - Soft Professional Gray */}
+          <button
+            onClick={() => navigate("/register")}
+            className="group relative flex w-full max-w-[280px] items-center justify-center rounded-full border border-slate-300 bg-slate-100 py-3 text-base font-bold text-slate-700 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:bg-slate-200 hover:border-slate-400 active:scale-[0.98] dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 sm:w-auto sm:flex-1"
+          >
+            <span className="tracking-wide">Kora konti</span>
+            {/* Absolute icon on the right */}
+            <span className="absolute right-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-300 text-slate-700 transition-transform duration-300 group-hover:translate-x-1 dark:bg-white/20 dark:text-white">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                strokeWidth={2.5} 
+                stroke="currentColor" 
+                className="h-4 w-4"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </span>
+          </button>
+
         </div>
       </div>
 

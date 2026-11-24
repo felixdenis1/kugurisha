@@ -483,12 +483,6 @@ export default function Header({
                   className="h-16 w-16 sm:h-20 sm:w-20 object-contain filter drop-shadow-sm"
                 />
               </span>
-              <span 
-                className="text-[26px] sm:text-[30px] font-black leading-none tracking-[-0.04em] text-slate-900 dark:text-white -ml-1 sm:-ml-2"
-                style={{ fontFamily: '"Space Grotesk", sans-serif' }}
-              >
-                kugurisha
-              </span>
             </Link>
 
             {/* DESKTOP NAV */}
