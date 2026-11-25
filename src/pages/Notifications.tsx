@@ -245,8 +245,10 @@ function Donut({
   )
 }
 
-type FilterKey = "all" | "unread" | "messages" | "favorites" | "listings"
+type FilterKey = "all" | "unread" | "messages" | "favorites" | "listings" | "system"
 type ViewMode = "list" | "grid"
+
+const SYSTEM_TYPES = ["info", "warning", "success", "alert", "system"]
 
 function Notifications() {
   const navigate = useNavigate()
@@ -260,6 +262,7 @@ function Notifications() {
   const [markingAll, setMarkingAll] = useState(false)
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
+  const [selected, setSelected] = useState<Notification | null>(null) // 👈 NEW: detail modal
   const searchRef = useRef<HTMLInputElement | null>(null)
   const [search, setSearch] = useState("")
 
@@ -307,7 +310,10 @@ function Notifications() {
         e.preventDefault()
         searchRef.current?.focus()
       }
-      if (e.key === "Escape") setShowShortcuts(false)
+      if (e.key === "Escape") {
+        setShowShortcuts(false)
+        setSelected(null) // 👈 close detail modal too
+      }
     }
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
@@ -372,11 +378,16 @@ function Notifications() {
 
     notifications.forEach((notification) => {
       const lastGroup = groups[groups.length - 1]
+      const isSystem = SYSTEM_TYPES.includes(notification.type)
+
+      // 👇 Also compare title so distinct admin broadcasts don't merge
       const sameGroup =
         lastGroup &&
+        !isSystem && // never merge system/admin broadcasts
         notification.type === lastGroup.latest.type &&
         notification.sender_id === lastGroup.latest.sender_id &&
-        notification.conversation_id === lastGroup.latest.conversation_id
+        notification.conversation_id === lastGroup.latest.conversation_id &&
+        notification.title === lastGroup.latest.title
 
       if (sameGroup) {
         lastGroup.notifications.push(notification)
@@ -413,6 +424,7 @@ function Notifications() {
     else if (filter === "messages") arr = arr.filter((g) => g.latest.type === "new_message")
     else if (filter === "favorites") arr = arr.filter((g) => g.latest.type.includes("favorite"))
     else if (filter === "listings") arr = arr.filter((g) => g.latest.type.includes("listing") && !g.latest.type.includes("favorite"))
+    else if (filter === "system") arr = arr.filter((g) => SYSTEM_TYPES.includes(g.latest.type))
 
     if (!search.trim()) return arr
     const q = search.trim().toLowerCase()
@@ -427,6 +439,7 @@ function Notifications() {
   const messageCount = useMemo(() => notifications.filter((n) => n.type === "new_message").length, [notifications])
   const favoriteCount = useMemo(() => notifications.filter((n) => n.type.includes("favorite")).length, [notifications])
   const listingCount = useMemo(() => notifications.filter((n) => n.type.includes("listing") && !n.type.includes("favorite")).length, [notifications])
+  const systemCount = useMemo(() => notifications.filter((n) => SYSTEM_TYPES.includes(n.type)).length, [notifications])
 
   const cGroups = useCountUp(groupedNotifications.length)
   const cUnread = useCountUp(unreadCount)
@@ -449,12 +462,23 @@ function Notifications() {
     }
 
     const notification = group.latest
+
+    // 1) message → conversation
     if (notification.type === "new_message") {
       if (notification.conversation_id) navigate(`/messages/${notification.conversation_id}`)
       else navigate("/messages")
       return
     }
-    if (notification.listing_id) navigate(`/listing/${notification.listing_id}`)
+
+    // 2) listing → listing page
+    if (notification.listing_id) {
+      navigate(`/listing/${notification.listing_id}`)
+      return
+    }
+
+    // 3) 👇 admin/system broadcast (info, warning, success, alert, system)
+    //    → open the detail modal
+    setSelected(notification)
   }
 
   async function markGroupAsRead(group: NotificationGroup, e: React.MouseEvent) {
@@ -491,6 +515,10 @@ function Notifications() {
     if (type === "new_message") return Icon.Chat
     if (type.includes("favorite")) return Icon.Heart
     if (type.includes("listing")) return Icon.Tag
+    if (type === "alert" || type === "warning") return Icon.Alert
+    if (type === "success") return Icon.Check
+    if (type === "system") return Icon.Shield
+    if (type === "info") return Icon.Sparkles
     return Icon.Bell
   }
 
@@ -498,6 +526,11 @@ function Notifications() {
     if (type === "new_message") return "Ubutumwa"
     if (type.includes("favorite")) return "Ibyakunzwe"
     if (type.includes("listing")) return "Listing"
+    if (type === "info") return "Info"
+    if (type === "warning") return "Warning"
+    if (type === "success") return "Success"
+    if (type === "alert") return "Alert"
+    if (type === "system") return "System"
     return "Notification"
   }
 
@@ -505,6 +538,10 @@ function Notifications() {
     if (type === "new_message") return { bg: "bg-blue-500/15", text: "text-blue-600 dark:text-blue-400", solid: "bg-gradient-to-br from-blue-500 to-indigo-600", hex: "#3b82f6", label: "Message" }
     if (type.includes("favorite")) return { bg: "bg-rose-500/15", text: "text-rose-600 dark:text-rose-400", solid: "bg-gradient-to-br from-rose-500 to-pink-600", hex: "#f43f5e", label: "Favorite" }
     if (type.includes("listing")) return { bg: "bg-amber-500/15", text: "text-amber-600 dark:text-amber-400", solid: "bg-gradient-to-br from-amber-500 to-orange-600", hex: "#f59e0b", label: "Listing" }
+    if (type === "alert") return { bg: "bg-rose-500/15", text: "text-rose-600 dark:text-rose-400", solid: "bg-gradient-to-br from-rose-500 to-red-600", hex: "#e11d48", label: "Alert" }
+    if (type === "warning") return { bg: "bg-amber-500/15", text: "text-amber-600 dark:text-amber-400", solid: "bg-gradient-to-br from-amber-500 to-orange-600", hex: "#f59e0b", label: "Warning" }
+    if (type === "success") return { bg: "bg-emerald-500/15", text: "text-emerald-600 dark:text-emerald-400", solid: "bg-gradient-to-br from-emerald-500 to-teal-600", hex: "#10b981", label: "Success" }
+    if (type === "system") return { bg: "bg-purple-500/15", text: "text-purple-600 dark:text-purple-400", solid: "bg-gradient-to-br from-purple-500 to-violet-600", hex: "#8b5cf6", label: "System" }
     return { bg: "bg-slate-500/15", text: "text-slate-600 dark:text-slate-300", solid: "bg-gradient-to-br from-slate-700 to-slate-900", hex: "#64748b", label: "System" }
   }
 
@@ -514,6 +551,7 @@ function Notifications() {
     { key: "messages", label: "Ubutumwa", count: messageCount, icon: Icon.Chat },
     { key: "favorites", label: "Ibyakunzwe", count: favoriteCount, icon: Icon.Heart },
     { key: "listings", label: "Listings", count: listingCount, icon: Icon.Tag },
+    { key: "system", label: "System", count: systemCount, icon: Icon.Shield },
   ]
 
   const donutSegments = [
@@ -990,7 +1028,11 @@ function Notifications() {
                         <div className="mt-2 flex items-center justify-between gap-3">
                           <span className="flex items-center gap-1 text-[10px] font-bold text-slate-400">
                             <Icon.ArrowRight className="w-2.5 h-2.5" />
-                            {notification.type === "new_message" ? "Kanda urebe ubutumwa" : "Kanda urebe byinshi"}
+                            {notification.type === "new_message"
+                              ? "Kanda urebe ubutumwa"
+                              : notification.listing_id
+                              ? "Kanda urebe listing"
+                              : "Kanda usome ubutumwa"}
                           </span>
                           <span className="flex items-center text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-[#FF5D00]">
                             <Icon.ArrowRight className="w-4 h-4" />
@@ -1056,6 +1098,67 @@ function Notifications() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 👇 Notification detail modal — for admin / system broadcasts */}
+      {selected && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
+          onClick={() => setSelected(null)}
+        >
+          <div
+            className="w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-2xl dark:border-white/10 dark:bg-slate-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={`h-1.5 w-full`} style={{ background: `linear-gradient(90deg, ${getTone(selected.type).hex}, ${getTone(selected.type).hex}44)` }} />
+
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${getTone(selected.type).solid} text-white shadow-sm`}>
+                    {(() => {
+                      const MIcon = getIconComponent(selected.type)
+                      return <MIcon className="w-5 h-5" />
+                    })()}
+                  </span>
+                  <div className="min-w-0">
+                    <p className={`text-[10px] font-black uppercase tracking-wider ${getTone(selected.type).text}`}>
+                      {getNotificationLabel(selected.type)}
+                    </p>
+                    <h3 className="mt-0.5 text-base font-black leading-snug text-slate-900 dark:text-white sm:text-lg">
+                      {selected.title}
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelected(null)}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+                >
+                  <Icon.Close className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="mt-4 max-h-[50vh] overflow-y-auto whitespace-pre-wrap rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700 dark:bg-white/[0.04] dark:text-slate-200">
+                {selected.body || "Nta bisobanuro byongewe."}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-white/10">
+                <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400">
+                  <Icon.Clock className="w-3 h-3" />
+                  {formatDate(selected.created_at)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelected(null)}
+                  className="rounded-full bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] px-4 py-2 text-xs font-black text-white shadow-md shadow-[#FF5D00]/30"
+                >
+                  Funga
+                </button>
+              </div>
             </div>
           </div>
         </div>
