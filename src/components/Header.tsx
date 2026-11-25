@@ -210,6 +210,7 @@ export default function Header({
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const [mobileAccountOpen, setMobileAccountOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [internalSearch, setInternalSearch] = useState("")
   const [loggingOut, setLoggingOut] = useState(false)
@@ -220,6 +221,7 @@ export default function Header({
   const location = useLocation()
   const navigate = useNavigate()
   const accountRef = useRef<HTMLDivElement>(null)
+  const mobileAccountRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const navRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -232,6 +234,7 @@ export default function Header({
   function closeMenus() {
     setMobileOpen(false)
     setAccountOpen(false)
+    setMobileAccountOpen(false)
     setSearchOpen(false)
     setOpenNav(null)
   }
@@ -279,6 +282,7 @@ export default function Header({
     hoverOpenTimer.current = setTimeout(() => {
       setOpenNav(label)
       setAccountOpen(false)
+      setMobileAccountOpen(false)
       setSearchOpen(false)
       setMobileOpen(false)
     }, HOVER_OPEN_DELAY)
@@ -313,6 +317,13 @@ export default function Header({
         setAccountOpen(false)
       }
 
+      if (
+        mobileAccountRef.current &&
+        !mobileAccountRef.current.contains(target)
+      ) {
+        setMobileAccountOpen(false)
+      }
+
       if (openNav) {
         const el = navRefs.current[openNav]
         if (el && !el.contains(target)) setOpenNav(null)
@@ -321,6 +332,7 @@ export default function Header({
       if (headerRef.current && !headerRef.current.contains(target)) {
         setSearchOpen(false)
         setMobileOpen(false)
+        setMobileAccountOpen(false)
         setOpenNav(null)
       }
     }
@@ -457,10 +469,8 @@ export default function Header({
       style={{ alignSelf: "stretch" }}
     >
       <header>
-        {/* Container with mx-auto and max-width. */}
         <div className="mx-auto max-w-[1520px] px-2 sm:px-4 lg:px-6">
           
-          {/* PILL CONTAINER: Increased height, consistent gray bg, subtle border */}
           <div 
             className={`relative flex items-center justify-between gap-3 rounded-full px-4 sm:px-5 min-h-[76px] sm:min-h-[84px] transition-all duration-500 ${
               scrolled
@@ -469,7 +479,7 @@ export default function Header({
             }`}
           >
             
-            {/* BRAND - Logo touches text */}
+            {/* BRAND */}
             <Link
               to="/"
               onClick={closeMenus}
@@ -490,7 +500,6 @@ export default function Header({
               className="hidden items-center gap-1 xl:flex mx-auto"
               aria-label="Menu nyamukuru"
             >
-              {/* Direct link to Home */}
               <Link
                 to="/"
                 onClick={closeMenus}
@@ -508,7 +517,6 @@ export default function Header({
                 </span>
               </Link>
 
-              {/* Dropdown Parents */}
               {primaryNav.map((parent) => {
                 const isOpen = openNav === parent.label
                 const parentActive = isParentActive(parent)
@@ -554,7 +562,6 @@ export default function Header({
                       />
                     </button>
 
-                    {/* DROPDOWN */}
                     {isOpen && (
                       <div
                         role="menu"
@@ -639,6 +646,7 @@ export default function Header({
                 onClick={() => {
                   setSearchOpen((p) => !p)
                   setAccountOpen(false)
+                  setMobileAccountOpen(false)
                   setMobileOpen(false)
                   setOpenNav(null)
                 }}
@@ -648,7 +656,7 @@ export default function Header({
                 <Icon name={searchOpen ? "close" : "search"} size={24} strokeWidth={2.2} />
               </button>
 
-              {/* THEME (Now visible on mobile) */}
+              {/* THEME */}
               <button
                 type="button"
                 className="group flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95"
@@ -675,93 +683,175 @@ export default function Header({
                 </Link>
               )}
 
-              {/* ACCOUNT */}
               {userId ? (
-                <div
-                  ref={accountRef}
-                  className="relative hidden sm:block"
-                  onMouseEnter={handleAccountEnter}
-                  onMouseLeave={handleAccountLeave}
-                >
-                  <button
-                    type="button"
-                    className={`group flex h-11 sm:h-12 items-center gap-2 rounded-full px-2.5 pr-4 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 ${
-                      accountOpen ? "bg-white/60 dark:bg-white/10" : ""
-                    }`}
-                    onClick={() => {
-                      clearHoverTimers()
-                      setAccountOpen((p) => !p)
-                      setSearchOpen(false)
-                      setMobileOpen(false)
-                      setOpenNav(null)
-                    }}
-                    aria-expanded={accountOpen}
-                    aria-haspopup="menu"
-                    aria-label="Fungura konti"
+                <>
+                  {/* ═══ MOBILE ACCOUNT BUTTON ═══ */}
+                  <div
+                    ref={mobileAccountRef}
+                    className="relative flex sm:hidden"
                   >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm transition-transform duration-300 group-hover:scale-105">
-                      <Icon name="user" size={16} strokeWidth={2.5} />
-                    </span>
-                    <span className="hidden text-[14px] font-bold tracking-tight text-slate-700 dark:text-slate-200 lg:inline">
-                      Konti
-                    </span>
-                    <Icon
-                      name="chevron"
-                      size={14}
-                      strokeWidth={3}
-                      className={`text-slate-400 transition-transform duration-300 ${accountOpen ? "rotate-180" : ""}`}
-                    />
-                  </button>
-
-                  {accountOpen && (
-                    <div
-                      role="menu"
-                      className="absolute right-0 top-[calc(100%+16px)] w-72 rounded-[24px] p-2.5 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.2)] border border-slate-200/60 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200"
-                      style={{ zIndex: 9999, visibility: "visible", opacity: 1 }}
+                    <button
+                      type="button"
+                      className={`group relative flex h-11 w-11 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 active:scale-95 ${
+                        mobileAccountOpen ? "bg-white/60 dark:bg-white/10" : ""
+                      }`}
+                      onClick={() => {
+                        setMobileAccountOpen((p) => !p)
+                        setAccountOpen(false)
+                        setSearchOpen(false)
+                        setMobileOpen(false)
+                        setOpenNav(null)
+                      }}
+                      aria-expanded={mobileAccountOpen}
+                      aria-haspopup="menu"
+                      aria-label="Fungura konti"
                     >
-                      <span aria-hidden="true" className="absolute -top-5 left-0 right-0 h-5" />
-
-                      <p className="px-3.5 py-3 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
-                        Konti yanjye
-                      </p>
-
-                      <div className="space-y-1">
-                        {accountLinks.map((item) => (
-                          <Link
-                            key={item.to}
-                            to={item.to}
-                            onClick={closeMenus}
-                            className="group/menu flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-bold text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-white/5"
-                          >
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100/80 dark:bg-white/5 text-slate-500 transition-all duration-200 group-hover/menu:bg-[#FF5D00]/10 group-hover/menu:text-[#FF5D00]">
-                              <Icon name={item.icon} size={16} strokeWidth={2.2} />
-                            </span>
-                            {item.label}
-                            {item.to === "/notifications" && unreadCount > 0 && (
-                              <span className="ml-auto rounded-full bg-[#FF5D00] px-2.5 py-0.5 text-[10px] font-black text-white">
-                                {unreadCount}
-                              </span>
-                            )}
-                          </Link>
-                        ))}
-                      </div>
-
-                      <div className="my-2 h-[1px] bg-slate-200/60 dark:bg-white/5" />
-
-                      <button
-                        type="button"
-                        onClick={() => void logout()}
-                        disabled={loggingOut}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-bold text-red-500 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50"
-                      >
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
-                          <Icon name="logout" size={16} strokeWidth={2.2} />
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm">
+                        <Icon name="user" size={16} strokeWidth={2.5} />
+                      </span>
+                      {unreadCount > 0 && (
+                        <span className="absolute right-1.5 top-1.5 flex min-h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#FF5D00] px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-slate-950">
+                          {unreadCount > 99 ? "99+" : unreadCount}
                         </span>
-                        {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                      )}
+                    </button>
+
+                    {mobileAccountOpen && (
+                      <div
+                        role="menu"
+                        className="absolute right-0 top-[calc(100%+12px)] w-[calc(100vw-2rem)] max-w-[320px] rounded-[24px] p-2.5 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.2)] border border-slate-200/60 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 z-[9999]"
+                        style={{ visibility: "visible", opacity: 1 }}
+                      >
+                        <p className="px-3.5 py-3 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                          Konti yanjye
+                        </p>
+
+                        <div className="space-y-1">
+                          {accountLinks.map((item) => (
+                            <Link
+                              key={item.to}
+                              to={item.to}
+                              onClick={closeMenus}
+                              className="group/menu flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-bold text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-white/5"
+                            >
+                              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100/80 dark:bg-white/5 text-slate-500 transition-all duration-200 group-hover/menu:bg-[#FF5D00]/10 group-hover/menu:text-[#FF5D00]">
+                                <Icon name={item.icon} size={16} strokeWidth={2.2} />
+                              </span>
+                              {item.label}
+                              {item.to === "/notifications" && unreadCount > 0 && (
+                                <span className="ml-auto rounded-full bg-[#FF5D00] px-2.5 py-0.5 text-[10px] font-black text-white">
+                                  {unreadCount}
+                                </span>
+                              )}
+                            </Link>
+                          ))}
+                        </div>
+
+                        <div className="my-2 h-[1px] bg-slate-200/60 dark:bg-white/5" />
+
+                        <button
+                          type="button"
+                          onClick={() => void logout()}
+                          disabled={loggingOut}
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-bold text-red-500 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50"
+                        >
+                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
+                            <Icon name="logout" size={16} strokeWidth={2.2} />
+                          </span>
+                          {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ═══ DESKTOP ACCOUNT ═══ */}
+                  <div
+                    ref={accountRef}
+                    className="relative hidden sm:block"
+                    onMouseEnter={handleAccountEnter}
+                    onMouseLeave={handleAccountLeave}
+                  >
+                    <button
+                      type="button"
+                      className={`group flex h-11 sm:h-12 items-center gap-2 rounded-full px-2.5 pr-4 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 ${
+                        accountOpen ? "bg-white/60 dark:bg-white/10" : ""
+                      }`}
+                      onClick={() => {
+                        clearHoverTimers()
+                        setAccountOpen((p) => !p)
+                        setMobileAccountOpen(false)
+                        setSearchOpen(false)
+                        setMobileOpen(false)
+                        setOpenNav(null)
+                      }}
+                      aria-expanded={accountOpen}
+                      aria-haspopup="menu"
+                      aria-label="Fungura konti"
+                    >
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm transition-transform duration-300 group-hover:scale-105">
+                        <Icon name="user" size={16} strokeWidth={2.5} />
+                      </span>
+                      <span className="hidden text-[14px] font-bold tracking-tight text-slate-700 dark:text-slate-200 lg:inline">
+                        Konti
+                      </span>
+                      <Icon
+                        name="chevron"
+                        size={14}
+                        strokeWidth={3}
+                        className={`text-slate-400 transition-transform duration-300 ${accountOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {accountOpen && (
+                      <div
+                        role="menu"
+                        className="absolute right-0 top-[calc(100%+16px)] w-72 rounded-[24px] p-2.5 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.2)] border border-slate-200/60 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200"
+                        style={{ zIndex: 9999, visibility: "visible", opacity: 1 }}
+                      >
+                        <span aria-hidden="true" className="absolute -top-5 left-0 right-0 h-5" />
+
+                        <p className="px-3.5 py-3 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+                          Konti yanjye
+                        </p>
+
+                        <div className="space-y-1">
+                          {accountLinks.map((item) => (
+                            <Link
+                              key={item.to}
+                              to={item.to}
+                              onClick={closeMenus}
+                              className="group/menu flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-bold text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-white/5"
+                            >
+                              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100/80 dark:bg-white/5 text-slate-500 transition-all duration-200 group-hover/menu:bg-[#FF5D00]/10 group-hover/menu:text-[#FF5D00]">
+                                <Icon name={item.icon} size={16} strokeWidth={2.2} />
+                              </span>
+                              {item.label}
+                              {item.to === "/notifications" && unreadCount > 0 && (
+                                <span className="ml-auto rounded-full bg-[#FF5D00] px-2.5 py-0.5 text-[10px] font-black text-white">
+                                  {unreadCount}
+                                </span>
+                              )}
+                            </Link>
+                          ))}
+                        </div>
+
+                        <div className="my-2 h-[1px] bg-slate-200/60 dark:bg-white/5" />
+
+                        <button
+                          type="button"
+                          onClick={() => void logout()}
+                          disabled={loggingOut}
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-[14px] font-bold text-red-500 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-500/10 disabled:opacity-50"
+                        >
+                          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
+                            <Icon name="logout" size={16} strokeWidth={2.2} />
+                          </span>
+                          {loggingOut ? "Turimo gusohoka..." : "Sohoka"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
                 <Link
                   to="/login"
@@ -784,13 +874,14 @@ export default function Header({
                 <span className="whitespace-nowrap">Gurisha</span>
               </Link>
 
-              {/* MOBILE MENU TOGGLE (Always visible on mobile) */}
+              {/* MOBILE MENU TOGGLE */}
               <button
                 type="button"
                 onClick={() => {
                   setMobileOpen((p) => !p)
                   setSearchOpen(false)
                   setAccountOpen(false)
+                  setMobileAccountOpen(false)
                   setOpenNav(null)
                 }}
                 className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 active:scale-95 xl:hidden"
@@ -802,7 +893,7 @@ export default function Header({
             </div>
           </div>
 
-          {/* SEARCH PANEL - NEW DESIGN MATCHING IMAGE */}
+          {/* SEARCH PANEL */}
           {searchOpen && (
             <div className="absolute left-0 right-0 top-full mt-3 flex justify-center px-4 animate-in slide-in-from-top-4 duration-300 z-[150]">
               <form
@@ -835,7 +926,6 @@ export default function Header({
           {mobileOpen && (
             <div className="absolute left-2 right-2 sm:left-4 sm:right-4 top-full mt-2 max-h-[calc(100dvh-100px)] overflow-y-auto rounded-3xl p-4 xl:hidden shadow-2xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl animate-in slide-in-from-top-4 duration-300 z-[150]">
               <nav className="grid gap-1" aria-label="Menu ya telefoni">
-                {/* Mobile Home Link */}
                 <Link
                   to="/"
                   onClick={closeMenus}
