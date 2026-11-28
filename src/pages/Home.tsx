@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
-import { useNavigate } from "react-router-dom"
 
 import HomeStory from "../components/HomeStory"
 import HomeRentStory from "../components/HomeRentStory"
@@ -9,7 +8,7 @@ import Header from "../components/Header"
 import { supabase } from "../services/supabase"
 import SellCTA from "../components/SellCTA"
 import HomeFooter from "../components/HomeFooter"
-import SystemAnalyticsCard from "../components/SystemAnalyticsCard"
+import MarketplaceStream from "../components/MarketplaceStream"
 type Listing = {
   id: string
   title: string
@@ -40,7 +39,6 @@ type HomeStats = {
 }
 
 type IconName =
-  | "search"
   | "check"
   | "plus"
   | "spark"
@@ -104,8 +102,6 @@ function Icon({
   }
 
   switch (name) {
-    case "search":
-      return <svg {...common}><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
     case "check":
       return <svg {...common}><path d="m5 12 4 4L19 6" /></svg>
     case "plus":
@@ -150,28 +146,9 @@ const initialStats: HomeStats = {
   sold: 0,
 }
 
-function formatPrice(listing: Listing) {
-  if (listing.listing_type === "free") return "Ubuntu"
-  if (listing.price === null || listing.price === undefined) {
-    return "Twandikire ku giciro"
-  }
-  return `${Number(listing.price).toLocaleString("en-US")} Frw`
-}
-
-function formatLocation(listing: Listing) {
-  if (!listing.location) return "Rwanda"
-
-  return [
-    listing.location.sector,
-    listing.location.district,
-    listing.location.province,
-  ].filter(Boolean).join(", ")
-}
-
 export default function Home() {
   const [listings, setListings] = useState<Listing[]>(homeCache.listings)
   const [images, setImages] = useState<Record<string, string>>(homeCache.images)
-  const navigate = useNavigate()
   const [, setStats] = useState<HomeStats>(initialStats)
   const [, setStatsLoading] = useState(true)
   const [loading, setLoading] = useState(!homeCache.loaded)
@@ -197,7 +174,6 @@ export default function Home() {
   })
 
   const [userId, setUserId] = useState<string | null>(null)
-  const [currentSlide, setCurrentSlide] = useState(0)
 
   const [showSellHeadline, setShowSellHeadline] = useState(true)
 
@@ -400,41 +376,6 @@ export default function Home() {
       void supabase.removeChannel(channel)
     }
   }, [userId])
-
-  const filteredListings = useMemo(() => {
-    const query = search.toLowerCase().trim()
-    if (!query) return listings
-
-    return listings.filter((listing) => (
-      listing.title.toLowerCase().includes(query) ||
-      listing.description?.toLowerCase().includes(query) ||
-      listing.category?.name.toLowerCase().includes(query) ||
-      formatLocation(listing).toLowerCase().includes(query)
-    ))
-  }, [listings, search])
-
-  /* ───────────────────────────────────────────────────────────────────
-     HERO SLIDER LOGIC
-     Auto-slides every 4 seconds. Manual controls included.
-     ─────────────────────────────────────────────────────────────────── */
-  const nextSlide = useCallback(() => {
-    if (filteredListings.length === 0) return;
-    setCurrentSlide((prev) => (prev + 1) % filteredListings.length);
-  }, [filteredListings.length]);
-
-  const prevSlide = useCallback(() => {
-    if (filteredListings.length === 0) return;
-    setCurrentSlide((prev) => (prev - 1 + filteredListings.length) % filteredListings.length);
-  }, [filteredListings.length]);
-
-  useEffect(() => {
-    if (loading || filteredListings.length < 2) return;
-    const timer = window.setInterval(nextSlide, 4000);
-    return () => window.clearInterval(timer);
-  }, [loading, filteredListings.length, nextSlide]);
-
-  const currentListing = filteredListings[currentSlide];
-  const currentImage = currentListing ? images[currentListing.id] : null;
 
   return (
     <main className="min-h-screen overflow-x-clip bg-white text-slate-900 selection:bg-[#569ab5] selection:text-white dark:bg-[#080f1b] dark:text-slate-100">
@@ -714,206 +655,13 @@ export default function Home() {
       </div>
     </div>
 
-    {/* ═════════ INTERACTIVE MARKETPLACE STREAM (UPDATED HERO SLIDER) ═════════ */}
-    <div className="relative mt-20 grid min-h-0 items-stretch gap-8 lg:mt-24 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-10">
-      {/* ────────── LEFT: HERO LISTING SLIDER ────────── */}
-      <div className="flex min-w-0 flex-col gap-6">
-        {/* Header row: title + Reba byose */}
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-2.5">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="absolute inset-0 animate-ping rounded-full bg-[#39778f] opacity-75 dark:bg-[#83c2dc]" />
-              <span className="relative flex h-2.5 w-2.5 rounded-full bg-[#39778f] dark:bg-[#83c2dc]" />
-            </span>
-            <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
-              Ibyashyizweho vuba
-            </h3>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => navigate("/Listings")}
-            className="group inline-flex items-center gap-1.5 rounded-full bg-[#102436] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#39778f] hover:shadow-md hover:shadow-[#39778f]/25 active:scale-95 dark:bg-white/10 dark:hover:bg-[#569ab5]"
-          >
-            <span>Reba byose</span>
-            <svg
-              className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* ────────── THE NEW HERO LISTING SLIDER ────────── */}
-        {loading ? (
-          <div className="relative overflow-hidden rounded-[2rem] bg-slate-900/10 dark:bg-white/5 min-h-[350px] sm:min-h-[400px] flex items-center justify-center">
-            <div className="kug-shimmer h-full w-full absolute inset-0 opacity-20" />
-            <p className="relative z-10 text-sm font-bold text-slate-500">Turashakisha ibicuruzwa...</p>
-          </div>
-        ) : filteredListings.length > 0 && currentListing ? (
-          <div className="group relative overflow-hidden rounded-[2rem] bg-slate-900 shadow-2xl min-h-[350px] sm:min-h-[420px] flex items-center justify-center border border-slate-200/50 dark:border-white/10">
-            {/* Background Image with smooth transition */}
-            <div className="absolute inset-0 z-0">
-              {currentImage ? (
-                <img
-                  key={currentListing.id}
-                  src={currentImage}
-                  alt={currentListing.title}
-                  className="h-full w-full object-cover opacity-80 animate-[fadeIn_0.5s_ease-out]"
-                />
-              ) : (
-                <div className="h-full w-full bg-slate-800" />
-              )}
-              {/* Cinematic Overlays */}
-              <div className="absolute inset-0 bg-black/40" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
-            </div>
-
-            {/* Navigation Arrows */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-4 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition-all hover:bg-black/60 hover:scale-110 active:scale-95 border border-white/10"
-              aria-label="Previous listing"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-4 top-1/2 z-20 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition-all hover:bg-black/60 hover:scale-110 active:scale-95 border border-white/10"
-              aria-label="Next listing"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
-
-            {/* Content Area */}
-            <div key={currentListing.id} className="relative z-10 flex flex-col items-center text-center px-8 sm:px-16 animate-[slideUp_0.6s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full max-w-2xl">
-              
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white backdrop-blur-md mb-4">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#FF5D00] animate-pulse" />
-                {currentListing.category?.name || "GENERAL"}
-              </div>
-
-              <h2 className="text-2xl sm:text-4xl md:text-5xl font-black leading-tight tracking-tight text-white mb-2 drop-shadow-lg line-clamp-2">
-                {currentListing.title}
-              </h2>
-
-              <p className="text-xl sm:text-3xl font-black text-[#FF7A29] mb-3 drop-shadow-md">
-                {formatPrice(currentListing)}
-              </p>
-
-              <div className="flex items-center gap-2 text-xs font-semibold text-white/90 mb-8 bg-black/30 px-3 py-1.5 rounded-full backdrop-blur-sm border border-white/10">
-                <Icon name="map-pin" size={14} className="text-[#82c4e0]" />
-                <span>{formatLocation(currentListing)}</span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <button
-                  onClick={() => navigate(`/listing/${currentListing.id}`)}
-                  className="flex items-center gap-2 rounded-full bg-[#FF5D00] px-6 py-3 text-sm font-extrabold text-white shadow-lg transition-all hover:bg-[#e05200] hover:scale-105 active:scale-95"
-                >
-                  Reba byose
-                  <Icon name="arrow-right" size={16} />
-                </button>
-                <button
-                  onClick={() => navigate("/create-listing")}
-                  className="flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-extrabold text-white backdrop-blur-md transition-all hover:bg-white/20 hover:scale-105 active:scale-95"
-                >
-                  <Icon name="plus" size={16} />
-                  Gurisha ubu
-                </button>
-              </div>
-
-            </div>
-            
-            {/* Progress Indicators (Dots) */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
-               {filteredListings.slice(0, 5).map((_, idx) => (
-                 <button
-                   key={idx}
-                   onClick={() => setCurrentSlide(idx)}
-                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                     idx === currentSlide 
-                       ? "w-6 bg-[#FF5D00]" 
-                       : "w-1.5 bg-white/40 hover:bg-white/70"
-                   }`}
-                   aria-label={`Go to slide ${idx + 1}`}
-                 />
-               ))}
-            </div>
-
-          </div>
-        ) : (
-          <div className="rounded-3xl border border-dashed border-slate-300 bg-[#f3f4f6]/70 p-8 py-14 text-center dark:border-white/10 dark:bg-white/[0.02] min-h-[350px] flex flex-col justify-center">
-            <Icon name="search" size={36} className="mx-auto mb-3 text-slate-400" />
-            <h4 className="font-bold text-slate-800 dark:text-slate-200">
-              Nta bintu bibonetse
-            </h4>
-            <p className="mt-1 text-xs text-slate-500">
-              Nta bicuruzwa biri ku isoko ubu.
-            </p>
-          </div>
-        )}
-
-             {/* Always-visible auth CTA */}
-        <div className="mt-20 flex w-full flex-col items-center justify-center gap-4 sm:flex-row px-4">
-          
-          {/* Button 1: Injara (Login) - Modern Classic Blue */}
-          <button
-            onClick={() => navigate("/login")}
-            className="group relative flex w-full max-w-[280px] items-center justify-center rounded-full bg-[#2563eb] py-3 text-base font-bold text-white shadow-lg shadow-blue-500/30 transition-all duration-300 hover:scale-[1.02] hover:bg-[#1d4ed8] active:scale-[0.98] sm:w-auto sm:flex-1"
-          >
-            <span className="tracking-wide">Injira</span>
-            {/* Absolute icon on the right */}
-            <span className="absolute right-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-400/40 text-white transition-transform duration-300 group-hover:translate-x-1">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                strokeWidth={2.5} 
-                stroke="currentColor" 
-                className="h-4 w-4"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </span>
-          </button>
-
-          {/* Button 2: Kora konti (Register) - Soft Professional Gray */}
-          <button
-            onClick={() => navigate("/register")}
-            className="group relative flex w-full max-w-[280px] items-center justify-center rounded-full border border-slate-300 bg-slate-100 py-3 text-base font-bold text-slate-700 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:bg-slate-200 hover:border-slate-400 active:scale-[0.98] dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 sm:w-auto sm:flex-1"
-          >
-            <span className="tracking-wide">Kora konti</span>
-            {/* Absolute icon on the right */}
-            <span className="absolute right-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-300 text-slate-700 transition-transform duration-300 group-hover:translate-x-1 dark:bg-white/20 dark:text-white">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                strokeWidth={2.5} 
-                stroke="currentColor" 
-                className="h-4 w-4"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-              </svg>
-            </span>
-          </button>
-
-        </div>
-      </div>
-
-      {/* ────────── RIGHT column ────────── */}
-      <SystemAnalyticsCard />
-    </div>
+    {/* ═════════ INTERACTIVE MARKETPLACE STREAM (extracted) ═════════ */}
+    <MarketplaceStream
+      listings={listings}
+      images={images}
+      loading={loading}
+      search={search}
+    />
   </div>
 </section>
       <HomeStory />

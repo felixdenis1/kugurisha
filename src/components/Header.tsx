@@ -35,6 +35,7 @@ type IconName =
   | "sun"
   | "moon"
   | "arrow"
+  | "check"
 
 function Icon({
   name,
@@ -108,6 +109,7 @@ function Icon({
         <path d="m13 6 6 6-6 6" />
       </>
     ),
+    check: <path d="M4.5 12.75l6 6 9-13.5" />,
   }
 
   return (
@@ -200,6 +202,15 @@ const accountLinks: { label: string; to: string; icon: IconName }[] = [
 const HOVER_OPEN_DELAY = 100
 const HOVER_CLOSE_DELAY = 180
 
+type MiniNotification = {
+  id: string
+  title: string
+  body: string | null
+  is_read: boolean
+  created_at: string
+  type: string
+}
+
 export default function Header({
   searchValue,
   onSearchChange,
@@ -212,16 +223,32 @@ export default function Header({
   const [accountOpen, setAccountOpen] = useState(false)
   const [mobileAccountOpen, setMobileAccountOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  
+  // NOTIFICATION DROPDOWN STATES
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [miniNotifs, setMiniNotifs] = useState<MiniNotification[]>([])
+  const [loadingNotifs, setLoadingNotifs] = useState(false)
+
   const [internalSearch, setInternalSearch] = useState("")
   const [loggingOut, setLoggingOut] = useState(false)
   const [openNav, setOpenNav] = useState<string | null>(null)
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null)
+  
+  // Ambient Dynamic Color State
+  const [glowIndex, setGlowIndex] = useState(0)
+  const glowColors = [
+    "from-[#FF5D00]/20 to-purple-500/20",
+    "from-blue-500/20 to-emerald-500/20",
+    "from-emerald-500/20 to-[#FF5D00]/20",
+    "from-purple-500/20 to-blue-500/20",
+  ]
 
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
   const accountRef = useRef<HTMLDivElement>(null)
   const mobileAccountRef = useRef<HTMLDivElement>(null)
+  const notifRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const navRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -231,11 +258,20 @@ export default function Header({
 
   const search = searchValue ?? internalSearch
 
+  // Rotate the ambient header glow
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setGlowIndex((prev) => (prev + 1) % glowColors.length)
+    }, 4000)
+    return () => clearInterval(timer)
+  }, [glowColors.length])
+
   function closeMenus() {
     setMobileOpen(false)
     setAccountOpen(false)
     setMobileAccountOpen(false)
     setSearchOpen(false)
+    setNotifOpen(false)
     setOpenNav(null)
   }
 
@@ -250,6 +286,7 @@ export default function Header({
     }
   }
 
+  // --- Dropdown Hover Logic ---
   function handleAccountEnter() {
     if (hoverCloseTimer.current) {
       clearTimeout(hoverCloseTimer.current)
@@ -260,6 +297,7 @@ export default function Header({
       setAccountOpen(true)
       setSearchOpen(false)
       setMobileOpen(false)
+      setNotifOpen(false)
     }, HOVER_OPEN_DELAY)
   }
 
@@ -285,6 +323,7 @@ export default function Header({
       setMobileAccountOpen(false)
       setSearchOpen(false)
       setMobileOpen(false)
+      setNotifOpen(false)
     }, HOVER_OPEN_DELAY)
   }
 
@@ -316,23 +355,21 @@ export default function Header({
       if (accountRef.current && !accountRef.current.contains(target)) {
         setAccountOpen(false)
       }
-
-      if (
-        mobileAccountRef.current &&
-        !mobileAccountRef.current.contains(target)
-      ) {
+      if (mobileAccountRef.current && !mobileAccountRef.current.contains(target)) {
         setMobileAccountOpen(false)
       }
-
+      if (notifRef.current && !notifRef.current.contains(target)) {
+        setNotifOpen(false)
+      }
       if (openNav) {
         const el = navRefs.current[openNav]
         if (el && !el.contains(target)) setOpenNav(null)
       }
-
       if (headerRef.current && !headerRef.current.contains(target)) {
         setSearchOpen(false)
         setMobileOpen(false)
         setMobileAccountOpen(false)
+        setNotifOpen(false)
         setOpenNav(null)
       }
     }
@@ -358,6 +395,7 @@ export default function Header({
     if (searchOpen) searchInputRef.current?.focus()
   }, [searchOpen])
 
+  // --- AUTH & NOTIFICATIONS ---
   useEffect(() => {
     let active = true
 
@@ -365,9 +403,7 @@ export default function Header({
       if (active) setUserId(data.user?.id ?? null)
     })
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserId(session?.user?.id ?? null)
     })
 
@@ -380,22 +416,42 @@ export default function Header({
   useEffect(() => {
     if (!userId) {
       setUnreadCount(0)
+      setMiniNotifs([])
       return
     }
 
     let active = true
 
-    async function refreshCount() {
-      const { count, error } = await supabase
-        .from("notifications")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("is_read", false)
+    async function refreshCountAndData() {
+      if (active) setLoadingNotifs(true)
 
-      if (active && !error) setUnreadCount(count ?? 0)
+      try {
+        // Get Count
+        const { count, error } = await supabase
+          .from("notifications")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("is_read", false)
+
+        if (active && !error) setUnreadCount(count ?? 0)
+
+        // Get Latest 5 for Dropdown
+        const { data, error: dataError } = await supabase
+          .from("notifications")
+          .select("id, title, body, is_read, created_at, type")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(5)
+
+        if (active && !dataError) {
+          setMiniNotifs(data || [])
+        }
+      } finally {
+        if (active) setLoadingNotifs(false)
+      }
     }
 
-    void refreshCount()
+    void refreshCountAndData()
 
     const channel = supabase
       .channel(`shared-header-notifications-${userId}`)
@@ -407,7 +463,7 @@ export default function Header({
           table: "notifications",
           filter: `user_id=eq.${userId}`,
         },
-        () => void refreshCount(),
+        () => void refreshCountAndData(),
       )
       .subscribe()
 
@@ -416,6 +472,18 @@ export default function Header({
       void supabase.removeChannel(channel)
     }
   }, [userId])
+
+  async function markMiniNotifsAsRead() {
+    if (unreadCount === 0) return
+    const unreadIds = miniNotifs.filter(n => !n.is_read).map(n => n.id)
+    if (unreadIds.length === 0) return
+
+    // Optimistic UI update
+    setMiniNotifs(curr => curr.map(n => ({ ...n, is_read: true })))
+    setUnreadCount(0)
+
+    await supabase.from("notifications").update({ is_read: true }).in("id", unreadIds)
+  }
 
   function updateSearch(value: string) {
     if (onSearchChange) onSearchChange(value)
@@ -429,9 +497,7 @@ export default function Header({
     closeMenus()
     if (onSearchSubmit) onSearchSubmit()
     else if (onSearchChange) {
-      if (location.pathname !== "/") {
-        navigate(`/?search=${encodeURIComponent(query)}`)
-      }
+      if (location.pathname !== "/") navigate(`/?search=${encodeURIComponent(query)}`)
     } else {
       navigate(`/listings?search=${encodeURIComponent(query)}`)
     }
@@ -456,63 +522,52 @@ export default function Header({
 
   function isParentActive(parent: NavParent): boolean {
     return parent.children.some((c) =>
-      c.to === "/"
-        ? location.pathname === "/"
-        : location.pathname.startsWith(c.to)
+      c.to === "/" ? location.pathname === "/" : location.pathname.startsWith(c.to)
     )
   }
 
   return (
     <div
       ref={headerRef}
-      className={`fixed top-0 z-[100] w-full transition-all duration-500 py-3 sm:py-4`}
-      style={{ alignSelf: "stretch" }}
+      className="fixed top-0 z-[100] w-full transition-all duration-500 py-3 sm:py-5"
     >
       <header>
         <div className="mx-auto max-w-[1520px] px-2 sm:px-4 lg:px-6">
           
+          {/* PREMIUM GLASS BAR */}
           <div 
-            className={`relative flex items-center justify-between gap-3 rounded-full px-4 sm:px-5 min-h-[76px] sm:min-h-[84px] transition-all duration-500 ${
+            className={`relative flex items-center justify-between gap-3 rounded-full px-4 sm:px-5 min-h-[76px] sm:min-h-[84px] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               scrolled
-                ? "bg-slate-100/95 dark:bg-slate-900/95 backdrop-blur-3xl border border-slate-200/80 dark:border-white/10 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.2)]"
-                : "bg-slate-100/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/60 dark:border-white/5 shadow-sm"
+                ? "bg-white/80 dark:bg-[#0a1017]/80 backdrop-blur-[40px] border border-slate-200/50 dark:border-white/10 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.1)] scale-[0.99]"
+                : "bg-white/60 dark:bg-slate-900/60 backdrop-blur-[20px] border border-slate-200/40 dark:border-white/5 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.05)]"
             }`}
           >
-            
+            {/* Dynamic Ambient Background Glow */}
+            <div className={`pointer-events-none absolute inset-0 -z-10 rounded-full bg-gradient-to-r opacity-50 blur-2xl transition-all duration-1000 ease-in-out ${glowColors[glowIndex]}`} />
+
             {/* BRAND */}
             <Link
               to="/"
               onClick={closeMenus}
-              className="group flex shrink-0 items-center gap-0"
-              aria-label="KUGURISHA - Ahabanza"
+              className="group flex shrink-0 items-center gap-0 relative z-10"
             >
-              <span className="flex shrink-0 items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:rotate-[-4deg]">
-                <img
-                  src="/favicon.svg"
-                  alt=""
-                  className="h-16 w-16 sm:h-20 sm:w-20 object-contain filter drop-shadow-sm"
-                />
+              <span className="flex shrink-0 items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-[-8deg] drop-shadow-md">
+                <img src="/favicon.svg" alt="" className="h-14 w-14 sm:h-16 sm:w-16 object-contain" />
               </span>
             </Link>
 
             {/* DESKTOP NAV */}
-            <nav
-              className="hidden items-center gap-1 xl:flex mx-auto"
-              aria-label="Menu nyamukuru"
-            >
+            <nav className="hidden items-center gap-1 xl:flex mx-auto relative z-10">
               <Link
                 to="/"
                 onClick={closeMenus}
-                className={`group relative flex items-center gap-2 rounded-full px-6 py-3 transition-all duration-300 ${
+                className={`group relative flex items-center gap-2 rounded-full px-5 py-2.5 transition-all duration-300 ${
                   location.pathname === "/"
-                    ? "text-slate-900 dark:text-white bg-white/70 dark:bg-white/10 shadow-sm"
+                    ? "text-slate-900 dark:text-white bg-white/80 dark:bg-white/10 shadow-sm"
                     : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5"
                 }`}
               >
-                <span 
-                  className="text-[17px] font-extrabold tracking-[-0.02em]"
-                  style={{ fontFamily: '"Outfit", "Space Grotesk", sans-serif' }}
-                >
+                <span className="text-[16px] font-extrabold tracking-[-0.01em]" style={{ fontFamily: '"Outfit", "Space Grotesk", sans-serif' }}>
                   Ahabanza
                 </span>
               </Link>
@@ -524,9 +579,7 @@ export default function Header({
                 return (
                   <div
                     key={parent.label}
-                    ref={(el) => {
-                      navRefs.current[parent.label] = el
-                    }}
+                    ref={(el) => { navRefs.current[parent.label] = el }}
                     className="relative"
                     style={{ zIndex: isOpen ? 300 : 1 }}
                     onMouseEnter={() => handleNavEnter(parent.label)}
@@ -537,42 +590,24 @@ export default function Header({
                       onClick={() => {
                         clearHoverTimers()
                         setOpenNav(isOpen ? null : parent.label)
+                        setNotifOpen(false)
                       }}
-                      className={`group relative flex items-center gap-2 rounded-full px-6 py-3 transition-all duration-300 cursor-pointer ${
+                      className={`group relative flex items-center gap-2 rounded-full px-5 py-2.5 transition-all duration-300 cursor-pointer ${
                         parentActive || isOpen
-                          ? "text-slate-900 dark:text-white bg-white/70 dark:bg-white/10 shadow-sm"
+                          ? "text-slate-900 dark:text-white bg-white/80 dark:bg-white/10 shadow-sm"
                           : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/5"
                       }`}
-                      aria-haspopup="menu"
-                      aria-expanded={isOpen}
                     >
-                      <span 
-                        className="text-[17px] font-extrabold tracking-[-0.02em]"
-                        style={{ fontFamily: '"Outfit", "Space Grotesk", sans-serif' }}
-                      >
+                      <span className="text-[16px] font-extrabold tracking-[-0.01em]" style={{ fontFamily: '"Outfit", "Space Grotesk", sans-serif' }}>
                         {parent.label}
                       </span>
-                      <Icon
-                        name="chevron"
-                        size={14}
-                        strokeWidth={3}
-                        className={`transition-transform duration-300 opacity-60 ${
-                          isOpen ? "rotate-180" : ""
-                        }`}
-                      />
+                      <Icon name="chevron" size={14} strokeWidth={3} className={`transition-transform duration-300 opacity-60 ${isOpen ? "rotate-180 text-[#FF5D00]" : ""}`} />
                     </button>
 
                     {isOpen && (
                       <div
                         role="menu"
-                        className="absolute left-1/2 top-[calc(100%+16px)] w-[340px] -translate-x-1/2 rounded-[28px] p-3 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.2)] border border-slate-200/60 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200"
-                        style={{
-                          position: "absolute",
-                          zIndex: 9999,
-                          visibility: "visible",
-                          opacity: 1,
-                          overflow: "visible",
-                        }}
+                        className="absolute left-1/2 top-[calc(100%+16px)] w-[340px] -translate-x-1/2 rounded-[28px] p-3 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] border border-slate-200/60 dark:border-white/10 bg-white/90 dark:bg-[#0a1017]/90 backdrop-blur-[50px] animate-in fade-in zoom-in-95 duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
                         onMouseEnter={() => {
                           if (hoverCloseTimer.current) {
                             clearTimeout(hoverCloseTimer.current)
@@ -581,55 +616,41 @@ export default function Header({
                         }}
                       >
                         <span aria-hidden="true" className="absolute -top-5 left-0 right-0 h-5" />
-                        {parent.children.map((child) => {
-                          const childActive =
-                            child.to === "/"
-                              ? location.pathname === "/"
-                              : location.pathname.startsWith(child.to)
-                          return (
-                            <Link
-                              key={child.to}
-                              to={child.to}
-                              onClick={closeMenus}
-                              className={`group/item flex items-start gap-4 rounded-[20px] p-3.5 transition-all duration-200 ${
-                                childActive
-                                  ? "bg-[#FF5D00]/8 dark:bg-[#FF5D00]/10"
-                                  : "hover:bg-slate-50 dark:hover:bg-white/5"
-                              }`}
-                            >
-                              <span
-                                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover/item:scale-110 ${
-                                  child.highlight
-                                    ? "bg-gradient-to-br from-[#FF5D00] to-[#FF8533] text-white shadow-lg shadow-[#FF5D00]/30"
-                                    : childActive
-                                    ? "bg-[#FF5D00]/15 text-[#FF5D00]"
-                                    : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400"
-                                }`}
-                              >
-                                <Icon name={child.icon} size={20} strokeWidth={2.5} />
+                        {parent.children.map((child) => (
+                          <Link
+                            key={child.to}
+                            to={child.to}
+                            onClick={closeMenus}
+                            className={`group/item flex items-start gap-4 rounded-[20px] p-3.5 transition-all duration-300 ${
+                              location.pathname.startsWith(child.to)
+                                ? "bg-[#FF5D00]/10 dark:bg-[#FF5D00]/15"
+                                : "hover:bg-slate-100/50 dark:hover:bg-white/5"
+                            }`}
+                          >
+                            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-500 group-hover/item:scale-110 group-hover/item:rotate-3 ${
+                              child.highlight
+                                ? "bg-gradient-to-br from-[#FF5D00] to-[#FF8533] text-white shadow-lg shadow-[#FF5D00]/30"
+                                : "bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400"
+                            }`}>
+                              <Icon name={child.icon} size={20} strokeWidth={2.5} />
+                            </span>
+                            <span className="min-w-0 flex-1 pt-0.5">
+                              <span className={`flex items-center gap-2 text-[15px] font-bold ${
+                                child.highlight ? "text-[#FF5D00]" : "text-slate-900 dark:text-white group-hover/item:text-[#FF5D00] dark:group-hover/item:text-[#FF5D00]"
+                              }`}>
+                                {child.label}
+                                {child.badge && (
+                                  <span className="rounded-full bg-[#FF5D00] px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white shadow-sm">
+                                    {child.badge}
+                                  </span>
+                                )}
                               </span>
-                              <span className="min-w-0 flex-1 pt-0.5">
-                                <span
-                                  className={`flex items-center gap-2 text-[15px] font-bold ${
-                                    child.highlight
-                                      ? "text-[#FF5D00]"
-                                      : "text-slate-900 dark:text-white"
-                                  }`}
-                                >
-                                  {child.label}
-                                  {child.badge && (
-                                    <span className="rounded-full bg-[#FF5D00] px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
-                                      {child.badge}
-                                    </span>
-                                  )}
-                                </span>
-                                <span className="mt-1 block text-[12px] font-medium leading-snug text-slate-500 dark:text-slate-400">
-                                  {child.description}
-                                </span>
+                              <span className="mt-1 block text-[12px] font-medium leading-snug text-slate-500 dark:text-slate-400">
+                                {child.description}
                               </span>
-                            </Link>
-                          )
-                        })}
+                            </span>
+                          </Link>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -638,94 +659,177 @@ export default function Header({
             </nav>
 
             {/* ACTIONS */}
-            <div className="flex shrink-0 items-center gap-1 sm:gap-2 pr-1 sm:pr-2">
-              {/* SEARCH */}
+            <div className="flex shrink-0 items-center gap-1 sm:gap-2 pr-1 sm:pr-2 relative z-10">
+              
+              {/* SEARCH BUTTON */}
               <button
                 type="button"
-                className="group relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95"
+                className="group relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10 hover:scale-110 active:scale-95"
                 onClick={() => {
                   setSearchOpen((p) => !p)
                   setAccountOpen(false)
                   setMobileAccountOpen(false)
                   setMobileOpen(false)
+                  setNotifOpen(false)
                   setOpenNav(null)
                 }}
-                aria-label={searchOpen ? "Funga ishakisha" : "Shakisha"}
-                aria-expanded={searchOpen}
               >
-                <Icon name={searchOpen ? "close" : "search"} size={24} strokeWidth={2.2} />
+                <Icon name={searchOpen ? "close" : "search"} size={22} strokeWidth={2.5} />
               </button>
 
-              {/* THEME */}
+              {/* THEME BUTTON */}
               <button
                 type="button"
-                className="group flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95"
+                className="group flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10 hover:scale-110 active:scale-95"
                 onClick={toggleTheme}
-                aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
               >
-                <Icon name={theme === "dark" ? "sun" : "moon"} size={22} strokeWidth={2.2} />
+                <Icon name={theme === "dark" ? "sun" : "moon"} size={22} strokeWidth={2.5} />
               </button>
 
-              {/* NOTIFICATIONS */}
+              {/* ═════════ NOTIFICATIONS DROPDOWN ═════════ */}
               {userId && (
-                <Link
-                  to="/notifications"
-                  onClick={closeMenus}
-                  className="group relative hidden sm:flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 hover:scale-105 active:scale-95"
-                  aria-label={`Imenyesha: ${unreadCount} utarasoma`}
-                >
-                  <Icon name="bell" size={22} strokeWidth={2.2} />
-                  {unreadCount > 0 && (
-                    <span className="absolute right-1 top-1 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#FF5D00] px-1 text-[10px] font-black text-white ring-2 ring-white dark:ring-slate-950 shadow-lg animate-pulse">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
+                <div ref={notifRef} className="relative hidden sm:block">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNotifOpen((p) => !p)
+                      setAccountOpen(false)
+                      setSearchOpen(false)
+                      setMobileOpen(false)
+                      setOpenNav(null)
+                    }}
+                    className={`group relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10 hover:scale-110 active:scale-95 ${
+                      notifOpen ? "bg-slate-200/50 dark:bg-white/10" : "text-slate-600 dark:text-slate-300"
+                    }`}
+                  >
+                    <Icon name="bell" size={22} strokeWidth={2.5} />
+                    {unreadCount > 0 && (
+                      <span className="absolute right-2 top-2 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#FF5D00] px-1 text-[10px] font-black text-white ring-2 ring-white dark:ring-[#0a1017] shadow-lg animate-pulse">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* THE NOTIFICATION PANEL */}
+                  {notifOpen && (
+                    <div className="absolute right-0 top-[calc(100%+16px)] w-[360px] overflow-hidden rounded-[24px] border border-slate-200/60 bg-white/95 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] backdrop-blur-[50px] dark:border-white/10 dark:bg-[#0a1017]/95 animate-in fade-in slide-in-from-top-4 duration-300 z-[9999]">
+                      
+                      {/* Panel Header */}
+                      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-white/5">
+                        <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Imenyesha</h3>
+                        {unreadCount > 0 && (
+                          <button 
+                            onClick={markMiniNotifsAsRead}
+                            className="text-[10px] font-bold text-[#FF5D00] hover:underline flex items-center gap-1"
+                          >
+                            <Icon name="check" size={12} strokeWidth={3} />
+                            Soma zose
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Panel Body */}
+                      <div className="max-h-[360px] overflow-y-auto">
+                        {loadingNotifs ? (
+                           <div className="flex flex-col items-center justify-center py-10">
+                             <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#FF5D00]/30 border-t-[#FF5D00]" />
+                           </div>
+                        ) : miniNotifs.length === 0 ? (
+                          <div className="px-6 py-10 text-center">
+                            <Icon name="bell" size={32} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
+                            <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Nta menyesha ufite</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col">
+                            {miniNotifs.map(notif => (
+                              <button
+                                key={notif.id}
+                                onClick={async () => {
+                                  if (!notif.is_read) {
+                                    await supabase.from("notifications").update({ is_read: true }).eq("id", notif.id)
+                                    setMiniNotifs(curr => curr.map(n => n.id === notif.id ? { ...n, is_read: true } : n))
+                                    setUnreadCount(prev => Math.max(0, prev - 1))
+                                  }
+                                  closeMenus()
+                                  navigate("/notifications")
+                                }}
+                                className={`flex w-full items-start gap-3 border-b border-slate-50 p-4 text-left transition-colors last:border-0 hover:bg-slate-50 dark:border-white/5 dark:hover:bg-white/[0.03] ${
+                                  !notif.is_read ? "bg-orange-50/30 dark:bg-[#FF5D00]/5" : ""
+                                }`}
+                              >
+                                <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                                  notif.type === "new_message" ? "bg-blue-100 text-blue-600" 
+                                  : notif.type.includes("listing") ? "bg-amber-100 text-amber-600"
+                                  : "bg-slate-100 text-slate-500"
+                                }`}>
+                                  <Icon name={notif.type === "new_message" ? "message" : notif.type.includes("listing") ? "store" : "bell"} size={14} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-sm line-clamp-1 ${!notif.is_read ? "font-black text-slate-900 dark:text-white" : "font-semibold text-slate-600 dark:text-slate-300"}`}>
+                                    {notif.title}
+                                  </p>
+                                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                                    {notif.body || "Kanda urebe byose..."}
+                                  </p>
+                                  <p className="mt-1 text-[10px] font-bold text-slate-400">
+                                    {new Date(notif.created_at).toLocaleDateString("rw-RW", { month: "short", day: "numeric" })}
+                                  </p>
+                                </div>
+                                {!notif.is_read && (
+                                  <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#FF5D00]" />
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Panel Footer */}
+                      <button
+                        onClick={() => {
+                          closeMenus()
+                          navigate("/notifications")
+                        }}
+                        className="flex w-full items-center justify-center bg-slate-50 py-3 text-xs font-black text-slate-700 transition hover:bg-slate-100 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+                      >
+                        Reba byose
+                        <Icon name="arrow" size={14} className="ml-1.5" />
+                      </button>
+                    </div>
                   )}
-                </Link>
+                </div>
               )}
 
+              {/* USER ACCOUNT */}
               {userId ? (
                 <>
-                  {/* ═══ MOBILE ACCOUNT BUTTON ═══ */}
-                  <div
-                    ref={mobileAccountRef}
-                    className="relative flex sm:hidden"
-                  >
+                  {/* MOBILE ACCOUNT */}
+                  <div ref={mobileAccountRef} className="relative flex sm:hidden">
                     <button
                       type="button"
-                      className={`group relative flex h-11 w-11 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 active:scale-95 ${
-                        mobileAccountOpen ? "bg-white/60 dark:bg-white/10" : ""
-                      }`}
+                      className={`group relative flex h-11 w-11 items-center justify-center rounded-full transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10 active:scale-95 ${mobileAccountOpen ? "bg-slate-200/50 dark:bg-white/10" : ""}`}
                       onClick={() => {
                         setMobileAccountOpen((p) => !p)
                         setAccountOpen(false)
                         setSearchOpen(false)
                         setMobileOpen(false)
+                        setNotifOpen(false)
                         setOpenNav(null)
                       }}
-                      aria-expanded={mobileAccountOpen}
-                      aria-haspopup="menu"
-                      aria-label="Fungura konti"
                     >
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#102436] dark:bg-white text-white dark:text-[#102436] shadow-sm">
                         <Icon name="user" size={16} strokeWidth={2.5} />
                       </span>
                       {unreadCount > 0 && (
-                        <span className="absolute right-1.5 top-1.5 flex min-h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#FF5D00] px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-slate-950">
+                        <span className="absolute right-1.5 top-1.5 flex min-h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#FF5D00] px-1 text-[9px] font-black text-white ring-2 ring-white dark:ring-[#0a1017]">
                           {unreadCount > 99 ? "99+" : unreadCount}
                         </span>
                       )}
                     </button>
 
                     {mobileAccountOpen && (
-                      <div
-                        role="menu"
-                        className="absolute right-0 top-[calc(100%+12px)] w-[calc(100vw-2rem)] max-w-[320px] rounded-[24px] p-2.5 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.2)] border border-slate-200/60 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200 z-[9999]"
-                        style={{ visibility: "visible", opacity: 1 }}
-                      >
-                        <p className="px-3.5 py-3 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
-                          Konti yanjye
-                        </p>
-
+                      <div className="absolute right-0 top-[calc(100%+12px)] w-[calc(100vw-2rem)] max-w-[320px] rounded-[24px] p-2.5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] border border-slate-200/60 dark:border-white/10 bg-white/95 dark:bg-[#0a1017]/95 backdrop-blur-[50px] animate-in fade-in zoom-in-95 duration-300 z-[9999]">
+                        <p className="px-3.5 py-3 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Konti yanjye</p>
                         <div className="space-y-1">
                           {accountLinks.map((item) => (
                             <Link
@@ -738,17 +842,10 @@ export default function Header({
                                 <Icon name={item.icon} size={16} strokeWidth={2.2} />
                               </span>
                               {item.label}
-                              {item.to === "/notifications" && unreadCount > 0 && (
-                                <span className="ml-auto rounded-full bg-[#FF5D00] px-2.5 py-0.5 text-[10px] font-black text-white">
-                                  {unreadCount}
-                                </span>
-                              )}
                             </Link>
                           ))}
                         </div>
-
                         <div className="my-2 h-[1px] bg-slate-200/60 dark:bg-white/5" />
-
                         <button
                           type="button"
                           onClick={() => void logout()}
@@ -764,7 +861,7 @@ export default function Header({
                     )}
                   </div>
 
-                  {/* ═══ DESKTOP ACCOUNT ═══ */}
+                  {/* DESKTOP ACCOUNT */}
                   <div
                     ref={accountRef}
                     className="relative hidden sm:block"
@@ -773,8 +870,8 @@ export default function Header({
                   >
                     <button
                       type="button"
-                      className={`group flex h-11 sm:h-12 items-center gap-2 rounded-full px-2.5 pr-4 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 ${
-                        accountOpen ? "bg-white/60 dark:bg-white/10" : ""
+                      className={`group flex h-11 sm:h-12 items-center gap-2 rounded-full px-2.5 pr-4 transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10 ${
+                        accountOpen ? "bg-slate-200/50 dark:bg-white/10" : ""
                       }`}
                       onClick={() => {
                         clearHoverTimers()
@@ -782,38 +879,25 @@ export default function Header({
                         setMobileAccountOpen(false)
                         setSearchOpen(false)
                         setMobileOpen(false)
+                        setNotifOpen(false)
                         setOpenNav(null)
                       }}
-                      aria-expanded={accountOpen}
-                      aria-haspopup="menu"
-                      aria-label="Fungura konti"
                     >
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm transition-transform duration-300 group-hover:scale-105">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#102436] dark:bg-white text-white dark:text-[#102436] shadow-sm transition-transform duration-300 group-hover:scale-105">
                         <Icon name="user" size={16} strokeWidth={2.5} />
                       </span>
                       <span className="hidden text-[14px] font-bold tracking-tight text-slate-700 dark:text-slate-200 lg:inline">
                         Konti
                       </span>
-                      <Icon
-                        name="chevron"
-                        size={14}
-                        strokeWidth={3}
-                        className={`text-slate-400 transition-transform duration-300 ${accountOpen ? "rotate-180" : ""}`}
-                      />
+                      <Icon name="chevron" size={14} strokeWidth={3} className={`text-slate-400 transition-transform duration-300 ${accountOpen ? "rotate-180 text-[#FF5D00]" : ""}`} />
                     </button>
 
                     {accountOpen && (
-                      <div
-                        role="menu"
-                        className="absolute right-0 top-[calc(100%+16px)] w-72 rounded-[24px] p-2.5 shadow-[0_40px_80px_-20px_rgba(15,23,42,0.2)] border border-slate-200/60 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl animate-in fade-in zoom-in-95 duration-200"
-                        style={{ zIndex: 9999, visibility: "visible", opacity: 1 }}
-                      >
+                      <div className="absolute right-0 top-[calc(100%+16px)] w-72 rounded-[24px] p-2.5 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.2)] border border-slate-200/60 dark:border-white/10 bg-white/95 dark:bg-[#0a1017]/95 backdrop-blur-[50px] animate-in fade-in zoom-in-95 duration-300 z-[9999]">
                         <span aria-hidden="true" className="absolute -top-5 left-0 right-0 h-5" />
-
                         <p className="px-3.5 py-3 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
                           Konti yanjye
                         </p>
-
                         <div className="space-y-1">
                           {accountLinks.map((item) => (
                             <Link
@@ -834,9 +918,7 @@ export default function Header({
                             </Link>
                           ))}
                         </div>
-
                         <div className="my-2 h-[1px] bg-slate-200/60 dark:bg-white/5" />
-
                         <button
                           type="button"
                           onClick={() => void logout()}
@@ -856,7 +938,7 @@ export default function Header({
                 <Link
                   to="/login"
                   onClick={closeMenus}
-                  className="hidden h-11 sm:h-12 items-center rounded-full px-5 text-[14px] font-bold text-slate-700 dark:text-slate-200 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 sm:inline-flex"
+                  className="hidden h-11 sm:h-12 items-center rounded-full px-5 text-[14px] font-bold text-slate-700 dark:text-slate-200 transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10 sm:inline-flex"
                 >
                   Injira
                 </Link>
@@ -866,12 +948,13 @@ export default function Header({
               <Link
                 to="/create-listing"
                 onClick={closeMenus}
-                className="group relative hidden h-11 sm:h-12 items-center gap-2 overflow-hidden rounded-full bg-slate-900 px-6 text-[15px] font-black tracking-tight text-white shadow-[0_8px_20px_-6px_rgba(15,23,42,0.4)] transition-all duration-300 hover:bg-[#FF5D00] hover:scale-[1.02] hover:shadow-[0_12px_24px_-8px_rgba(255,93,0,0.5)] active:scale-95 sm:flex"
+                className="group relative hidden h-11 sm:h-12 items-center gap-2 overflow-hidden rounded-full bg-[#102436] px-6 text-[15px] font-black tracking-tight text-white shadow-[0_8px_20px_-6px_rgba(15,23,42,0.4)] transition-all duration-300 hover:bg-[#FF5D00] hover:scale-[1.02] hover:shadow-[0_12px_24px_-8px_rgba(255,93,0,0.5)] active:scale-95 sm:flex dark:bg-white dark:text-[#102436] dark:hover:bg-[#FF5D00] dark:hover:text-white"
               >
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-500 group-hover:rotate-90">
+                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full dark:via-black/10" />
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 transition-transform duration-500 group-hover:rotate-90 dark:bg-black/10">
                   <Icon name="plus" size={13} strokeWidth={3} />
                 </span>
-                <span className="whitespace-nowrap">Gurisha</span>
+                <span className="whitespace-nowrap relative z-10">Gurisha</span>
               </Link>
 
               {/* MOBILE MENU TOGGLE */}
@@ -882,24 +965,22 @@ export default function Header({
                   setSearchOpen(false)
                   setAccountOpen(false)
                   setMobileAccountOpen(false)
+                  setNotifOpen(false)
                   setOpenNav(null)
                 }}
-                className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-white/60 dark:hover:bg-white/10 active:scale-95 xl:hidden"
-                aria-label={mobileOpen ? "Funga menu" : "Fungura menu"}
-                aria-expanded={mobileOpen}
+                className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full text-slate-600 dark:text-slate-300 transition-all duration-300 hover:bg-slate-200/50 dark:hover:bg-white/10 active:scale-95 xl:hidden"
               >
-                <Icon name={mobileOpen ? "close" : "menu"} size={26} strokeWidth={2.5} />
+                <Icon name={mobileOpen ? "close" : "menu"} size={24} strokeWidth={2.5} />
               </button>
             </div>
           </div>
 
           {/* SEARCH PANEL */}
           {searchOpen && (
-            <div className="absolute left-0 right-0 top-full mt-3 flex justify-center px-4 animate-in slide-in-from-top-4 duration-300 z-[150]">
+            <div className="absolute left-0 right-0 top-full mt-4 flex justify-center px-4 animate-in slide-in-from-top-4 duration-300 z-[150]">
               <form
                 onSubmit={submitSearch}
-                role="search"
-                className="flex w-full max-w-3xl items-center gap-3 rounded-full border-2 border-[#FF5D00]/40 bg-[#e2e8f0] px-6 py-2 shadow-[0_20px_40px_-15px_rgba(255,93,0,0.3)] transition-all duration-300 focus-within:border-[#FF5D00] focus-within:bg-slate-100 dark:bg-slate-800 dark:border-[#FF5D00]/50 dark:focus-within:bg-slate-900"
+                className="flex w-full max-w-3xl items-center gap-3 rounded-full border border-slate-200/50 bg-white/90 dark:bg-[#0a1017]/90 px-6 py-2 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] backdrop-blur-[40px] transition-all duration-300 focus-within:border-[#FF5D00] focus-within:shadow-[0_20px_40px_-15px_rgba(255,93,0,0.2)] dark:border-white/10"
               >
                 <span className="text-slate-500 dark:text-slate-400">
                   <Icon name="search" size={24} strokeWidth={2.5} />
@@ -909,7 +990,7 @@ export default function Header({
                   type="search"
                   value={search}
                   onChange={(event) => updateSearch(event.target.value)}
-                  placeholder="What are you looking for?"
+                  placeholder="Shakisha igicuruzwa hano..."
                   className="min-w-0 flex-1 bg-transparent py-3 text-[17px] font-medium text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 outline-none"
                 />
                 <button
@@ -924,8 +1005,8 @@ export default function Header({
 
           {/* MOBILE MENU */}
           {mobileOpen && (
-            <div className="absolute left-2 right-2 sm:left-4 sm:right-4 top-full mt-2 max-h-[calc(100dvh-100px)] overflow-y-auto rounded-3xl p-4 xl:hidden shadow-2xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl animate-in slide-in-from-top-4 duration-300 z-[150]">
-              <nav className="grid gap-1" aria-label="Menu ya telefoni">
+            <div className="absolute left-2 right-2 sm:left-4 sm:right-4 top-full mt-3 max-h-[calc(100dvh-120px)] overflow-y-auto rounded-[32px] p-4 xl:hidden shadow-2xl border border-slate-200/60 dark:border-white/10 bg-white/95 dark:bg-[#0a1017]/95 backdrop-blur-[50px] animate-in slide-in-from-top-4 duration-300 z-[150]">
+              <nav className="grid gap-1">
                 <Link
                   to="/"
                   onClick={closeMenus}
@@ -954,17 +1035,9 @@ export default function Header({
                             ? "bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white"
                             : "text-slate-600 dark:text-slate-300"
                         }`}
-                        aria-expanded={isExpanded}
                       >
                         <span>{parent.label}</span>
-                        <Icon
-                          name="chevron"
-                          size={18}
-                          strokeWidth={2.5}
-                          className={`transition-transform duration-300 opacity-50 ${
-                            isExpanded ? "rotate-180" : ""
-                          }`}
-                        />
+                        <Icon name="chevron" size={18} strokeWidth={2.5} className={`transition-transform duration-300 opacity-50 ${isExpanded ? "rotate-180" : ""}`} />
                       </button>
 
                       {isExpanded && (
@@ -975,28 +1048,20 @@ export default function Header({
                               to={child.to}
                               onClick={closeMenus}
                               className={`flex items-start gap-3 rounded-xl p-3 transition-all ${
-                                location.pathname.startsWith(child.to)
-                                  ? "bg-slate-100/50 dark:bg-white/5"
-                                  : ""
+                                location.pathname.startsWith(child.to) ? "bg-slate-100/50 dark:bg-white/5" : ""
                               }`}
                             >
-                              <span
-                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                                  child.highlight
-                                    ? "bg-gradient-to-br from-[#FF5D00] to-[#FF8533] text-white"
-                                    : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-sm border border-slate-100 dark:border-white/5"
-                                }`}
-                              >
+                              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                                child.highlight
+                                  ? "bg-gradient-to-br from-[#FF5D00] to-[#FF8533] text-white"
+                                  : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-sm border border-slate-100 dark:border-white/5"
+                              }`}>
                                 <Icon name={child.icon} size={16} strokeWidth={2.2} />
                               </span>
                               <span className="min-w-0 flex-1 pt-0.5">
-                                <span
-                                  className={`flex items-center gap-2 text-[15px] font-bold ${
-                                    child.highlight
-                                      ? "text-[#FF5D00]"
-                                      : "text-slate-900 dark:text-white"
-                                  }`}
-                                >
+                                <span className={`flex items-center gap-2 text-[15px] font-bold ${
+                                  child.highlight ? "text-[#FF5D00]" : "text-slate-900 dark:text-white"
+                                }`}>
                                   {child.label}
                                   {child.badge && (
                                     <span className="rounded-full bg-[#FF5D00] px-1.5 py-0.5 text-[9px] font-black text-white">
@@ -1021,7 +1086,7 @@ export default function Header({
                 <Link
                   to="/create-listing"
                   onClick={closeMenus}
-                  className="mt-1 flex items-center justify-center gap-2 rounded-full bg-[#FF5D00] px-5 py-4 text-[16px] font-black text-white shadow-lg shadow-[#FF5D00]/30"
+                  className="mt-1 flex items-center justify-center gap-2 rounded-full bg-[#102436] px-5 py-4 text-[16px] font-black text-white shadow-lg shadow-slate-900/20 dark:bg-white dark:text-[#102436]"
                 >
                   <Icon name="plus" size={20} strokeWidth={2.5} />
                   Gurisha ikintu

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { supabase } from "../services/supabase"
 
@@ -86,6 +86,45 @@ const Icon = {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
+   AUTO-CHANGING SUBTITLE (Typewriter)
+   ────────────────────────────────────────────────────────────────────────── */
+function TypingSubtitle() {
+  const phrases = [
+    "Uzuza amakuru make hanyuma utangire gukoresha KUGURISHA.COM.",
+    "Fungura konti yawe ubu, utangire kugura cyangwa kugurisha.",
+    "Injira mu isoko rinini ry'abanyarwanda, ubone amahirwe menshi.",
+    "Byoroshye, byihuse kandi ni ubuntu. Tangira ubu."
+  ]
+  
+  const [index, setIndex] = useState(0)
+  const [subIndex, setSubIndex] = useState(0)
+  const [reverse, setReverse] = useState(false)
+
+  useEffect(() => {
+    if (subIndex === phrases[index].length + 1 && !reverse) {
+      const timeout = setTimeout(() => setReverse(true), 2500)
+      return () => clearTimeout(timeout)
+    }
+    if (subIndex === 0 && reverse) {
+      setReverse(false)
+      setIndex((prev) => (prev + 1) % phrases.length)
+      return
+    }
+    const timeout = setTimeout(() => {
+      setSubIndex((prev) => prev + (reverse ? -1 : 1))
+    }, reverse ? 30 : 60)
+    return () => clearTimeout(timeout)
+  }, [subIndex, index, reverse, phrases])
+
+  return (
+    <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400 min-h-[40px]">
+      {phrases[index].substring(0, subIndex)}
+      <span className="inline-block w-1.5 h-4 ml-1 bg-[#FF5D00] animate-pulse align-middle rounded-full" />
+    </p>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
    COMPONENT
    ────────────────────────────────────────────────────────────────────────── */
 function Register() {
@@ -137,40 +176,30 @@ function Register() {
   const canSubmit = isNameValid && isEmailValid && isPasswordValid && !loading
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#060f19] text-slate-100">
-      {/* ═══════════════ CINEMATIC BACKGROUND ═══════════════ */}
+    /* The Deep Gray Background matching your design */
+    <main className="relative min-h-screen overflow-hidden bg-[#e2e8f0] dark:bg-[#0a1017] flex flex-col justify-center transition-colors duration-300 py-12">
+      
+      {/* High-end Studio Lighting Mesh */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/25 blur-[140px]" />
-        <div className="absolute -left-32 -top-32 h-[34rem] w-[34rem] rounded-full bg-indigo-500/25 blur-[120px]" />
-        <div className="absolute -bottom-32 -right-32 h-[36rem] w-[36rem] rounded-full bg-cyan-400/20 blur-[130px]" />
-        <div className="absolute right-[10%] top-[12%] h-[26rem] w-[26rem] rounded-full bg-blue-600/20 blur-[110px]" />
-        <div className="absolute bottom-[8%] left-[12%] h-[24rem] w-[24rem] rounded-full bg-indigo-600/20 blur-[110px]" />
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+        <div className="absolute -left-40 -top-40 h-[600px] w-[600px] rounded-full bg-white/60 blur-[120px] dark:bg-white/5" />
+        <div className="absolute -bottom-40 right-0 h-[500px] w-[500px] rounded-full bg-slate-400/40 blur-[140px] dark:bg-[#102436]/60" />
+        <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#82c4e0]/20 blur-[100px] dark:bg-[#82c4e0]/10" />
       </div>
 
-      {/* ═══════════════ TOP NAV ═══════════════ */}
-      <nav className="relative z-20 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
-        <Link to="/" className="group flex items-center gap-2.5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-105">
-            <Icon.Tag className="w-4 h-4" />
-          </span>
-          <div>
-            <p className="text-sm font-black tracking-tight text-white">
-              KUGURISHA
-              <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">.COM</span>
-            </p>
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Isoko ryawe</p>
-          </div>
+      {/* TOP NAV BAR */}
+      <nav className="absolute top-0 left-0 right-0 z-20 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
+        <Link to="/" className="flex items-center gap-2.5">
+          <img src="/favicon.svg" alt="KUGURISHA" className="h-10 w-10 object-contain" />
         </Link>
 
         <div className="flex items-center gap-2">
-          <span className="hidden items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-400 sm:inline-flex">
+          <span className="hidden items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 sm:inline-flex">
             <Icon.Shield className="w-3 h-3" />
-            Secure
+            Umutekano
           </span>
           <Link
             to="/login"
-            className="group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-black text-white backdrop-blur-md transition hover:border-white/30 hover:bg-white/10"
+            className="group inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white/80 px-4 py-2 text-xs font-black text-slate-800 shadow-sm backdrop-blur-md transition hover:border-slate-400 hover:bg-white dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
           >
             Injira
             <Icon.ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -178,289 +207,201 @@ function Register() {
         </div>
       </nav>
 
-      {/* ═══════════════ MAIN PANEL ═══════════════ */}
-      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-84px)] max-w-7xl items-center justify-center px-4 pb-10 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03] shadow-[0_40px_100px_-30px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
-          <section className="relative px-6 py-10 sm:px-10 sm:py-12">
-            <div className="mx-auto w-full max-w-md">
-              {/* Mobile brand */}
-              <div className="mb-8 flex items-center justify-between sm:hidden">
-                <Link to="/" className="group flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md">
-                    <Icon.Tag className="w-4 h-4" />
-                  </span>
-                  <p className="text-sm font-black text-white">
-                    KUGURISHA<span className="text-blue-400">.COM</span>
-                  </p>
-                </Link>
-                <Link to="/" className="text-xs font-bold text-slate-400 hover:text-white">
-                  ← Ahabanza
-                </Link>
-              </div>
+      {/* MAIN REGISTER CARD */}
+      <div className="relative z-10 w-full px-4 pt-20 pb-8 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[440px] overflow-hidden rounded-[2rem] bg-white p-8 shadow-2xl shadow-slate-300/50 dark:bg-[#132433] dark:shadow-black/50 sm:p-10 border border-slate-200/50 dark:border-white/5">
+          
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-50 text-[#FF5D00] dark:bg-orange-500/10">
+              <Icon.Sparkles className="w-6 h-6" />
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              Fungura Konti Nshya
+            </h1>
+            {/* The Dynamic Auto-changing Subtitle */}
+            <TypingSubtitle />
+          </div>
 
-              {/* Header */}
-              <div>
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-blue-400 backdrop-blur">
-                  <Icon.Sparkles className="w-3 h-3" />
-                  Tangira ubu
-                </div>
-
-                <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                  Fungura{" "}
-                  <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                    konti nshya
-                  </span>
-                </h1>
-
-                <p className="mt-2 text-sm font-medium text-slate-400">
-                  Uzuza amakuru make hanyuma utangire gukoresha KUGURISHA.COM.
-                </p>
-              </div>
-
-              {/* ═════════ FORM ═════════ */}
-              <form onSubmit={handleRegister} className="mt-6 space-y-4">
-                {/* Full name */}
-                <div>
-                  <label htmlFor="fullName" className="flex items-center justify-between text-xs font-black text-slate-300">
-                    <span>Amazina yawe</span>
-                    {fullName && (
-                      <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${isNameValid ? "text-emerald-400" : "text-amber-400"}`}>
-                        {isNameValid ? <Icon.Check className="w-3 h-3" /> : <Icon.Alert className="w-3 h-3" />}
-                        {isNameValid ? "Byiza" : "Nibura 2"}
-                      </span>
-                    )}
-                  </label>
-                  <div className="relative mt-2">
-                    <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center transition-colors ${focused === "name" ? "text-blue-400" : "text-slate-500"}`}>
-                      <Icon.User className="w-4 h-4" />
-                    </span>
-                    <input
-                      id="fullName"
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      onFocus={() => setFocused("name")}
-                      onBlur={() => setFocused(null)}
-                      required
-                      placeholder="Andika amazina yawe"
-                      autoComplete="name"
-                      className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-12 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-blue-400/60 focus:bg-white/[0.06] focus:ring-4 focus:ring-blue-500/15"
-                    />
-                  </div>
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label htmlFor="email" className="flex items-center justify-between text-xs font-black text-slate-300">
-                    <span>Email</span>
-                    {email && (
-                      <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${isEmailValid ? "text-emerald-400" : "text-amber-400"}`}>
-                        {isEmailValid ? <Icon.Check className="w-3 h-3" /> : <Icon.Alert className="w-3 h-3" />}
-                        {isEmailValid ? "Byiza" : "Si email"}
-                      </span>
-                    )}
-                  </label>
-                  <div className="relative mt-2">
-                    <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center transition-colors ${focused === "email" ? "text-blue-400" : "text-slate-500"}`}>
-                      <Icon.Mail className="w-4 h-4" />
-                    </span>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      onFocus={() => setFocused("email")}
-                      onBlur={() => setFocused(null)}
-                      required
-                      placeholder="email@example.com"
-                      autoComplete="email"
-                      className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-12 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-blue-400/60 focus:bg-white/[0.06] focus:ring-4 focus:ring-blue-500/15"
-                    />
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label htmlFor="password" className="flex items-center justify-between text-xs font-black text-slate-300">
-                    <span>Password</span>
-                    {password && (
-                      <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${isPasswordValid ? "text-emerald-400" : "text-amber-400"}`}>
-                        {isPasswordValid ? <Icon.Check className="w-3 h-3" /> : <Icon.Alert className="w-3 h-3" />}
-                        {isPasswordValid ? "Byiza" : "Nibura 6"}
-                      </span>
-                    )}
-                  </label>
-                  <div className="relative mt-2">
-                    <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center transition-colors ${focused === "password" ? "text-blue-400" : "text-slate-500"}`}>
-                      <Icon.Lock className="w-4 h-4" />
-                    </span>
-                    <input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      onFocus={() => setFocused("password")}
-                      onBlur={() => setFocused(null)}
-                      required
-                      minLength={6}
-                      placeholder="Nibura inyuguti 6"
-                      autoComplete="new-password"
-                      className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-12 pr-12 text-sm font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-blue-400/60 focus:bg-white/[0.06] focus:ring-4 focus:ring-blue-500/15"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((p) => !p)}
-                      aria-label={showPassword ? "Hisha ijambo ry'ibanga" : "Erekana ijambo ry'ibanga"}
-                      className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-500 transition hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
-                    >
-                      {showPassword ? <Icon.EyeOff className="w-4 h-4" /> : <Icon.Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Role */}
-                <div>
-                  <p className="mb-2 text-xs font-black text-slate-300">Uje gukora iki?</p>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {[
-                      {
-                        value: "buyer" as const,
-                        icon: Icon.ShoppingCart,
-                        title: "NDASHAKA KUGURA",
-                        subtitle: "Shaka ibintu",
-                        tone: "blue",
-                      },
-                      {
-                        value: "seller" as const,
-                        icon: Icon.Store,
-                        title: "NDASHAKA KUGURISHA",
-                        subtitle: "Gurisha ibintu",
-                        tone: "orange",
-                      },
-                    ].map((option) => {
-                      const isActive = role === option.value
-                      const OptionIcon = option.icon
-                      return (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setRole(option.value)}
-                          aria-pressed={isActive}
-                          className={`group relative rounded-xl border p-3.5 text-left transition-all ${
-                            isActive
-                              ? option.tone === "blue"
-                                ? "border-blue-400/50 bg-blue-500/[0.08] shadow-[0_8px_25px_-10px_rgba(59,130,246,0.5)] ring-2 ring-blue-500/20"
-                                : "border-[#FF5D00]/50 bg-[#FF5D00]/[0.08] shadow-[0_8px_25px_-10px_rgba(255,93,0,0.5)] ring-2 ring-[#FF5D00]/20"
-                              : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <span className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
-                              isActive
-                                ? option.tone === "blue"
-                                  ? "bg-blue-500 text-white shadow-md shadow-blue-500/30"
-                                  : "bg-[#FF5D00] text-white shadow-md shadow-[#FF5D00]/30"
-                                : "bg-white/[0.06] text-slate-400"
-                            }`}>
-                              <OptionIcon className="w-4 h-4" />
-                            </span>
-                            {isActive && (
-                              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-white ${
-                                option.tone === "blue" ? "bg-blue-500" : "bg-[#FF5D00]"
-                              }`}>
-                                <Icon.Check className="w-3 h-3" />
-                              </span>
-                            )}
-                          </div>
-                          <p className={`mt-2.5 text-[10px] font-black uppercase tracking-wider ${
-                            isActive
-                              ? option.tone === "blue" ? "text-blue-300" : "text-[#FF7424]"
-                              : "text-slate-300"
-                          }`}>
-                            {option.title}
-                          </p>
-                          <p className="mt-0.5 text-[10px] font-medium text-slate-500">{option.subtitle}</p>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-
-                {/* Message */}
-                {message && (
-                  <div className={`flex items-start gap-2.5 rounded-xl border p-3 text-xs font-semibold ${
-                    success
-                      ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
-                      : "border-rose-500/25 bg-rose-500/10 text-rose-300"
-                  }`}>
-                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
-                      success ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
-                    }`}>
-                      {success ? <Icon.Check className="w-3.5 h-3.5" /> : <Icon.Alert className="w-3.5 h-3.5" />}
-                    </span>
-                    <p className="mt-1 leading-5">{message}</p>
-                  </div>
-                )}
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={!canSubmit}
-                  className="group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] text-sm font-black text-white shadow-[0_16px_38px_-10px_rgba(255,93,0,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_45px_-10px_rgba(255,93,0,0.85)] active:scale-95 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:shadow-none disabled:opacity-60"
-                >
-                  <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                  {loading ? (
-                    <>
-                      <span className="relative h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                      <span className="relative">Turimo gukora konti...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Icon.Sparkles className="relative w-4 h-4" />
-                      <span className="relative">Fungura konti</span>
-                      <Icon.ArrowRight className="relative w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                    </>
-                  )}
-                </button>
-              </form>
-
-              {/* Login link */}
-              <div className="mt-6 text-center">
-                <p className="text-xs font-semibold text-slate-400">Usanzwe ufite konti?</p>
-                <Link
-                  to="/login"
-                  className="group mt-1.5 inline-flex items-center gap-1.5 text-sm font-black text-blue-400 transition hover:text-blue-300"
-                >
-                  Injira muri konti
-                  <Icon.ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </div>
-
-              {/* Trust footer */}
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-white/5 pt-5 text-[10px] font-semibold text-slate-500">
-                <span className="flex items-center gap-1">
-                  <Icon.Shield className="w-3 h-3 text-emerald-500" />
-                  Umutekano
+          {/* FORM */}
+          <form onSubmit={handleRegister} className="space-y-4">
+            {/* Full name */}
+            <div>
+              <label htmlFor="fullName" className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Amazina yawe
+              </label>
+              <div className="relative">
+                <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center transition-colors ${focused === "name" ? "text-[#FF5D00]" : "text-slate-400"}`}>
+                  <Icon.User className="w-4 h-4" />
                 </span>
-                <span className="flex items-center gap-1">
-                  <Icon.Bolt className="w-3 h-3 text-blue-400" />
-                  Byihuse
-                </span>
-                <span className="flex items-center gap-1">
-                  <Icon.Check className="w-3 h-3 text-emerald-500" />
-                  Byizewe
-                </span>
+                <input
+                  id="fullName"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  onFocus={() => setFocused("name")}
+                  onBlur={() => setFocused(null)}
+                  required
+                  placeholder="Andika amazina yawe"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-[#FF5D00] dark:focus:bg-[#1a2d3e]"
+                />
               </div>
             </div>
-          </section>
+
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Email
+              </label>
+              <div className="relative">
+                <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center transition-colors ${focused === "email" ? "text-[#FF5D00]" : "text-slate-400"}`}>
+                  <Icon.Mail className="w-4 h-4" />
+                </span>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onFocus={() => setFocused("email")}
+                  onBlur={() => setFocused(null)}
+                  required
+                  placeholder="email@example.com"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-[#FF5D00] dark:focus:bg-[#1a2d3e]"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div>
+              <label htmlFor="password" className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Password
+              </label>
+              <div className="relative">
+                <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center transition-colors ${focused === "password" ? "text-[#FF5D00]" : "text-slate-400"}`}>
+                  <Icon.Lock className="w-4 h-4" />
+                </span>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => setFocused("password")}
+                  onBlur={() => setFocused(null)}
+                  required
+                  minLength={6}
+                  placeholder="Nibura inyuguti 6"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-11 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-[#FF5D00] dark:focus:bg-[#1a2d3e]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 transition hover:text-[#FF5D00]"
+                >
+                  {showPassword ? <Icon.EyeOff className="w-4 h-4" /> : <Icon.Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Role Selection */}
+            <div className="pt-2">
+              <p className="mb-2 text-xs font-bold text-slate-700 dark:text-slate-300">Uje gukora iki?</p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  {
+                    value: "buyer" as const,
+                    icon: Icon.ShoppingCart,
+                    title: "NDASHAKA KUGURA",
+                    subtitle: "Shaka ibintu",
+                  },
+                  {
+                    value: "seller" as const,
+                    icon: Icon.Store,
+                    title: "NDASHAKA KUGURISHA",
+                    subtitle: "Gurisha ibintu",
+                  },
+                ].map((option) => {
+                  const isActive = role === option.value
+                  const OptionIcon = option.icon
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setRole(option.value)}
+                      className={`group relative flex flex-col items-start rounded-xl border p-3.5 transition-all duration-300 ${
+                        isActive
+                          ? "border-[#FF5D00] bg-orange-50/50 shadow-sm dark:border-[#FF5D00] dark:bg-[#FF5D00]/10"
+                          : "border-slate-200 bg-slate-50 hover:border-slate-300 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                      }`}
+                    >
+                      <div className="flex w-full items-center justify-between">
+                        <span className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${isActive ? "bg-[#FF5D00] text-white shadow-sm" : "bg-white text-slate-400 dark:bg-white/10"}`}>
+                          <OptionIcon className="w-4 h-4" />
+                        </span>
+                        {isActive && (
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FF5D00] text-white">
+                            <Icon.Check className="w-3 h-3" />
+                          </span>
+                        )}
+                      </div>
+                      <p className={`mt-2.5 text-[10px] font-black uppercase tracking-wider ${isActive ? "text-[#FF5D00]" : "text-slate-600 dark:text-slate-300"}`}>
+                        {option.title}
+                      </p>
+                      <p className="mt-0.5 text-[10px] font-medium text-slate-500">{option.subtitle}</p>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Message / Error */}
+            {message && (
+              <div className={`flex items-start gap-2.5 rounded-xl border p-3 text-xs font-semibold ${
+                success
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400"
+                  : "border-rose-200 bg-rose-50 text-rose-600 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400"
+              }`}>
+                <Icon.Alert className="mt-0.5 w-4 h-4 shrink-0" />
+                <p className="leading-5">{message}</p>
+              </div>
+            )}
+
+            {/* Submit (The Big Orange Button from your image) */}
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="group relative mt-2 flex h-14 w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-[#FF5D00] text-base font-black text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#FF7424] hover:shadow-xl hover:shadow-[#FF5D00]/30 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+            >
+              {loading ? (
+                <>
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  <span>Turimo gukora...</span>
+                </>
+              ) : (
+                <>
+                  <span>Fungura Konti</span>
+                  <Icon.ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Divider / Login */}
+          <div className="mt-8 text-center">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              Usanzwe ufite konti?{" "}
+              <Link to="/login" className="font-black text-[#FF5D00] hover:underline">
+                Injira ubu
+              </Link>
+            </p>
+          </div>
+
         </div>
       </div>
 
       {/* Back link */}
-      <div className="relative z-10 mx-auto mb-6 max-w-7xl px-5 text-center sm:px-8">
+      <div className="relative z-10 mb-4 text-center">
         <Link
           to="/"
-          className="group inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-white"
+          className="group inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           <Icon.ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
           Subira ku isoko

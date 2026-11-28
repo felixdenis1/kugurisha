@@ -63,11 +63,6 @@ const Icon = {
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
     </svg>
   ),
-  Tag: ({ className = "w-4 h-4" }: IconProps) => (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
-    </svg>
-  ),
   User: ({ className = "w-4 h-4" }: IconProps) => (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
@@ -122,6 +117,52 @@ function clearSavedLogin() {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
+   AUTO-CHANGING SUBTITLE (Typewriter)
+   ────────────────────────────────────────────────────────────────────────── */
+function TypingSubtitle({ usingSavedAccount }: { usingSavedAccount: boolean }) {
+  const phrases = usingSavedAccount 
+    ? ["Twabibutse konti yawe. Injiza password gusa."]
+    : [
+        "Uzuza amakuru yawe kugira ukomeze.",
+        "Injira urebe ibicuruzwa bishya kuri KUGURISHA.",
+        "Gurisha ibintu byawe ubu, ubone amahirwe menshi.",
+        "Ibyo ushaka byose ubibona hano, injira ubu."
+      ]
+  
+  const [index, setIndex] = useState(0)
+  const [subIndex, setSubIndex] = useState(0)
+  const [reverse, setReverse] = useState(false)
+
+  useEffect(() => {
+    if (phrases.length === 1) {
+      setSubIndex(phrases[0].length)
+      return
+    }
+
+    if (subIndex === phrases[index].length + 1 && !reverse) {
+      const timeout = setTimeout(() => setReverse(true), 2500)
+      return () => clearTimeout(timeout)
+    }
+    if (subIndex === 0 && reverse) {
+      setReverse(false)
+      setIndex((prev) => (prev + 1) % phrases.length)
+      return
+    }
+    const timeout = setTimeout(() => {
+      setSubIndex((prev) => prev + (reverse ? -1 : 1))
+    }, reverse ? 30 : 60)
+    return () => clearTimeout(timeout)
+  }, [subIndex, index, reverse, phrases])
+
+  return (
+    <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400 min-h-[40px]">
+      {phrases[index].substring(0, subIndex)}
+      <span className="inline-block w-1.5 h-4 ml-1 bg-[#FF5D00] animate-pulse align-middle rounded-full" />
+    </p>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
    COMPONENT
    ────────────────────────────────────────────────────────────────────────── */
 function Login() {
@@ -136,7 +177,6 @@ function Login() {
   const [savedLogin, setSavedLogin] = useState<SavedLogin | null>(null)
   const [usingSavedAccount, setUsingSavedAccount] = useState(false)
 
-  /* ── Restore saved login on mount ── */
   useEffect(() => {
     const saved = readSavedLogin()
     if (saved) {
@@ -190,7 +230,6 @@ function Login() {
         return
       }
 
-      // Save / clear remembered login depending on toggle
       if (rememberMe) {
         writeSavedLogin(email.trim())
       } else {
@@ -228,32 +267,30 @@ function Login() {
   const canSubmit = isEmailValid && isPasswordValid && !loading
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#060f19] text-slate-100">
-      {/* ═══════════════ CINEMATIC BACKGROUND ═══════════════ */}
+    /* The Deep Gray Background matching your design */
+    <main className="relative min-h-screen overflow-hidden bg-[#e2e8f0] dark:bg-[#0a1017] flex flex-col justify-center transition-colors duration-300">
+      
+      {/* High-end Studio Lighting Mesh */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-1/2 h-[42rem] w-[42rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500/25 blur-[140px]" />
-        <div className="absolute -left-32 -top-32 h-[34rem] w-[34rem] rounded-full bg-indigo-500/25 blur-[120px]" />
-        <div className="absolute -bottom-32 -right-32 h-[36rem] w-[36rem] rounded-full bg-cyan-400/20 blur-[130px]" />
-        <div className="absolute right-[10%] top-[12%] h-[26rem] w-[26rem] rounded-full bg-blue-600/20 blur-[110px]" />
-        <div className="absolute bottom-[8%] left-[12%] h-[24rem] w-[24rem] rounded-full bg-indigo-600/20 blur-[110px]" />
-        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+        <div className="absolute -left-40 -top-40 h-[600px] w-[600px] rounded-full bg-white/60 blur-[120px] dark:bg-white/5" />
+        <div className="absolute -bottom-40 right-0 h-[500px] w-[500px] rounded-full bg-slate-400/40 blur-[140px] dark:bg-[#102436]/60" />
+        <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#82c4e0]/20 blur-[100px] dark:bg-[#82c4e0]/10" />
       </div>
 
-      {/* ═══════════════ TOP NAV BAR ═══════════════ */}
-      <nav className="relative z-20 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
-        <Link to="/" className="group flex items-center gap-2.5">
-          
-          
+      {/* TOP NAV BAR (Light Mode Friendly) */}
+      <nav className="absolute top-0 left-0 right-0 z-20 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
+        <Link to="/" className="flex items-center gap-2.5">
+          <img src="/favicon.svg" alt="KUGURISHA" className="h-10 w-10 object-contain" />
         </Link>
 
         <div className="flex items-center gap-2">
-          <span className="hidden items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-400 sm:inline-flex">
+          <span className="hidden items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 sm:inline-flex">
             <Icon.Shield className="w-3 h-3" />
-            Secure
+            Umutekano
           </span>
           <Link
             to="/register"
-            className="group inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-black text-white backdrop-blur-md transition hover:border-white/30 hover:bg-white/10"
+            className="group inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white/80 px-4 py-2 text-xs font-black text-slate-800 shadow-sm backdrop-blur-md transition hover:border-slate-400 hover:bg-white dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
           >
             Fungura konti
             <Icon.ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -261,236 +298,165 @@ function Login() {
         </div>
       </nav>
 
-      {/* ═══════════════ MAIN PANEL ═══════════════ */}
-      <div className="relative z-10 mx-auto flex min-h-[calc(100vh-84px)] max-w-7xl items-center justify-center px-4 pb-10 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03] shadow-[0_40px_100px_-30px_rgba(0,0,0,0.8)] backdrop-blur-2xl">
-          <section className="relative px-6 py-10 sm:px-10 sm:py-12">
-            <div className="mx-auto w-full max-w-md">
-              {/* Mobile brand */}
-              <div className="mb-8 flex items-center justify-between sm:hidden">
-                <Link to="/" className="group flex items-center gap-2.5">
-                
-                </Link>
-                <Link to="/" className="text-xs font-bold text-slate-400 hover:text-white">
-                  ← Ahabanza
-                </Link>
+      {/* MAIN LOGIN CARD (Matches your image perfectly) */}
+      <div className="relative z-10 w-full px-4 pb-12 pt-24 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-[420px] overflow-hidden rounded-[2rem] bg-white p-8 shadow-2xl shadow-slate-300/50 dark:bg-[#132433] dark:shadow-black/50 sm:p-10 border border-slate-200/50 dark:border-white/5">
+          
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-slate-300">
+              <Icon.User className="w-6 h-6" />
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              Injira muri Konti
+            </h1>
+            {/* The Dynamic Auto-changing Subtitle */}
+            <TypingSubtitle usingSavedAccount={usingSavedAccount} />
+          </div>
+
+          {savedLogin && usingSavedAccount && (
+            <div className="mb-6 flex items-center gap-2.5 rounded-xl border border-blue-500/20 bg-blue-50 p-2.5 dark:border-blue-500/30 dark:bg-blue-500/10">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white shadow-sm">
+                <Icon.User className="w-4 h-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Konti yabitswe</p>
+                <p className="truncate text-xs font-bold text-slate-900 dark:text-white">{savedLogin.email}</p>
               </div>
+              <button
+                type="button"
+                onClick={handleForgetSaved}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-500/15 hover:text-rose-500"
+              >
+                <Icon.X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
 
-              {/* Header */}
-              <div>
-                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-blue-400 backdrop-blur">
-                  <Icon.Sparkles className="w-3 h-3" />
-                  Murakaza neza
-                </div>
-
-                <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                  Injira muri{" "}
-                  <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                    konti yawe
-                  </span>
-                </h1>
-
-                <p className="mt-2 text-sm font-medium text-slate-400">
-                  {usingSavedAccount
-                    ? "Twabibutse konti yawe. Injiza password gusa."
-                    : "Uzuza amakuru yawe kugira ukomeze."}
-                </p>
-              </div>
-
-              {/* Saved account chip */}
-              {savedLogin && usingSavedAccount && (
-                <div className="mt-5 flex items-center gap-2.5 rounded-xl border border-blue-500/25 bg-blue-500/[0.06] p-2.5">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md">
-                    <Icon.User className="w-4 h-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[9px] font-black uppercase tracking-wider text-blue-400">Konti yabitswe</p>
-                    <p className="truncate text-xs font-bold text-white">{savedLogin.email}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleForgetSaved}
-                    aria-label="Kuraho konti yabitswe"
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-500/15 hover:text-rose-400"
-                  >
-                    <Icon.X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-
-              {/* ═════════ FORM ═════════ */}
-              <form onSubmit={handleLogin} className="mt-6 space-y-4">
-                {/* Email */}
-                <div>
-                  <label htmlFor="email" className="flex items-center justify-between text-xs font-black text-slate-300">
-                    <span>Email</span>
-                    {email && (
-                      <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${isEmailValid ? "text-emerald-400" : "text-amber-400"}`}>
-                        {isEmailValid ? <Icon.Check className="w-3 h-3" /> : <Icon.Alert className="w-3 h-3" />}
-                        {isEmailValid ? "Byiza" : "Si email"}
-                      </span>
-                    )}
-                  </label>
-                  <div className="relative mt-2">
-                    <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center transition-colors ${emailFocused ? "text-blue-400" : "text-slate-500"}`}>
-                      <Icon.Mail className="w-4 h-4" />
-                    </span>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      onFocus={() => setEmailFocused(true)}
-                      onBlur={() => setEmailFocused(false)}
-                      required
-                      placeholder="Andika email yawe"
-                      autoComplete="email"
-                      className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-12 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-blue-400/60 focus:bg-white/[0.06] focus:ring-4 focus:ring-blue-500/15"
-                    />
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div>
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="password" className="flex items-center gap-1.5 text-xs font-black text-slate-300">
-                      <span>Password</span>
-                      {password && (
-                        <span className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-wider ${isPasswordValid ? "text-emerald-400" : "text-amber-400"}`}>
-                          {isPasswordValid ? <Icon.Check className="w-3 h-3" /> : <Icon.Alert className="w-3 h-3" />}
-                          {isPasswordValid ? "Byiza" : "Nibura 6"}
-                        </span>
-                      )}
-                    </label>
-                    <Link
-                      to="/forgot-password"
-                      className="text-[11px] font-bold text-blue-400 transition hover:text-blue-300 hover:underline"
-                    >
-                      Wibagiwe?
-                    </Link>
-                  </div>
-                  <div className="relative mt-2">
-                    <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center transition-colors ${passwordFocused ? "text-blue-400" : "text-slate-500"}`}>
-                      <Icon.Lock className="w-4 h-4" />
-                    </span>
-                    <input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      onFocus={() => setPasswordFocused(true)}
-                      onBlur={() => setPasswordFocused(false)}
-                      required
-                      placeholder="Andika password yawe"
-                      autoComplete="current-password"
-                      className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] pl-12 pr-12 text-sm font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-blue-400/60 focus:bg-white/[0.06] focus:ring-4 focus:ring-blue-500/15"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((p) => !p)}
-                      aria-label={showPassword ? "Hisha ijambo ry'ibanga" : "Erekana ijambo ry'ibanga"}
-                      className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-500 transition hover:text-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400"
-                    >
-                      {showPassword ? <Icon.EyeOff className="w-4 h-4" /> : <Icon.Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Remember me */}
-                <div className="flex items-center justify-between">
-                  <label className="group flex cursor-pointer items-center gap-2 select-none">
-                    <span className="relative inline-flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        className="peer sr-only"
-                      />
-                      <span className="flex h-5 w-5 items-center justify-center rounded-md border border-white/15 bg-white/[0.04] transition peer-checked:border-[#FF5D00] peer-checked:bg-[#FF5D00] peer-focus-visible:ring-2 peer-focus-visible:ring-[#FF5D00]/40">
-                        <Icon.Check className={`w-3 h-3 text-white transition ${rememberMe ? "scale-100 opacity-100" : "scale-0 opacity-0"}`} />
-                      </span>
-                    </span>
-                    <span className="text-[11px] font-bold text-slate-300 transition group-hover:text-white">
-                      Nibuke kuri iyi device
-                    </span>
-                  </label>
-                </div>
-
-                {/* Error */}
-                {message && (
-                  <div className="flex items-start gap-2.5 rounded-xl border border-rose-500/25 bg-rose-500/10 p-3 text-xs font-semibold text-rose-300">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-rose-500/20 text-rose-400">
-                      <Icon.Alert className="w-3.5 h-3.5" />
-                    </span>
-                    <p className="mt-1 leading-5">{message}</p>
-                  </div>
-                )}
-
-                {/* Submit */}
-                <button
-                  type="submit"
-                  disabled={!canSubmit}
-                  className="group relative flex h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-[#FF5D00] via-[#FF7424] to-[#e05200] text-sm font-black text-white shadow-[0_16px_38px_-10px_rgba(255,93,0,0.65)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_45px_-10px_rgba(255,93,0,0.85)] active:scale-95 disabled:cursor-not-allowed disabled:from-slate-700 disabled:to-slate-700 disabled:shadow-none disabled:opacity-60"
-                >
-                  <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-                  {loading ? (
-                    <>
-                      <span className="relative h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                      <span className="relative">Turinjira...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="relative">Injira muri konti</span>
-                      <Icon.ArrowRight className="relative w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-                    </>
-                  )}
-                </button>
-              </form>
-
-              {/* Divider */}
-              <div className="my-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-white/10" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">cyangwa</span>
-                <div className="h-px flex-1 bg-white/10" />
-              </div>
-
-              {/* Register */}
-              <div className="text-center">
-                <p className="text-xs font-semibold text-slate-400">Ntabwo konti ufite?</p>
-                <Link
-                  to="/register"
-                  className="group mt-2 inline-flex items-center gap-1.5 text-sm font-black text-blue-400 transition hover:text-blue-300"
-                >
-                  Fungura konti nshya
-                  <Icon.ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </div>
-
-              {/* Trust footer */}
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-white/5 pt-5 text-[10px] font-semibold text-slate-500">
-                <span className="flex items-center gap-1">
-                  <Icon.Shield className="w-3 h-3 text-emerald-500" />
-                  Umutekano wuzuye
+          {/* FORM */}
+          <form onSubmit={handleLogin} className="space-y-5">
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="mb-1.5 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Email
+              </label>
+              <div className="relative">
+                <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center transition-colors ${emailFocused ? "text-[#FF5D00]" : "text-slate-400"}`}>
+                  <Icon.Mail className="w-4 h-4" />
                 </span>
-                <span className="flex items-center gap-1">
-                  <Icon.Bolt className="w-3 h-3 text-blue-400" />
-                  Byihuse
-                </span>
-                <span className="flex items-center gap-1">
-                  <Icon.Check className="w-3 h-3 text-emerald-500" />
-                  Byizewe
-                </span>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onFocus={() => setEmailFocused(true)}
+                  onBlur={() => setEmailFocused(false)}
+                  required
+                  placeholder="Email yawe"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-[#FF5D00] dark:focus:bg-[#1a2d3e]"
+                />
               </div>
             </div>
-          </section>
+
+            {/* Password */}
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="password" className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Password
+                </label>
+                <Link to="/forgot-password" className="text-[11px] font-bold text-[#FF5D00] hover:underline">
+                  Wibagiwe?
+                </Link>
+              </div>
+              <div className="relative">
+                <span className={`pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center transition-colors ${passwordFocused ? "text-[#FF5D00]" : "text-slate-400"}`}>
+                  <Icon.Lock className="w-4 h-4" />
+                </span>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
+                  required
+                  placeholder="Password yawe"
+                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-11 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#FF5D00] focus:bg-white focus:ring-4 focus:ring-[#FF5D00]/10 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:border-[#FF5D00] dark:focus:bg-[#1a2d3e]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-slate-400 transition hover:text-[#FF5D00]"
+                >
+                  {showPassword ? <Icon.EyeOff className="w-4 h-4" /> : <Icon.Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Remember me */}
+            <div className="flex items-center justify-between pt-1">
+              <label className="group flex cursor-pointer items-center gap-2 select-none">
+                <span className="relative inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="peer sr-only"
+                  />
+                  <span className="flex h-4 w-4 items-center justify-center rounded border border-slate-300 bg-white transition peer-checked:border-[#FF5D00] peer-checked:bg-[#FF5D00] dark:border-white/20 dark:bg-white/5">
+                    <Icon.Check className={`w-2.5 h-2.5 text-white transition ${rememberMe ? "scale-100 opacity-100" : "scale-0 opacity-0"}`} />
+                  </span>
+                </span>
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
+                  Nibuke kuri iyi device
+                </span>
+              </label>
+            </div>
+
+            {/* Error */}
+            {message && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-semibold text-rose-600 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400">
+                <Icon.Alert className="mt-0.5 w-4 h-4 shrink-0" />
+                <p className="leading-5">{message}</p>
+              </div>
+            )}
+
+            {/* Submit (The Big Orange Button from your image) */}
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className="group relative mt-2 flex h-14 w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-[#FF5D00] text-base font-black text-white shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#FF7424] hover:shadow-xl hover:shadow-[#FF5D00]/30 active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+            >
+              {loading ? (
+                <>
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  <span>Turinjira...</span>
+                </>
+              ) : (
+                <>
+                  <span>Injira</span>
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Divider / Register */}
+          <div className="mt-8 text-center">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              Ntabwo konti ufite?{" "}
+              <Link to="/register" className="font-black text-[#FF5D00] hover:underline">
+                Fungura ubu
+              </Link>
+            </p>
+          </div>
+
         </div>
       </div>
 
-      {/* Back link (desktop) */}
-      <div className="relative z-10 mx-auto mb-6 max-w-7xl px-5 text-center sm:px-8">
+      {/* Back link */}
+      <div className="absolute bottom-6 left-0 right-0 z-10 text-center">
         <Link
           to="/"
-          className="group inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-white"
+          className="group inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           <Icon.ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
           Subira ku isoko
